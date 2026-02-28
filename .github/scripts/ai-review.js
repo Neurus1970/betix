@@ -102,6 +102,12 @@ Genera el reporte en español.`;
 
 main().catch(err => {
   console.error('Error al generar reporte:', err.message);
-  fs.writeFileSync('ai-report.md', '## ⚠️ Error al generar reporte de IA\n\nNo se pudo conectar con Claude API.');
+  const keyPresent = !!ANTHROPIC_API_KEY;
+  const diagnostic = keyPresent
+    ? `**Detalle del error:** \`${err.message}\``
+    : '**Causa:** el secret `ANTHROPIC_API_KEY` no está configurado en este repositorio.\n\n> Settings → Secrets and variables → Actions → New repository secret';
+  fs.writeFileSync('ai-report.md',
+    `## ⚠️ Error al generar reporte de IA\n\n${diagnostic}`
+  );
   process.exit(0);
 });
