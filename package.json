@@ -8,21 +8,27 @@
     "dev": "nodemon src/app.js",
     "test": "jest --coverage --verbose",
     "test:ci": "jest --coverage --ci --reporters=default --reporters=jest-junit",
+    "test:functional": "cucumber-js",
     "lint": "eslint src/ tests/"
   },
-  "keywords": ["betix", "estadisticas", "tickets"],
+  "keywords": [
+    "betix",
+    "estadisticas",
+    "tickets"
+  ],
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "express": "^4.18.2"
   },
   "devDependencies": {
+    "@cucumber/cucumber": "^12.7.0",
+    "eslint": "^8.57.0",
     "jest": "^29.7.0",
     "jest-junit": "^16.0.0",
-    "supertest": "^6.3.4",
-    "eslint": "^8.57.0",
-    "nodemon": "^3.0.3"
+    "nodemon": "^3.0.3",
+    "supertest": "^6.3.4"
   },
   "jest": {
     "testEnvironment": "node",
@@ -30,13 +36,20 @@
     "collectCoverageFrom": [
       "src/**/*.js"
     ],
-    "coverageReporters": ["text", "lcov", "clover"],
+    "coverageReporters": [
+      "text",
+      "lcov",
+      "clover"
+    ],
     "reporters": [
       "default",
-      ["jest-junit", {
-        "outputDirectory": "test-results",
-        "outputName": "junit.xml"
-      }]
+      [
+        "jest-junit",
+        {
+          "outputDirectory": "test-results",
+          "outputName": "junit.xml"
+        }
+      ]
     ]
   }
 }
