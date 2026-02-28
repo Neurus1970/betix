@@ -24,7 +24,7 @@ if [ -z "$TICKET" ]; then
   exit 0
 fi
 
-# Leer credenciales desde variables de entorno o archivo .jira-credentials
+# Leer credenciales desde variables de entorno o archivo ~/.jira-credentials
 JIRA_BASE_URL="${JIRA_BASE_URL:-}"
 JIRA_USER_EMAIL="${JIRA_USER_EMAIL:-}"
 JIRA_API_TOKEN="${JIRA_API_TOKEN:-}"
