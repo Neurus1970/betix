@@ -54,6 +54,7 @@ function callClaude(prompt) {
 async function main() {
   const diff = readFile('pr_diff.txt');
   const junitResults = readFile('test-results/junit.xml');
+  const cucumberResults = readFile('test-results/cucumber.xml');
 
   const prompt = `Eres un revisor de código experto para la plataforma Betix (API de estadísticas de tickets de lotería).
 
@@ -85,9 +86,14 @@ DIFF:
 ${diff.slice(0, 8000)}
 \`\`\`
 
-RESULTADOS DE TESTS (JUnit XML):
+RESULTADOS DE TESTS UNITARIOS (Jest JUnit XML):
 \`\`\`xml
 ${junitResults.slice(0, 2000)}
+\`\`\`
+
+RESULTADOS DE TESTS FUNCIONALES (Cucumber JUnit XML):
+\`\`\`xml
+${cucumberResults.slice(0, 2000)}
 \`\`\`
 
 Genera el reporte en español.`;

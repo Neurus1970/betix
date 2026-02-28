@@ -9,6 +9,7 @@
     "test": "jest --coverage --verbose && cucumber-js --profile summary",
     "test:ci": "jest --coverage --ci",
     "test:functional": "cucumber-js",
+    "test:functional:ci": "cucumber-js --format junit:test-results/cucumber.xml",
     "lint": "eslint src/ tests/"
   },
   "keywords": [
