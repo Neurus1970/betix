@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "jest --coverage --verbose",
+    "test": "jest --coverage --verbose && cucumber-js --profile summary",
     "test:ci": "jest --coverage --ci --reporters=default --reporters=jest-junit",
     "test:functional": "cucumber-js",
     "lint": "eslint src/ tests/"
