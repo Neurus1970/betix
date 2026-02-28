@@ -1,22 +1,20 @@
 Feature: Endpoint unificado de geodata
 
   Como cliente frontend
-  Quiero obtener en una sola llamada los datos georreferenciados y el detalle por juego
+  Quiero obtener en una sola llamada los totales globales, por provincia y por juego
   Para reducir el número de requests al servidor
 
-  Scenario: La respuesta es exitosa y contiene las dos colecciones de datos
+  Scenario: La respuesta contiene globalTotals y la lista de provincias
     When hago GET a "/api/datos/geodata"
     Then el código de respuesta es 200
     And el campo "status" es "ok"
-    And la respuesta contiene un array en el campo "data.geo"
-    And la respuesta contiene un array en el campo "data.detail"
-    And el campo "data.geo" tiene 10 elementos
-    And el campo "data.detail" tiene 30 elementos
+    And "data" tiene los campos "globalTotals,provinces"
+    And el campo "data.provinces" tiene 10 elementos
 
-  Scenario: Los datos geo tienen todos los campos requeridos incluyendo coordenadas
+  Scenario: globalTotals tiene los campos de métricas requeridos
     When hago GET a "/api/datos/geodata"
-    Then cada elemento del campo "data.geo" tiene los campos "provincia,cantidad,importe,beneficio,lat,lng"
+    Then el campo anidado "data.globalTotals" tiene los campos "cantidad,importe,beneficio"
 
-  Scenario: Los datos de detalle tienen todos los campos requeridos
+  Scenario: Cada provincia tiene estructura con coordenadas, totales y juegos
     When hago GET a "/api/datos/geodata"
-    Then cada elemento del campo "data.detail" tiene los campos "provincia,juego,cantidad,importe,beneficio"
+    Then cada elemento del campo "data.provinces" tiene los campos "provincia,lat,lng,totals,games"

@@ -18,34 +18,32 @@ describe('GET /api/datos/geodata', () => {
     expect(body.status).toBe('ok');
   });
 
-  it('data.geo debe tener 10 provincias', () => {
-    expect(Array.isArray(body.data.geo)).toBe(true);
-    expect(body.data.geo).toHaveLength(10);
+  it('data tiene globalTotals y provinces', () => {
+    expect(body.data).toHaveProperty('globalTotals');
+    expect(body.data).toHaveProperty('provinces');
   });
 
-  it('data.detail debe tener 30 registros (10 provincias × 3 juegos)', () => {
-    expect(Array.isArray(body.data.detail)).toBe(true);
-    expect(body.data.detail).toHaveLength(30);
+  it('globalTotals tiene cantidad, importe y beneficio', () => {
+    expect(body.data.globalTotals).toHaveProperty('cantidad');
+    expect(body.data.globalTotals).toHaveProperty('importe');
+    expect(body.data.globalTotals).toHaveProperty('beneficio');
   });
 
-  it('cada registro de data.geo tiene los campos requeridos con coordenadas', () => {
-    for (const item of body.data.geo) {
-      expect(item).toHaveProperty('provincia');
-      expect(item).toHaveProperty('cantidad');
-      expect(item).toHaveProperty('importe');
-      expect(item).toHaveProperty('beneficio');
-      expect(item.lat).not.toBeNull();
-      expect(item.lng).not.toBeNull();
-    }
+  it('data.provinces debe tener 10 provincias', () => {
+    expect(Array.isArray(body.data.provinces)).toBe(true);
+    expect(body.data.provinces).toHaveLength(10);
   });
 
-  it('cada registro de data.detail tiene los campos requeridos', () => {
-    for (const item of body.data.detail) {
-      expect(item).toHaveProperty('provincia');
-      expect(item).toHaveProperty('juego');
-      expect(item).toHaveProperty('cantidad');
-      expect(item).toHaveProperty('importe');
-      expect(item).toHaveProperty('beneficio');
+  it('cada provincia tiene lat, lng, totals y games con campos correctos', () => {
+    for (const p of body.data.provinces) {
+      expect(p).toHaveProperty('provincia');
+      expect(p.lat).not.toBeNull();
+      expect(p.lng).not.toBeNull();
+      expect(p.totals).toHaveProperty('cantidad');
+      expect(p.totals).toHaveProperty('importe');
+      expect(p.totals).toHaveProperty('beneficio');
+      expect(Array.isArray(p.games)).toBe(true);
+      expect(p.games.length).toBeGreaterThan(0);
     }
   });
 });

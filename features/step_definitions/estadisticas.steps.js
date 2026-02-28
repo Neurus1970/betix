@@ -113,3 +113,15 @@ Then('cada elemento del campo {string} tiene los campos {string}', function (dot
     }
   }
 });
+
+Then('el campo anidado {string} tiene los campos {string}', function (dotPath, camposStr) {
+  const get = (obj, path) => path.split('.').reduce((o, k) => o && o[k], obj);
+  const campos = camposStr.split(',');
+  const obj = get(this.response.body, dotPath);
+  for (const campo of campos) {
+    assert.ok(
+      Object.prototype.hasOwnProperty.call(obj, campo),
+      `Campo "${campo}" faltante en ${dotPath}: ${JSON.stringify(obj)}`
+    );
+  }
+});

@@ -197,7 +197,14 @@
 
         geoData = await geoRes.json();
         const json = await apiRes.json();
-        apiData = json.data.geo;
+        apiData = json.data.provinces.map(p => ({
+          provincia: p.provincia,
+          lat:       p.lat,
+          lng:       p.lng,
+          cantidad:  p.totals.cantidad,
+          importe:   p.totals.importe,
+          beneficio: p.totals.beneficio,
+        }));
 
         renderMapa(document.getElementById('metrica').value);
       } catch (e) {

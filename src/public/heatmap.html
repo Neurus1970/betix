@@ -353,7 +353,9 @@
         if (!geoRes.ok || !apiRes.ok) throw new Error('Error en la respuesta');
 
         geoData = await geoRes.json();
-        rawData = (await apiRes.json()).data.detail;
+        rawData = (await apiRes.json()).data.provinces.flatMap(p =>
+          p.games.map(g => ({ provincia: p.provincia, ...g }))
+        );
 
         loader.style.display = 'none';
         render();

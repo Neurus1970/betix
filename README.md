@@ -61,11 +61,19 @@ API de estadísticas de tickets de lotería por provincia y juego, con dashboard
 {
   "status": "ok",
   "data": {
-    "geo": [
-      { "provincia": "Salta", "cantidad": 3750, "importe": 432000, "beneficio": 135000, "lat": -24.7859, "lng": -65.4117 }
-    ],
-    "detail": [
-      { "provincia": "Salta", "juego": "Quiniela", "cantidad": 1200, "importe": 144000, "beneficio": 39000 }
+    "globalTotals": { "cantidad": 104800, "importe": 3375000, "beneficio": 1196000 },
+    "provinces": [
+      {
+        "provincia": "Salta",
+        "lat": -24.7859,
+        "lng": -65.4117,
+        "totals": { "cantidad": 12600, "importe": 411000, "beneficio": 174000 },
+        "games": [
+          { "juego": "Quiniela",  "cantidad": 4800, "importe": 144000, "beneficio": 39000 },
+          { "juego": "Lotería",   "cantidad": 2100, "importe": 210000, "beneficio": 126000 },
+          { "juego": "Raspadita", "cantidad": 5700, "importe":  57000, "beneficio":   9000 }
+        ]
+      }
     ]
   }
 }

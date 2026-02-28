@@ -538,7 +538,9 @@
         const res = await fetch(API_URL);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const json = await res.json();
-        rawData = json.data.detail;
+        rawData = json.data.provinces.flatMap(p =>
+          p.games.map(g => ({ provincia: p.provincia, ...g }))
+        );
 
         allProvincias = [...new Set(rawData.map(d => d.provincia))];
         allJuegos     = [...new Set(rawData.map(d => d.juego))];
