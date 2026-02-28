@@ -1,15 +1,16 @@
 const { tickets } = require('../data/mockData');
 
 const PROVINCE_COORDS = {
-  'Buenos Aires': { lat: -36.6769, lng: -60.5588 },
-  'CABA':         { lat: -34.6037, lng: -58.3816 },
-  'Entre Ríos':   { lat: -31.7328, lng: -60.5238 },
-  'Corrientes':   { lat: -27.4806, lng: -58.8341 },
-  'Chaco':        { lat: -27.4513, lng: -59.0730 },
-  'Misiones':     { lat: -27.3668, lng: -55.8963 },
-  'Formosa':      { lat: -26.1849, lng: -58.1730 },
-  'La Pampa':     { lat: -36.6148, lng: -64.2839 },
-  'San Luis':     { lat: -33.2950, lng: -66.3356 },
+  'Salta':               { lat: -24.7859, lng: -65.4117 },
+  'Santiago del Estero': { lat: -27.7951, lng: -64.2615 },
+  'Neuquén':             { lat: -38.9516, lng: -68.0591 },
+  'La Pampa':            { lat: -36.6148, lng: -64.2839 },
+  'Santa Cruz':          { lat: -51.6230, lng: -69.2168 },
+  'La Rioja':            { lat: -29.4131, lng: -66.8558 },
+  'Catamarca':           { lat: -28.4696, lng: -65.7852 },
+  'Tierra del Fuego':    { lat: -54.8019, lng: -68.3030 },
+  'Corrientes':          { lat: -27.4806, lng: -58.8341 },
+  'Río Negro':           { lat: -40.8135, lng: -63.0000 },
 };
 
 function getMapaEstadisticas() {
