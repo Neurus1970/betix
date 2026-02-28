@@ -1,0 +1,29 @@
+name: Jira - Mover a In Progress al crear branch
+
+on:
+  create:
+    branches:
+      - '**'
+
+jobs:
+  move-to-in-progress:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Extraer ticket de Jira del nombre del branch
+        id: extract_ticket
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          TICKET=$(echo "$BRANCH" | grep -oE '[A-Z]+-[0-9]+' | head -1)
+          echo "ticket=$TICKET" >> $GITHUB_OUTPUT
+          echo "Branch: $BRANCH → Ticket: $TICKET"
+
+      - name: Transicionar ticket a In Progress
+        if: steps.extract_ticket.outputs.ticket != ''
+        run: |
+          curl --silent --fail --show-error \
+            --request POST \
+            --url "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${{ steps.extract_ticket.outputs.ticket }}/transitions" \
+            --user "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            --header "Content-Type: application/json" \
+            --data '{"transition":{"id":"21"}}'
+          echo "Ticket ${{ steps.extract_ticket.outputs.ticket }} movido a In Progress"
