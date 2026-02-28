@@ -44,10 +44,3 @@ jobs:
           name: coverage-report
           path: coverage/
 
-      - name: Comentar cobertura en la PR
-        uses: ArtiomTr/jest-coverage-report-action@v2
-        if: github.event_name == 'pull_request'
-        with:
-          skip-step: install
-          coverage-file: coverage/clover.xml
-          base-coverage-file: coverage/clover.xml
