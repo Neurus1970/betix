@@ -1,0 +1,50 @@
+name: Jira - Close ticket on PR merge
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  close-jira-ticket:
+    name: Transicionar ticket Jira a Done
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == true
+
+    steps:
+      - name: Extraer ticket ID del nombre de la branch
+        id: extract
+        run: |
+          BRANCH="${{ github.event.pull_request.head.ref }}"
+          TICKET=$(echo "$BRANCH" | grep -oE '[A-Z]+-[0-9]+' | head -1)
+          echo "ticket=$TICKET" >> $GITHUB_OUTPUT
+          if [ -z "$TICKET" ]; then
+            echo "No se encontró ticket Jira en la branch: $BRANCH"
+          else
+            echo "Ticket encontrado: $TICKET"
+          fi
+
+      - name: Transicionar ticket a Done
+        if: steps.extract.outputs.ticket != ''
+        run: |
+          TICKET="${{ steps.extract.outputs.ticket }}"
+          echo "Moviendo $TICKET a Done..."
+
+          HTTP_STATUS=$(curl --silent \
+            --output /tmp/jira-response.json \
+            --write-out "%{http_code}" \
+            --request POST \
+            --url "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/$TICKET/transitions" \
+            --user "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            --header "Content-Type: application/json" \
+            --data '{"transition":{"id":"31"}}')
+
+          echo "HTTP Status: $HTTP_STATUS"
+          cat /tmp/jira-response.json
+
+          if [ "$HTTP_STATUS" -eq 204 ]; then
+            echo "✅ $TICKET → Done"
+          else
+            echo "❌ No se pudo transicionar $TICKET (HTTP $HTTP_STATUS)"
+            exit 1
+          fi
