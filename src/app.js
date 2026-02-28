@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const estadisticasRouter = require('./routes/estadisticas');
 const mapaRouter = require('./routes/mapa');
+const dashboardRouter = require('./routes/dashboard');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,8 +16,12 @@ app.get('/health', (req, res) => res.json({ status: 'ok', service: 'betix-api' }
 
 app.use('/api/estadisticas', estadisticasRouter);
 app.use('/api/mapa-estadisticas', mapaRouter);
-app.get('/mapa-estadisticas', (req, res) =>
+app.use('/api/dashboard', dashboardRouter);
+app.get('/mapa-estadisticas', (_req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'mapa.html'))
+);
+app.get('/dashboard-rendimiento', (_req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'dashboard.html'))
 );
 
 if (require.main === module) {
