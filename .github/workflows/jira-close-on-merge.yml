@@ -1,0 +1,42 @@
+name: Jira - Sincronizar estado al cerrar PR
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  sync-jira-ticket:
+    name: Sincronizar ticket de Jira
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Extraer ticket de Jira del nombre del branch
+        id: extract_ticket
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          TICKET=$(echo "$BRANCH" | grep -oE '[A-Z]+-[0-9]+' | head -1)
+          echo "ticket=$TICKET" >> $GITHUB_OUTPUT
+          echo "Branch: $BRANCH → Ticket: $TICKET"
+
+      - name: Transicionar ticket a Done (merge)
+        if: steps.extract_ticket.outputs.ticket != '' && github.event.pull_request.merged == true
+        run: |
+          curl -s -X POST \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${{ steps.extract_ticket.outputs.ticket }}/transitions" \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"transition":{"id":"31"}}' \
+            | cat
+          echo "✅ Ticket ${{ steps.extract_ticket.outputs.ticket }} → Done"
+
+      - name: Transicionar ticket a To Do (cerrado sin merge)
+        if: steps.extract_ticket.outputs.ticket != '' && github.event.pull_request.merged == false
+        run: |
+          curl -s -X POST \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/${{ steps.extract_ticket.outputs.ticket }}/transitions" \
+            -u "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d '{"transition":{"id":"11"}}' \
+            | cat
+          echo "↩️ Ticket ${{ steps.extract_ticket.outputs.ticket }} → To Do"
