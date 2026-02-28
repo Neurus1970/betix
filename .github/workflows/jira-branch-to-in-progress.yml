@@ -27,3 +27,42 @@ jobs:
             --header "Content-Type: application/json" \
             --data '{"transition":{"id":"21"}}'
           echo "Ticket ${{ steps.extract_ticket.outputs.ticket }} movido a In Progress"
+
+      - name: Asignar ticket al desarrollador en Jira
+        if: steps.extract_ticket.outputs.ticket != ''
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TICKET="${{ steps.extract_ticket.outputs.ticket }}"
+
+          # 1. Obtener el email público del actor de GitHub
+          GITHUB_EMAIL=$(curl -sf \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/users/${{ github.actor }}" \
+            | jq -r '.email // empty')
+
+          if [ -z "$GITHUB_EMAIL" ]; then
+            echo "⚠️  ${{ github.actor }} no tiene email público en GitHub. Asignación omitida."
+            exit 0
+          fi
+
+          # 2. Buscar el accountId en Jira por email
+          ACCOUNT_ID=$(curl -sf \
+            --user "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/3/user/search?query=$GITHUB_EMAIL" \
+            | jq -r '.[0].accountId // empty')
+
+          if [ -z "$ACCOUNT_ID" ]; then
+            echo "⚠️  No se encontró usuario en Jira con email $GITHUB_EMAIL. Asignación omitida."
+            exit 0
+          fi
+
+          # 3. Asignar el ticket
+          curl --silent --fail --show-error \
+            --request PUT \
+            --url "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/$TICKET/assignee" \
+            --user "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
+            --header "Content-Type: application/json" \
+            --data "{\"accountId\": \"$ACCOUNT_ID\"}"
+
+          echo "✅ Ticket $TICKET asignado a ${{ github.actor }} (accountId: $ACCOUNT_ID)"
