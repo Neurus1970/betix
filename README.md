@@ -8,76 +8,30 @@ API de estadísticas de tickets de lotería por provincia y juego, con dashboard
 
 ## Endpoints API
 
+### Estadísticas
+
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| GET | `/health` | Estado del servicio |
-| GET | `/api/estadisticas/provincia` | Tickets, ingresos y rentabilidad agrupados por provincia |
-| GET | `/api/estadisticas/juego` | Tickets, ingresos y rentabilidad agrupados por juego |
-| GET | `/api/estadisticas/resumen` | Resumen general consolidado |
-| GET | ~~`/api/mapa-estadisticas/datos`~~ | ⚠️ **DEPRECADO** — retorna `410 Gone`. Migrar a `/api/datos/geodata` (campo `data.geo`) |
-| GET | ~~`/api/dashboard/datos`~~ | ⚠️ **DEPRECADO** — retorna `410 Gone`. Migrar a `/api/datos/geodata` (campo `data.detail`) |
-| GET | `/api/datos/geodata` | Datos combinados: `data.geo` (lat/lng por provincia) + `data.detail` (provincia × juego) |
+| GET | `/health` | Verifica que el servicio está activo y responde. |
+| GET | `/api/estadisticas/provincia` | Devuelve el total de tickets, ingresos, costos y rentabilidad agrupados por provincia. Útil para comparar el rendimiento entre regiones. |
+| GET | `/api/estadisticas/juego` | Devuelve el total de tickets, ingresos, costos y rentabilidad agrupados por tipo de juego (Quiniela, Lotería, Raspadita). Permite comparar qué juego genera más volumen o margen. |
+| GET | `/api/estadisticas/resumen` | Devuelve los totales consolidados del negocio: cantidad total de tickets, ingresos, costos y rentabilidad global. Pensado para vistas ejecutivas. |
+
+### Geodata unificada
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/datos/geodata` | Endpoint principal que combina en una sola respuesta los totales globales del negocio, los datos georreferenciados por provincia (coordenadas + métricas agregadas) y el detalle de cada juego dentro de cada provincia. Diseñado para alimentar todos los dashboards del frontend. |
+| GET | ~~`/api/mapa-estadisticas/datos`~~ | ⚠️ **DEPRECADO** — retorna `410 Gone`. Migrar a `/api/datos/geodata`. |
+| GET | ~~`/api/dashboard/datos`~~ | ⚠️ **DEPRECADO** — retorna `410 Gone`. Migrar a `/api/datos/geodata`. |
 
 ## Páginas Frontend
 
 | Ruta | Descripción |
 |------|-------------|
-| `/mapa-estadisticas` | Mapa de burbujas interactivo por provincia (D3.js) |
-| `/dashboard-rendimiento` | Gráfico de barras agrupadas por juego y provincia (D3.js) |
-| `/heatmap-apuestas` | Heatmap choropleth de Argentina por métrica (D3.js) |
-
-## Ejemplo de respuesta `/api/estadisticas/provincia`
-
-```json
-{
-  "status": "ok",
-  "data": [
-    {
-      "provincia": "Salta",
-      "totalTickets": 12600,
-      "totalIngresos": 411000,
-      "totalCosto": 237000,
-      "rentabilidad": 42.34
-    }
-  ]
-}
-```
-
-## Ejemplo de respuesta `/api/dashboard/datos`
-
-```json
-{
-  "status": "ok",
-  "data": [
-    { "provincia": "Salta", "juego": "Quiniela", "cantidad": 4800, "importe": 144000, "beneficio": 39000 },
-    { "provincia": "Salta", "juego": "Lotería",  "cantidad": 2100, "importe": 210000, "beneficio": 126000 }
-  ]
-}
-```
-
-## Ejemplo de respuesta `/api/datos/geodata`
-
-```json
-{
-  "status": "ok",
-  "data": {
-    "globalTotals": { "cantidad": 104800, "importe": 3375000, "beneficio": 1196000 },
-    "provinces": [
-      {
-        "provincia": "Salta",
-        "lat": -24.7859,
-        "lng": -65.4117,
-        "totals": { "cantidad": 12600, "importe": 411000, "beneficio": 174000 },
-        "games": [
-          { "juego": "Quiniela",  "cantidad": 4800, "importe": 144000, "beneficio": 39000 },
-          { "juego": "Lotería",   "cantidad": 2100, "importe": 210000, "beneficio": 126000 },
-          { "juego": "Raspadita", "cantidad": 5700, "importe":  57000, "beneficio":   9000 }
-        ]
-      }
-    ]
-  }
-}
-```
+| `/mapa-estadisticas` | Mapa de burbujas interactivo: muestra el volumen de la métrica seleccionada en cada provincia mediante burbujas proporcionales sobre el mapa de Argentina. |
+| `/dashboard-rendimiento` | Gráfico de barras agrupadas: compara las métricas (cantidad, importe o beneficio) entre juegos para cada provincia seleccionada. Permite filtrar por juego y provincias. |
+| `/heatmap-apuestas` | Heatmap choropleth: colorea el mapa de Argentina según la intensidad de la métrica elegida, con soporte de zoom/pan, tooltip y leyenda de escala. |
 
 ## Desarrollo local
 
