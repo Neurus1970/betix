@@ -32,6 +32,10 @@ jobs:
         run: npm run test:ci
         continue-on-error: true
 
+      - name: Ejecutar tests funcionales (Cucumber)
+        run: npm run test:functional:ci
+        continue-on-error: true
+
       - name: Obtener diff de la PR
         id: diff
         run: |
