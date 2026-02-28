@@ -1,0 +1,98 @@
+name: Jira — Mover ticket a In Progress al crear branch
+
+on:
+  create:
+    # Se ejecuta cuando se crea una branch o tag
+
+jobs:
+  transition-to-in-progress:
+    name: Transicionar ticket Jira a In Progress
+    runs-on: ubuntu-latest
+    # Solo ejecutar si es una branch (no un tag)
+    if: github.ref_type == 'branch'
+
+    steps:
+      - name: Extraer ticket ID de Jira desde el nombre de la branch
+        id: extract
+        run: |
+          BRANCH="${{ github.ref_name }}"
+          echo "Branch detectada: $BRANCH"
+
+          # Busca patrón como BETIX-1, BETIX-23, PROJ-100, etc.
+          TICKET=$(echo "$BRANCH" | grep -oE '[A-Z]+-[0-9]+' | head -1)
+
+          if [ -z "$TICKET" ]; then
+            echo "No se encontró ticket Jira en la branch '$BRANCH'. Saltando."
+            echo "found=false" >> $GITHUB_OUTPUT
+          else
+            echo "Ticket encontrado: $TICKET"
+            echo "ticket=$TICKET" >> $GITHUB_OUTPUT
+            echo "found=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Transicionar ticket a In Progress en Jira
+        if: steps.extract.outputs.found == 'true'
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          TICKET: ${{ steps.extract.outputs.ticket }}
+        run: |
+          echo "Transicionando $TICKET a In Progress..."
+
+          HTTP_STATUS=$(curl --silent --output response.json --write-out "%{http_code}" \
+            --request POST \
+            --url "$JIRA_BASE_URL/rest/api/3/issue/$TICKET/transitions" \
+            --user "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
+            --header "Accept: application/json" \
+            --header "Content-Type: application/json" \
+            --data '{"transition":{"id":"21"}}')
+
+          echo "HTTP Status: $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" -eq 204 ]; then
+            echo "✅ Ticket $TICKET movido a In Progress exitosamente."
+          else
+            echo "⚠️ Respuesta inesperada ($HTTP_STATUS):"
+            cat response.json
+            # No falla el workflow — el ticket puede ya estar en ese estado
+            exit 0
+          fi
+
+      - name: Agregar comentario en Jira
+        if: steps.extract.outputs.found == 'true'
+        env:
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+          TICKET: ${{ steps.extract.outputs.ticket }}
+          BRANCH: ${{ github.ref_name }}
+          ACTOR: ${{ github.actor }}
+          REPO: ${{ github.repository }}
+        run: |
+          BODY=$(cat <<EOF
+          {
+            "body": {
+              "type": "doc",
+              "version": 1,
+              "content": [{
+                "type": "paragraph",
+                "content": [{
+                  "type": "text",
+                  "text": "🚀 Branch creada por @$ACTOR: $BRANCH\n🔗 Repositorio: https://github.com/$REPO/tree/$BRANCH"
+                }]
+              }]
+            }
+          }
+          EOF
+          )
+
+          curl --silent --output /dev/null \
+            --request POST \
+            --url "$JIRA_BASE_URL/rest/api/3/issue/$TICKET/comment" \
+            --user "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
+            --header "Accept: application/json" \
+            --header "Content-Type: application/json" \
+            --data "$BODY"
+
+          echo "💬 Comentario agregado en $TICKET."
