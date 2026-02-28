@@ -1,0 +1,56 @@
+#!/bin/sh
+# post-checkout hook: transiciona ticket Jira a "In Progress" al crear una nueva branch
+
+PREV_HEAD=$1
+NEW_HEAD=$2
+BRANCH_CHECKOUT=$3
+
+# Solo actuar en branch checkouts (no file checkouts)
+# y solo cuando es una branch nueva (prev HEAD == new HEAD = mismo commit)
+if [ "$BRANCH_CHECKOUT" != "1" ]; then
+  exit 0
+fi
+
+if [ "$PREV_HEAD" != "$NEW_HEAD" ]; then
+  exit 0
+fi
+
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+
+# Extraer ticket ID con patrón [A-Z]+-[0-9]+ (ej: BETIX-1, PROJ-23)
+TICKET=$(echo "$BRANCH" | grep -oE '[A-Z]+-[0-9]+' | head -1)
+
+if [ -z "$TICKET" ]; then
+  exit 0
+fi
+
+# Leer credenciales desde variables de entorno o archivo ~/.jira-credentials
+JIRA_BASE_URL="${JIRA_BASE_URL:-}"
+JIRA_USER_EMAIL="${JIRA_USER_EMAIL:-}"
+JIRA_API_TOKEN="${JIRA_API_TOKEN:-}"
+
+CREDS_FILE="$HOME/.jira-credentials"
+if [ -z "$JIRA_API_TOKEN" ] && [ -f "$CREDS_FILE" ]; then
+  . "$CREDS_FILE"
+fi
+
+if [ -z "$JIRA_BASE_URL" ] || [ -z "$JIRA_USER_EMAIL" ] || [ -z "$JIRA_API_TOKEN" ]; then
+  echo "⚠️  [Jira hook] Credenciales no configuradas. Saltando transición de $TICKET."
+  echo "   Configura JIRA_BASE_URL, JIRA_USER_EMAIL y JIRA_API_TOKEN en ~/.jira-credentials"
+  exit 0
+fi
+
+echo "🔄 [Jira hook] Moviendo $TICKET a In Progress..."
+
+HTTP_STATUS=$(curl --silent --output /tmp/jira-hook-response.json --write-out "%{http_code}" \
+  --request POST \
+  --url "$JIRA_BASE_URL/rest/api/3/issue/$TICKET/transitions" \
+  --user "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" \
+  --header "Content-Type: application/json" \
+  --data '{"transition":{"id":"21"}}')
+
+if [ "$HTTP_STATUS" -eq 204 ]; then
+  echo "✅ [Jira hook] $TICKET → In Progress"
+else
+  echo "⚠️  [Jira hook] No se pudo transicionar $TICKET (HTTP $HTTP_STATUS)"
+fi
