@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Betix - Mapa de Estadísticas</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #f8fafc;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-bottom: 20px;
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      color: #94a3b8;
+    }
+
+    select {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    select:hover, select:focus { border-color: #3b82f6; }
+
+    #mapa-container {
+      width: 100%;
+      max-width: 700px;
+      background: #1e293b;
+      border-radius: 16px;
+      border: 1px solid #334155;
+      overflow: hidden;
+      position: relative;
+    }
+
+    svg { width: 100%; height: auto; display: block; }
+
+    .province {
+      fill: #1e3a5f;
+      stroke: #334155;
+      stroke-width: 0.8;
+      transition: fill 0.2s;
+    }
+
+    .province:hover { fill: #1d4ed8; }
+
+    .bubble {
+      fill: #3b82f6;
+      fill-opacity: 0.55;
+      stroke: #60a5fa;
+      stroke-width: 1.5;
+      cursor: pointer;
+      transition: fill-opacity 0.2s, r 0.4s ease;
+    }
+
+    .bubble:hover { fill-opacity: 0.85; }
+
+    #tooltip {
+      position: fixed;
+      background: #0f172a;
+      border: 1px solid #3b82f6;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 100;
+      line-height: 1.6;
+    }
+
+    #tooltip strong { color: #60a5fa; display: block; margin-bottom: 2px; }
+
+    #error-msg {
+      color: #f87171;
+      background: #1e293b;
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      padding: 14px 20px;
+      margin-top: 16px;
+      display: none;
+      max-width: 500px;
+      text-align: center;
+    }
+
+    .legend {
+      display: flex;
+      gap: 16px;
+      margin-top: 14px;
+      font-size: 0.78rem;
+      color: #64748b;
+      align-items: center;
+    }
+
+    .legend-bubble {
+      border-radius: 50%;
+      background: #3b82f6;
+      opacity: 0.55;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Mapa de Estadísticas por Provincia</h1>
+  <p class="subtitle">Betix · Argentina</p>
+
+  <div class="controls">
+    <label for="metrica">Métrica:</label>
+    <select id="metrica">
+      <option value="cantidad">Cantidad de tickets</option>
+      <option value="importe">Importe</option>
+      <option value="beneficio">Beneficio</option>
+    </select>
+  </div>
+
+  <div id="mapa-container">
+    <svg id="mapa"></svg>
+  </div>
+
+  <div class="legend">
+    <span class="legend-bubble" style="width:10px;height:10px;"></span> menor
+    <span class="legend-bubble" style="width:20px;height:20px;"></span> mayor
+    <span style="margin-left:8px;">El tamaño del círculo es proporcional al valor de la métrica</span>
+  </div>
+
+  <div id="error-msg">⚠️ Error al cargar los datos. Por favor, intentá de nuevo más tarde.</div>
+  <div id="tooltip"></div>
+
+  <script>
+    const GEO_URL = '/argentina.geojson';
+    const API_URL = '/api/mapa-estadisticas/datos';
+
+    const LABELS = {
+      cantidad:  'Cantidad de tickets',
+      importe:   'Importe ($)',
+      beneficio: 'Beneficio ($)',
+    };
+
+    const formatValue = (metrica, v) =>
+      metrica === 'cantidad'
+        ? v.toLocaleString('es-AR')
+        : '$' + v.toLocaleString('es-AR');
+
+    let apiData  = [];
+    let geoData  = null;
+
+    const tooltip = document.getElementById('tooltip');
+    const errorMsg = document.getElementById('error-msg');
+
+    function showError() { errorMsg.style.display = 'block'; }
+
+    async function loadData() {
+      try {
+        const [geoRes, apiRes] = await Promise.all([
+          fetch(GEO_URL),
+          fetch(API_URL),
+        ]);
+
+        if (!geoRes.ok) throw new Error('Error cargando mapa');
+        if (!apiRes.ok) throw new Error('Error cargando datos de la API');
+
+        geoData = await geoRes.json();
+        const json = await apiRes.json();
+        apiData = json.data;
+
+        renderMapa(document.getElementById('metrica').value);
+      } catch (e) {
+        showError();
+      }
+    }
+
+    function renderMapa(metrica) {
+      const container = document.getElementById('mapa-container');
+      const width  = container.clientWidth || 700;
+      const height = width * 1.4;
+
+      const svg = d3.select('#mapa')
+        .attr('viewBox', `0 0 ${width} ${height}`)
+        .attr('preserveAspectRatio', 'xMidYMid meet');
+
+      svg.selectAll('*').remove();
+
+      // Proyección centrada en Argentina
+      const projection = d3.geoMercator()
+        .center([-65, -38])
+        .scale(width * 1.45)
+        .translate([width / 2, height / 2]);
+
+      const path = d3.geoPath().projection(projection);
+
+      // Dibujar provincias desde GeoJSON local
+      svg.append('g')
+        .selectAll('path')
+        .data(geoData.features)
+        .join('path')
+        .attr('class', 'province')
+        .attr('d', path);
+
+      // Escala de radio proporcional
+      const maxVal = d3.max(apiData, d => d[metrica]);
+      const rScale = d3.scaleSqrt()
+        .domain([0, maxVal])
+        .range([8, width * 0.1]);
+
+      // Burbujas por provincia
+      const bubbles = svg.append('g')
+        .selectAll('circle')
+        .data(apiData)
+        .join('circle')
+        .attr('class', 'bubble')
+        .attr('cx', d => projection([d.lng, d.lat])[0])
+        .attr('cy', d => projection([d.lng, d.lat])[1])
+        .attr('r',  0);
+
+      // Animación de entrada
+      bubbles.transition()
+        .duration(600)
+        .ease(d3.easeCubicOut)
+        .attr('r', d => rScale(d[metrica]));
+
+      // Tooltips
+      bubbles
+        .on('mousemove', (event, d) => {
+          tooltip.style.opacity = '1';
+          tooltip.style.left = (event.clientX + 14) + 'px';
+          tooltip.style.top  = (event.clientY - 10) + 'px';
+          tooltip.innerHTML = `
+            <strong>${d.provincia}</strong>
+            ${LABELS[metrica]}: ${formatValue(metrica, d[metrica])}
+          `;
+        })
+        .on('mouseleave', () => { tooltip.style.opacity = '0'; });
+    }
+
+    document.getElementById('metrica').addEventListener('change', e => {
+      if (geoData && apiData.length) renderMapa(e.target.value);
+    });
+
+    loadData();
+  </script>
+</body>
+</html>
