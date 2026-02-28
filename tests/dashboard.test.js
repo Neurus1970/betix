@@ -3,49 +3,10 @@ const app = require('../src/app');
 const { getDashboardData } = require('../src/services/dashboardService');
 
 describe('GET /api/dashboard/datos', () => {
-  it('debe retornar status ok y un array de datos', async () => {
+  it('debe retornar 410 Gone (endpoint deprecado)', async () => {
     const res = await request(app).get('/api/dashboard/datos');
-    expect(res.statusCode).toBe(200);
-    expect(res.body.status).toBe('ok');
-    expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body.data.length).toBeGreaterThan(0);
-  });
-
-  it('debe retornar 30 registros (10 provincias × 3 juegos)', async () => {
-    const res = await request(app).get('/api/dashboard/datos');
-    expect(res.body.data.length).toBe(30);
-  });
-
-  it('cada elemento debe tener los campos requeridos', async () => {
-    const res = await request(app).get('/api/dashboard/datos');
-    for (const item of res.body.data) {
-      expect(item).toHaveProperty('provincia');
-      expect(item).toHaveProperty('juego');
-      expect(item).toHaveProperty('cantidad');
-      expect(item).toHaveProperty('importe');
-      expect(item).toHaveProperty('beneficio');
-    }
-  });
-
-  it('todos los importes deben ser positivos', async () => {
-    const res = await request(app).get('/api/dashboard/datos');
-    for (const item of res.body.data) {
-      expect(item.importe).toBeGreaterThan(0);
-    }
-  });
-
-  it('todos los beneficios deben ser positivos', async () => {
-    const res = await request(app).get('/api/dashboard/datos');
-    for (const item of res.body.data) {
-      expect(item.beneficio).toBeGreaterThan(0);
-    }
-  });
-
-  it('el beneficio debe ser menor o igual al importe', async () => {
-    const res = await request(app).get('/api/dashboard/datos');
-    for (const item of res.body.data) {
-      expect(item.beneficio).toBeLessThanOrEqual(item.importe);
-    }
+    expect(res.statusCode).toBe(410);
+    expect(res.body.status).toBe('gone');
   });
 });
 

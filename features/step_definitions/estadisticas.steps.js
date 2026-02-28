@@ -85,3 +85,43 @@ Then('el campo numérico {string} es mayor que {string}', function (pathA, pathB
   const valB = get(this.response.body, pathB);
   assert.ok(valA > valB, `Se esperaba ${pathA}(${valA}) > ${pathB}(${valB})`);
 });
+
+// ── Acceso a campos anidados con dot-notation ─────────────────────────────────
+
+Then('la respuesta contiene un array en el campo {string}', function (dotPath) {
+  const get = (obj, path) => path.split('.').reduce((o, k) => o && o[k], obj);
+  const val = get(this.response.body, dotPath);
+  assert.ok(Array.isArray(val), `"${dotPath}" no es un array`);
+});
+
+Then('el campo {string} tiene {int} elementos', function (dotPath, expected) {
+  const get = (obj, path) => path.split('.').reduce((o, k) => o && o[k], obj);
+  const val = get(this.response.body, dotPath);
+  assert.strictEqual(val.length, expected, `Se esperaban ${expected} en "${dotPath}", se encontraron ${val.length}`);
+});
+
+Then('cada elemento del campo {string} tiene los campos {string}', function (dotPath, camposStr) {
+  const get = (obj, path) => path.split('.').reduce((o, k) => o && o[k], obj);
+  const campos = camposStr.split(',');
+  const arr = get(this.response.body, dotPath);
+  for (const item of arr) {
+    for (const campo of campos) {
+      assert.ok(
+        Object.prototype.hasOwnProperty.call(item, campo),
+        `Campo "${campo}" faltante en: ${JSON.stringify(item)}`
+      );
+    }
+  }
+});
+
+Then('el campo anidado {string} tiene los campos {string}', function (dotPath, camposStr) {
+  const get = (obj, path) => path.split('.').reduce((o, k) => o && o[k], obj);
+  const campos = camposStr.split(',');
+  const obj = get(this.response.body, dotPath);
+  for (const campo of campos) {
+    assert.ok(
+      Object.prototype.hasOwnProperty.call(obj, campo),
+      `Campo "${campo}" faltante en ${dotPath}: ${JSON.stringify(obj)}`
+    );
+  }
+});

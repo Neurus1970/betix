@@ -1,7 +1,8 @@
-const { getDashboardData } = require('../services/dashboardService');
-
 function getDatos(req, res) {
-  res.json({ status: 'ok', data: getDashboardData() });
+  res.status(410).json({
+    status: 'gone',
+    message: 'Este endpoint está deprecado. Use GET /api/datos/geodata (campo data.detail)',
+  });
 }
 
 module.exports = { getDatos };

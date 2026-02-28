@@ -1,9 +1,10 @@
 const path = require('path');
-const { getMapaEstadisticas } = require('../services/mapaService');
 
 function getDatos(req, res) {
-  const datos = getMapaEstadisticas();
-  res.json({ status: 'success', data: datos });
+  res.status(410).json({
+    status: 'gone',
+    message: 'Este endpoint está deprecado. Use GET /api/datos/geodata (campo data.geo)',
+  });
 }
 
 function getPagina(req, res) {
