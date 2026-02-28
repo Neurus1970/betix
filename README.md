@@ -12,6 +12,7 @@ API de estadísticas de tickets de lotería por provincia y juego, con dashboard
 | GET | `/api/estadisticas/resumen` | Resumen general consolidado |
 | GET | `/api/mapa-estadisticas/datos` | Datos georreferenciados por provincia (lat/lng + métricas) |
 | GET | `/api/dashboard/datos` | Datos cruzados provincia × juego para dashboards |
+| GET | `/api/datos/geodata` | Datos combinados: geo (lat/lng) + detalle (provincia × juego) |
 
 ## Páginas Frontend
 
@@ -50,6 +51,22 @@ API de estadísticas de tickets de lotería por provincia y juego, con dashboard
 }
 ```
 
+## Ejemplo de respuesta `/api/datos/geodata`
+
+```json
+{
+  "status": "ok",
+  "data": {
+    "geo": [
+      { "provincia": "Salta", "cantidad": 3750, "importe": 432000, "beneficio": 135000, "lat": -24.7859, "lng": -65.4117 }
+    ],
+    "detail": [
+      { "provincia": "Salta", "juego": "Quiniela", "cantidad": 1200, "importe": 144000, "beneficio": 39000 }
+    ]
+  }
+}
+```
+
 ## Desarrollo local
 
 ```bash
@@ -60,7 +77,7 @@ npm run dev       # servidor con nodemon en puerto 3000
 ## Tests
 
 ```bash
-npm test                # Jest (39 tests) + Cucumber (30 scenarios)
+npm test                # Jest (45 tests) + Cucumber (33 scenarios)
 npm run test:functional # Solo Cucumber en modo verbose
 npm run test:ci         # Solo Jest con cobertura (para CI)
 npm run lint            # ESLint
