@@ -33,8 +33,16 @@ function callClaude(prompt) {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
-        const parsed = JSON.parse(data);
-        resolve(parsed.content[0].text);
+        try {
+          const parsed = JSON.parse(data);
+          if (!parsed.content) {
+            reject(new Error(`Claude API error: ${JSON.stringify(parsed.error || parsed)}`));
+          } else {
+            resolve(parsed.content[0].text);
+          }
+        } catch (e) {
+          reject(e);
+        }
       });
     });
     req.on('error', reject);
