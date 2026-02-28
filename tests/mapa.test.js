@@ -3,58 +3,10 @@ const app = require('../src/app');
 const { getMapaEstadisticas, PROVINCE_COORDS } = require('../src/services/mapaService');
 
 describe('GET /api/mapa-estadisticas/datos', () => {
-  it('debe retornar status success y array de provincias', async () => {
+  it('debe retornar 410 Gone (endpoint deprecado)', async () => {
     const res = await request(app).get('/api/mapa-estadisticas/datos');
-    expect(res.statusCode).toBe(200);
-    expect(res.body.status).toBe('success');
-    expect(Array.isArray(res.body.data)).toBe(true);
-    expect(res.body.data.length).toBeGreaterThan(0);
-  });
-
-  it('cada provincia debe tener los campos requeridos', async () => {
-    const res = await request(app).get('/api/mapa-estadisticas/datos');
-    for (const p of res.body.data) {
-      expect(p).toHaveProperty('provincia');
-      expect(p).toHaveProperty('cantidad');
-      expect(p).toHaveProperty('importe');
-      expect(p).toHaveProperty('beneficio');
-      expect(p).toHaveProperty('lat');
-      expect(p).toHaveProperty('lng');
-    }
-  });
-
-  it('los valores numéricos deben ser positivos', async () => {
-    const res = await request(app).get('/api/mapa-estadisticas/datos');
-    for (const p of res.body.data) {
-      expect(p.cantidad).toBeGreaterThan(0);
-      expect(p.importe).toBeGreaterThan(0);
-    }
-  });
-
-  it('el beneficio debe ser importe menos costo', async () => {
-    const res = await request(app).get('/api/mapa-estadisticas/datos');
-    // beneficio = importe - costo, siempre <= importe
-    for (const p of res.body.data) {
-      expect(p.beneficio).toBeLessThanOrEqual(p.importe);
-    }
-  });
-
-  it('las coordenadas deben ser válidas para Argentina', async () => {
-    const res = await request(app).get('/api/mapa-estadisticas/datos');
-    for (const p of res.body.data) {
-      expect(p.lat).toBeGreaterThan(-60);
-      expect(p.lat).toBeLessThan(-20);
-      expect(p.lng).toBeGreaterThan(-75);
-      expect(p.lng).toBeLessThan(-50);
-    }
-  });
-
-  it('no debe incluir provincias sin coordenadas', async () => {
-    const res = await request(app).get('/api/mapa-estadisticas/datos');
-    for (const p of res.body.data) {
-      expect(p.lat).not.toBeNull();
-      expect(p.lng).not.toBeNull();
-    }
+    expect(res.statusCode).toBe(410);
+    expect(res.body.status).toBe('gone');
   });
 });
 

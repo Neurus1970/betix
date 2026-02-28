@@ -10,9 +10,9 @@ API de estadísticas de tickets de lotería por provincia y juego, con dashboard
 | GET | `/api/estadisticas/provincia` | Tickets, ingresos y rentabilidad agrupados por provincia |
 | GET | `/api/estadisticas/juego` | Tickets, ingresos y rentabilidad agrupados por juego |
 | GET | `/api/estadisticas/resumen` | Resumen general consolidado |
-| GET | `/api/mapa-estadisticas/datos` | Datos georreferenciados por provincia (lat/lng + métricas) |
-| GET | `/api/dashboard/datos` | Datos cruzados provincia × juego para dashboards |
-| GET | `/api/datos/geodata` | Datos combinados: geo (lat/lng) + detalle (provincia × juego) |
+| GET | ~~`/api/mapa-estadisticas/datos`~~ | ⚠️ **DEPRECADO** — retorna `410 Gone`. Migrar a `/api/datos/geodata` (campo `data.geo`) |
+| GET | ~~`/api/dashboard/datos`~~ | ⚠️ **DEPRECADO** — retorna `410 Gone`. Migrar a `/api/datos/geodata` (campo `data.detail`) |
+| GET | `/api/datos/geodata` | Datos combinados: `data.geo` (lat/lng por provincia) + `data.detail` (provincia × juego) |
 
 ## Páginas Frontend
 
@@ -77,7 +77,7 @@ npm run dev       # servidor con nodemon en puerto 3000
 ## Tests
 
 ```bash
-npm test                # Jest (45 tests) + Cucumber (33 scenarios)
+npm test                # Jest (35 tests) + Cucumber (26 scenarios)
 npm run test:functional # Solo Cucumber en modo verbose
 npm run test:ci         # Solo Jest con cobertura (para CI)
 npm run lint            # ESLint

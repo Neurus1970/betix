@@ -164,7 +164,7 @@
 
   <script>
     const GEO_URL = '/argentina.geojson';
-    const API_URL = '/api/mapa-estadisticas/datos';
+    const API_URL = '/api/datos/geodata';
 
     const LABELS = {
       cantidad:  'Cantidad de tickets',
@@ -197,7 +197,7 @@
 
         geoData = await geoRes.json();
         const json = await apiRes.json();
-        apiData = json.data;
+        apiData = json.data.geo;
 
         renderMapa(document.getElementById('metrica').value);
       } catch (e) {

@@ -243,7 +243,7 @@
 
   <script>
     const GEO_URL = '/argentina.geojson';
-    const API_URL = '/api/dashboard/datos';
+    const API_URL = '/api/datos/geodata';
 
     const METRIC_LABELS = {
       cantidad:  'Volumen de apuestas',
@@ -353,7 +353,7 @@
         if (!geoRes.ok || !apiRes.ok) throw new Error('Error en la respuesta');
 
         geoData = await geoRes.json();
-        rawData = (await apiRes.json()).data;
+        rawData = (await apiRes.json()).data.detail;
 
         loader.style.display = 'none';
         render();
