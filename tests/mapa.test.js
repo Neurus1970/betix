@@ -84,17 +84,17 @@ describe('mapaService', () => {
     const datos = getMapaEstadisticas();
     const bsAs = datos.find(p => p.provincia === 'Buenos Aires');
     expect(bsAs).toBeDefined();
-    // Buenos Aires tiene 3 registros en mockData: 15200 + 8300 + 22100 = 45600
-    expect(bsAs.cantidad).toBe(45600);
+    // Buenos Aires tiene 3 registros en mockData: 18500 + 9200 + 24800 = 52500
+    expect(bsAs.cantidad).toBe(52500);
   });
 
   it('el beneficio debe ser importe - costo', () => {
     const datos = getMapaEstadisticas();
-    const cordoba = datos.find(p => p.provincia === 'Córdoba');
-    // ingresos: 294000 + 420000 + 115000 = 829000
-    // costos:   200000 + 290000 + 95000  = 585000
-    expect(cordoba.importe).toBe(829000);
-    expect(cordoba.beneficio).toBe(829000 - 585000);
+    const entreRios = datos.find(p => p.provincia === 'Entre Ríos');
+    // ingresos: 186000 + 280000 + 74000  = 540000
+    // costos:   90000  + 220000 + 58000  = 368000
+    expect(entreRios.importe).toBe(540000);
+    expect(entreRios.beneficio).toBe(540000 - 368000);
   });
 
   it('solo debe incluir provincias que tienen coordenadas', () => {
@@ -104,8 +104,11 @@ describe('mapaService', () => {
     });
   });
 
-  it('PROVINCE_COORDS debe tener las 5 provincias del mock', () => {
-    const provincias = ['Buenos Aires', 'Córdoba', 'Santa Fe', 'Mendoza', 'Tucumán'];
+  it('PROVINCE_COORDS debe tener las 9 provincias de Tecno Acción', () => {
+    const provincias = [
+      'Buenos Aires', 'CABA', 'Entre Ríos', 'Corrientes',
+      'Chaco', 'Misiones', 'Formosa', 'La Pampa', 'San Luis',
+    ];
     for (const prov of provincias) {
       expect(PROVINCE_COORDS[prov]).toBeDefined();
       expect(PROVINCE_COORDS[prov].lat).toBeDefined();
