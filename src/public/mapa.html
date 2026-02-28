@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Betix - Mapa de Estadísticas</title>
   <script src="https://d3js.org/d3.v7.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/topojson@3.0.2/dist/topojson.min.js"></script>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -164,8 +163,8 @@
   <div id="tooltip"></div>
 
   <script>
-    const TOPO_URL = 'https://raw.githubusercontent.com/deldersveld/topojson/master/countries/argentina/argentina-provinces.json';
-    const API_URL  = '/api/mapa-estadisticas/datos';
+    const GEO_URL = '/argentina.geojson';
+    const API_URL = '/api/mapa-estadisticas/datos';
 
     const LABELS = {
       cantidad:  'Cantidad de tickets',
@@ -178,27 +177,25 @@
         ? v.toLocaleString('es-AR')
         : '$' + v.toLocaleString('es-AR');
 
-    let apiData = [];
-    let topoData = null;
+    let apiData  = [];
+    let geoData  = null;
 
     const tooltip = document.getElementById('tooltip');
     const errorMsg = document.getElementById('error-msg');
 
-    function showError() {
-      errorMsg.style.display = 'block';
-    }
+    function showError() { errorMsg.style.display = 'block'; }
 
     async function loadData() {
       try {
-        const [topoRes, apiRes] = await Promise.all([
-          fetch(TOPO_URL),
+        const [geoRes, apiRes] = await Promise.all([
+          fetch(GEO_URL),
           fetch(API_URL),
         ]);
 
-        if (!topoRes.ok) throw new Error('Error cargando mapa');
-        if (!apiRes.ok)  throw new Error('Error cargando datos de la API');
+        if (!geoRes.ok) throw new Error('Error cargando mapa');
+        if (!apiRes.ok) throw new Error('Error cargando datos de la API');
 
-        topoData = await topoRes.json();
+        geoData = await geoRes.json();
         const json = await apiRes.json();
         apiData = json.data;
 
@@ -227,20 +224,16 @@
 
       const path = d3.geoPath().projection(projection);
 
-      // Dibujar provincias desde TopoJSON
-      const objectKey = Object.keys(topoData.objects)[0];
-      const features  = topojson.feature(topoData, topoData.objects[objectKey]).features;
-
+      // Dibujar provincias desde GeoJSON local
       svg.append('g')
         .selectAll('path')
-        .data(features)
+        .data(geoData.features)
         .join('path')
         .attr('class', 'province')
         .attr('d', path);
 
       // Escala de radio proporcional
-      const values = apiData.map(d => d[metrica]);
-      const maxVal = d3.max(values);
+      const maxVal = d3.max(apiData, d => d[metrica]);
       const rScale = d3.scaleSqrt()
         .domain([0, maxVal])
         .range([8, width * 0.1]);
@@ -272,13 +265,11 @@
             ${LABELS[metrica]}: ${formatValue(metrica, d[metrica])}
           `;
         })
-        .on('mouseleave', () => {
-          tooltip.style.opacity = '0';
-        });
+        .on('mouseleave', () => { tooltip.style.opacity = '0'; });
     }
 
     document.getElementById('metrica').addEventListener('change', e => {
-      if (topoData && apiData.length) renderMapa(e.target.value);
+      if (geoData && apiData.length) renderMapa(e.target.value);
     });
 
     loadData();
