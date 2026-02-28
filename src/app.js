@@ -28,6 +28,9 @@ app.get('/dashboard-rendimiento', (_req, res) =>
 app.get('/heatmap-apuestas', (_req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'heatmap.html'))
 );
+app.get('/dashboard-interactivo', (_req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'dashboard-interactivo.html'))
+);
 
 if (require.main === module) {
   app.listen(PORT, () => console.log(`Betix API corriendo en puerto ${PORT}`));

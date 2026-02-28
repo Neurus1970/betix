@@ -32,6 +32,7 @@ API de estadísticas de tickets de lotería por provincia y juego, con dashboard
 | `/mapa-estadisticas` | Mapa de burbujas interactivo: muestra el volumen de la métrica seleccionada en cada provincia mediante burbujas proporcionales sobre el mapa de Argentina. |
 | `/dashboard-rendimiento` | Gráfico de barras agrupadas: compara las métricas (cantidad, importe o beneficio) entre juegos para cada provincia seleccionada. Permite filtrar por juego y provincias. |
 | `/heatmap-apuestas` | Heatmap choropleth: colorea el mapa de Argentina según la intensidad de la métrica elegida, con soporte de zoom/pan, tooltip y leyenda de escala. |
+| `/dashboard-interactivo` | Mapa choropleth + gráfico de torta interactivos side-by-side: hover en una provincia muestra su distribución por juego en la torta; click en un segmento resalta la provincia correspondiente en el mapa. Filtrable por juego y métrica. |
 
 ## Desarrollo local
 

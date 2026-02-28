@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Betix - Dashboard Interactivo</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0f172a;
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 24px 16px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: #f8fafc;
+    }
+
+    .subtitle {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      margin-bottom: 24px;
+    }
+
+    .controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      gap: 16px;
+      margin-bottom: 20px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .filter-group label {
+      font-size: 0.78rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    select {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #334155;
+      border-radius: 8px;
+      padding: 8px 14px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    select:hover, select:focus { border-color: #3b82f6; }
+
+    /* ── Layout charts ────────────────────────────────────────────────── */
+    .charts-wrapper {
+      display: flex;
+      gap: 16px;
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    .chart-panel {
+      flex: 1;
+      background: #1e293b;
+      border: 1px solid #334155;
+      border-radius: 16px;
+      overflow: hidden;
+      position: relative;
+      min-height: 420px;
+    }
+
+    .panel-title {
+      font-size: 0.78rem;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 14px 18px 0;
+    }
+
+    /* ── Mapa ────────────────────────────────────────────────────────── */
+    #mapa-svg {
+      width: 100%;
+      display: block;
+    }
+
+    .province {
+      stroke: #0f172a;
+      stroke-width: 0.6;
+      cursor: pointer;
+      transition: opacity 0.3s;
+    }
+
+    /* ── Pie ─────────────────────────────────────────────────────────── */
+    #pie-svg {
+      width: 100%;
+      display: block;
+    }
+
+    .pie-hint {
+      font-size: 0.78rem;
+      color: #475569;
+      text-align: center;
+      padding: 8px;
+    }
+
+    .no-data {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      height: 200px;
+      color: #475569;
+      font-size: 0.9rem;
+    }
+
+    /* ── Leyenda pie ─────────────────────────────────────────────────── */
+    #pie-legend {
+      padding: 0 18px 14px;
+      font-size: 0.78rem;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #94a3b8;
+    }
+
+    .legend-swatch {
+      width: 10px;
+      height: 10px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    /* ── Loader / Error ──────────────────────────────────────────────── */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #1e293b;
+      z-index: 10;
+    }
+
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 3px solid #334155;
+      border-top-color: #3b82f6;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .error-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      color: #f87171;
+      font-size: 0.9rem;
+    }
+
+    .error-content button {
+      background: #1e293b;
+      color: #e2e8f0;
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      padding: 8px 18px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: border-color 0.2s;
+    }
+
+    .error-content button:hover { border-color: #f87171; }
+
+    /* ── Tooltip ─────────────────────────────────────────────────────── */
+    #tooltip {
+      position: fixed;
+      background: #0f172a;
+      border: 1px solid #3b82f6;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 100;
+      line-height: 1.6;
+    }
+
+    #tooltip strong { color: #60a5fa; display: block; margin-bottom: 2px; }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 1.3rem; }
+      .charts-wrapper { flex-direction: column; }
+      .chart-panel { min-height: 320px; }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Dashboard Interactivo</h1>
+  <p class="subtitle">Betix · Argentina — Mapa + Distribución por juego</p>
+
+  <div class="controls">
+    <div class="filter-group">
+      <label for="select-juego">Juego</label>
+      <select id="select-juego">
+        <option value="Todos">Todos los juegos</option>
+        <option value="Quiniela">Quiniela</option>
+        <option value="Lotería">Lotería</option>
+        <option value="Raspadita">Raspadita</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label for="select-metrica">Métrica</label>
+      <select id="select-metrica">
+        <option value="cantidad">Volumen de apuestas</option>
+        <option value="importe">Importe total ($)</option>
+        <option value="beneficio">Beneficio neto ($)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="charts-wrapper">
+
+    <!-- Mapa choropleth -->
+    <div class="chart-panel" id="map-panel">
+      <p class="panel-title">Por provincia · hover para detalle</p>
+      <div class="overlay" id="map-loader"><div class="spinner"></div></div>
+      <div class="overlay" id="map-error" style="display:none;">
+        <div class="error-content">
+          <span>⚠️ Error al cargar los datos.</span>
+          <button id="retry-btn">Reintentar</button>
+        </div>
+      </div>
+      <svg id="mapa-svg"></svg>
+    </div>
+
+    <!-- Pie chart -->
+    <div class="chart-panel" id="pie-panel">
+      <p class="panel-title" id="pie-title">Distribución por provincia</p>
+      <p class="pie-hint" id="pie-hint">Hover en una provincia para ver su distribución por juego · Click en segmento para resaltar</p>
+      <div class="no-data" id="no-data">Sin datos para esta combinación</div>
+      <svg id="pie-svg"></svg>
+      <div id="pie-legend"></div>
+    </div>
+
+  </div>
+
+  <div id="tooltip"></div>
+
+  <script>
+    const GEO_URL = '/argentina.geojson';
+    const API_URL = '/api/datos/geodata';
+
+    const PIE_COLORS  = { Quiniela: '#3b82f6', 'Lotería': '#10b981', Raspadita: '#f59e0b' };
+    const PROV_COLORS = d3.scaleOrdinal(d3.schemeTableau10);
+
+    const METRIC_LABELS = {
+      cantidad:  'Volumen de apuestas',
+      importe:   'Importe ($)',
+      beneficio: 'Beneficio ($)',
+    };
+
+    const fmt = (metrica, v) =>
+      metrica === 'cantidad'
+        ? v.toLocaleString('es-AR')
+        : '$' + v.toLocaleString('es-AR');
+
+    // ── Estado ────────────────────────────────────────────────────────────────
+    let rawData       = [];   // data.provinces[]
+    let geoData       = null;
+    let filtroJuego   = 'Todos';
+    let filtroMetrica = 'cantidad';
+    let provinciaHover = null;  // string|null
+    let segmentoClick  = null;  // string|null (provincia o juego clicado en pie)
+
+    // ── DOM refs ─────────────────────────────────────────────────────────────
+    const tooltip   = document.getElementById('tooltip');
+    const mapLoader = document.getElementById('map-loader');
+    const mapError  = document.getElementById('map-error');
+    const svgMapa   = d3.select('#mapa-svg');
+    const svgPie    = d3.select('#pie-svg');
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+    function getProvinciaValue(p) {
+      if (filtroJuego === 'Todos') {
+        return p.totals[filtroMetrica];
+      }
+      const g = p.games.find(g => g.juego === filtroJuego);
+      return g ? g[filtroMetrica] : 0;
+    }
+
+    function showTooltip(event, html) {
+      tooltip.innerHTML = html;
+      tooltip.style.opacity = '1';
+      tooltip.style.left = (event.clientX + 14) + 'px';
+      tooltip.style.top  = (event.clientY - 10) + 'px';
+    }
+
+    function hideTooltip() { tooltip.style.opacity = '0'; }
+
+    // ── Render mapa ───────────────────────────────────────────────────────────
+    function renderMapa() {
+      const container = document.getElementById('map-panel');
+      const width  = container.clientWidth  || 520;
+      const height = width * 1.35;
+
+      const values = {};
+      for (const p of rawData) {
+        values[p.provincia] = getProvinciaValue(p);
+      }
+      const maxVal = d3.max(Object.values(values)) || 1;
+
+      const colorScale = d3.scaleSequential(d3.interpolateBlues).domain([0, maxVal]);
+
+      svgMapa
+        .attr('viewBox', `0 0 ${width} ${height}`)
+        .attr('preserveAspectRatio', 'xMidYMid meet');
+
+      svgMapa.selectAll('g').remove();
+      const g = svgMapa.append('g');
+
+      const projection = d3.geoMercator()
+        .center([-65, -38])
+        .scale(width * 1.45)
+        .translate([width / 2, height / 2]);
+
+      const path = d3.geoPath().projection(projection);
+
+      g.selectAll('.province')
+        .data(geoData.features)
+        .join('path')
+        .attr('class', 'province')
+        .attr('d', path)
+        .attr('fill', d => {
+          const val = values[d.properties.NAME_1];
+          return val != null ? colorScale(val) : '#1e3a5f';
+        })
+        .attr('opacity', d => {
+          if (!segmentoClick) return 1;
+          return d.properties.NAME_1 === segmentoClick ? 1 : 0.25;
+        })
+        .on('mousemove', (event, d) => {
+          const name = d.properties.NAME_1;
+          const val  = values[name];
+          provinciaHover = name;
+          renderPie();
+          showTooltip(event,
+            val != null
+              ? `<strong>${name}</strong>${METRIC_LABELS[filtroMetrica]}: ${fmt(filtroMetrica, val)}`
+              : `<strong>${name}</strong><span style="color:#64748b">Sin datos</span>`
+          );
+        })
+        .on('mouseleave', () => {
+          provinciaHover = null;
+          hideTooltip();
+          renderPie();
+        });
+    }
+
+    // ── Render pie ────────────────────────────────────────────────────────────
+    function renderPie() {
+      const noDataEl = document.getElementById('no-data');
+      const titleEl  = document.getElementById('pie-title');
+      const hintEl   = document.getElementById('pie-hint');
+      const legendEl = document.getElementById('pie-legend');
+
+      let segments;
+
+      if (provinciaHover) {
+        // Modo provincia: mostrar juegos de esa provincia
+        titleEl.textContent = `Distribución de ${provinciaHover}`;
+        hintEl.style.display = 'none';
+        const prov = rawData.find(p => p.provincia === provinciaHover);
+        if (!prov) { segments = []; }
+        else {
+          const games = filtroJuego === 'Todos'
+            ? prov.games
+            : prov.games.filter(g => g.juego === filtroJuego);
+          segments = games.map(g => ({ label: g.juego, value: g[filtroMetrica], color: PIE_COLORS[g.juego] || '#64748b' }));
+        }
+      } else {
+        // Modo global: mostrar provincias
+        titleEl.textContent = 'Distribución por provincia';
+        hintEl.style.display = 'block';
+        segments = rawData
+          .map(p => ({ label: p.provincia, value: getProvinciaValue(p), color: PROV_COLORS(p.provincia) }))
+          .filter(s => s.value > 0);
+      }
+
+      if (!segments.length) {
+        noDataEl.style.display = 'flex';
+        svgPie.selectAll('*').remove();
+        legendEl.innerHTML = '';
+        return;
+      }
+
+      noDataEl.style.display = 'none';
+
+      const container = document.getElementById('pie-panel');
+      const W = container.clientWidth || 460;
+      const H = Math.min(W * 0.85, 320);
+      const R = Math.min(W, H) / 2 * 0.72;
+      const CX = W / 2;
+      const CY = H / 2;
+      const EXPLODE = 12;
+
+      svgPie
+        .attr('viewBox', `0 0 ${W} ${H}`)
+        .attr('preserveAspectRatio', 'xMidYMid meet');
+
+      const pie  = d3.pie().value(d => d.value).sort(null);
+      const arc  = d3.arc().innerRadius(R * 0.38).outerRadius(R);
+      const arcX = d3.arc().innerRadius(R * 0.38).outerRadius(R + EXPLODE);
+
+      const arcs = pie(segments);
+
+      // Transición suave reutilizando paths existentes
+      const slices = svgPie.selectAll('.slice').data(arcs, d => d.data.label);
+
+      slices.exit().remove();
+
+      const entered = slices.enter()
+        .append('path')
+        .attr('class', 'slice')
+        .attr('transform', `translate(${CX},${CY})`)
+        .attr('fill', d => d.data.color)
+        .attr('stroke', '#0f172a')
+        .attr('stroke-width', 1.5)
+        .style('cursor', 'pointer');
+
+      const allSlices = entered.merge(slices);
+
+      allSlices.transition().duration(400).ease(d3.easeCubicOut)
+        .attr('transform', `translate(${CX},${CY})`)
+        .attr('fill', d => d.data.color)
+        .attrTween('d', function(d) {
+          const prev = this._prev || { startAngle: d.startAngle, endAngle: d.startAngle };
+          const interp = d3.interpolate(prev, d);
+          this._prev = d;
+          const isClicked = d.data.label === segmentoClick;
+          return t => (isClicked ? arcX : arc)(interp(t));
+        });
+
+      allSlices
+        .on('mousemove', (event, d) => {
+          showTooltip(event,
+            `<strong>${d.data.label}</strong>${METRIC_LABELS[filtroMetrica]}: ${fmt(filtroMetrica, d.data.value)}`
+          );
+        })
+        .on('mouseleave', hideTooltip)
+        .on('click', (event, d) => {
+          event.stopPropagation();
+          const label = d.data.label;
+          segmentoClick = segmentoClick === label ? null : label;
+          // Solo resaltar en el mapa si los segmentos son provincias
+          if (provinciaHover) { segmentoClick = null; }
+          renderMapa();
+          renderPie();
+        });
+
+      // Leyenda
+      legendEl.innerHTML = segments.map(s =>
+        `<div class="legend-item">
+          <span class="legend-swatch" style="background:${s.color}"></span>
+          <span>${s.label} — ${fmt(filtroMetrica, s.value)}</span>
+        </div>`
+      ).join('');
+    }
+
+    // ── Carga de datos ────────────────────────────────────────────────────────
+    async function loadData() {
+      mapLoader.style.display = 'flex';
+      mapError.style.display  = 'none';
+
+      try {
+        const [geoRes, apiRes] = await Promise.all([fetch(GEO_URL), fetch(API_URL)]);
+        if (!geoRes.ok || !apiRes.ok) throw new Error('Error en la respuesta');
+
+        geoData = await geoRes.json();
+        rawData = (await apiRes.json()).data.provinces;
+
+        mapLoader.style.display = 'none';
+        renderMapa();
+        renderPie();
+      } catch {
+        mapLoader.style.display = 'none';
+        mapError.style.display  = 'flex';
+      }
+    }
+
+    // ── Eventos ───────────────────────────────────────────────────────────────
+    document.getElementById('select-juego').addEventListener('change', e => {
+      filtroJuego = e.target.value;
+      segmentoClick = null;
+      renderMapa();
+      renderPie();
+    });
+
+    document.getElementById('select-metrica').addEventListener('change', e => {
+      filtroMetrica = e.target.value;
+      segmentoClick = null;
+      renderMapa();
+      renderPie();
+    });
+
+    document.getElementById('retry-btn').addEventListener('click', loadData);
+
+    loadData();
+  </script>
+</body>
+</html>
