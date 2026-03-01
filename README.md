@@ -59,35 +59,3 @@ Cada Pull Request hacia `main` ejecuta automáticamente:
 
 Al crear un branch con código de ticket (ej. `feature/BETIX-4-...`) el ticket Jira pasa a **In Progress** automáticamente. Al hacer merge de la PR pasa a **Done**.
 
-## Arquitectura
-
-### C4 Level 1 — Contexto del sistema
-
-```mermaid
-C4Context
-  title Contexto del Sistema — Betix
-
-  Person(analista, "Analista / Gerente", "Usuario de Tecno Acción que consulta estadísticas de lotería")
-  System(betix, "Betix", "API REST con dashboards interactivos de estadísticas de tickets de lotería por provincia y juego")
-
-  Rel(analista, betix, "Consulta métricas y visualizaciones", "HTTPS / Browser")
-```
-
-### C4 Level 2 — Contenedores
-
-```mermaid
-C4Container
-  title Diagrama de Contenedores — Betix
-
-  Person(analista, "Analista / Gerente", "Usuario de Tecno Acción")
-
-  System_Boundary(b, "Betix") {
-    Container(frontend, "Páginas Frontend", "HTML + D3.js v7", "Mapa de burbujas, Dashboard de barras agrupadas, Heatmap choropleth")
-    Container(api, "API REST", "Node.js 20 + Express 4", "Endpoints de estadísticas agregadas y datos para dashboards")
-    ContainerDb(data, "Mock Data", "Array JS — mockData.js", "30 registros: 10 provincias × 3 juegos (Quiniela, Lotería, Raspadita)")
-  }
-
-  Rel(analista, frontend, "Navega", "HTTPS / Browser")
-  Rel(frontend, api, "Consume datos", "HTTP REST / JSON")
-  Rel(api, data, "Lee y agrega")
-```
