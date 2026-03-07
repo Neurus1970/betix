@@ -3,8 +3,11 @@ Feature: Health check del servicio
   Quiero consultar el estado del servicio
   Para saber si está operativo
 
-  Scenario: El endpoint de health devuelve status ok
-    When hago GET a "/health"
+  Scenario: El endpoint /healthz devuelve status healthy
+    When hago GET a "/healthz"
     Then el código de respuesta es 200
-    And el campo "status" es "ok"
-    And el campo "service" es "betix-api"
+    And el campo "status" es "healthy"
+
+  Scenario: El endpoint /health redirige a /healthz con 301
+    When hago GET a "/health"
+    Then el código de respuesta es 301
