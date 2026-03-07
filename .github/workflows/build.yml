@@ -32,3 +32,14 @@ jobs:
         uses: SonarSource/sonarqube-scan-action@v6
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        with:
+          args: >
+            -Dsonar.projectKey=Neurus1970_betix
+            -Dsonar.organization=neurus1970
+            -Dsonar.projectName=BETIX
+            -Dsonar.projectVersion=1.0
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
+            -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
+            -Dsonar.exclusions=node_modules/**,coverage/**,test-results/**
+            -Dsonar.coverage.exclusions=src/app.js
