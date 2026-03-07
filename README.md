@@ -33,6 +33,7 @@ API de estadísticas de tickets de lotería por provincia y juego, con dashboard
 | `/mapa-estadisticas` | Mapa de burbujas interactivo: muestra el volumen de la métrica seleccionada en cada provincia mediante burbujas proporcionales sobre el mapa de Argentina. |
 | `/dashboard-rendimiento` | Gráfico de barras agrupadas: compara las métricas (cantidad, importe o beneficio) entre juegos para cada provincia seleccionada. Permite filtrar por juego y provincias. |
 | `/heatmap-apuestas` | Heatmap choropleth: colorea el mapa de Argentina según la intensidad de la métrica elegida, con soporte de zoom/pan, tooltip y leyenda de escala. |
+| `/dashboard-interactivo` | Mapa coroplético + gráfico de torta side-by-side con D3.js. Hover en provincia filtra la torta; click en segmento resalta la provincia. Filtros por juego y métrica (cantidad, importe, beneficio). |
 
 ## Desarrollo local
 
@@ -65,7 +66,7 @@ Todas las variables usan el prefijo `BETIX_`. Ver `.env.example` para la referen
 ## Tests
 
 ```bash
-npm test                # Jest (38 tests) + Cucumber (27 scenarios)
+npm test                # Jest (45 tests) + Cucumber (34 scenarios)
 npm run test:functional # Solo Cucumber en modo verbose
 npm run test:ci         # Solo Jest con cobertura (para CI)
 npm run lint            # ESLint
