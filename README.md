@@ -41,12 +41,26 @@ npm install
 npm run dev       # servidor con nodemon en puerto 3000
 ```
 
-Copiá `.env.example` a `.env` para configurar el nivel de logging:
+El perfil activo se controla con `NODE_ENV`. Hay un archivo por entorno incluido en el repo:
+
+| `NODE_ENV` | Archivo | Log level | Salida |
+|------------|---------|-----------|--------|
+| `dev` (default) | `.env.dev` | `debug` | consola |
+| `uat` | `.env.uat` | `info` | consola + archivo |
+| `pro` | `.env.pro` | `warn` | archivo |
 
 ```bash
-cp .env.example .env
-# LOG_LEVEL=info  (opciones: error, warn, info, http, verbose, debug, silly)
+# Desarrollo local (default)
+npm run dev
+
+# UAT
+NODE_ENV=uat npm run dev
+
+# Producción
+NODE_ENV=pro npm start
 ```
+
+Todas las variables usan el prefijo `BETIX_`. Ver `.env.example` para la referencia completa.
 
 ## Tests
 
