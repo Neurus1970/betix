@@ -41,21 +41,26 @@ npm install
 npm run dev       # servidor con nodemon en puerto 3000
 ```
 
-La configuración por defecto está en [`betix.properties`](betix.properties) y usa el prefijo `BETIX.*`:
+El perfil activo se controla con `NODE_ENV`. Hay un archivo por entorno incluido en el repo:
 
-```properties
-BETIX.log.level=info        # nivel de logging
-BETIX.log.output=console    # console | file | both
-BETIX.log.file=logs/betix.log
-BETIX.port=3000
-```
-
-Las variables de entorno tienen prioridad sobre `betix.properties`. Copiá `.env.example` a `.env` para sobrescribir valores en local:
+| `NODE_ENV` | Archivo | Log level | Salida |
+|------------|---------|-----------|--------|
+| `dev` (default) | `.env.dev` | `debug` | consola |
+| `uat` | `.env.uat` | `info` | consola + archivo |
+| `pro` | `.env.pro` | `warn` | archivo |
 
 ```bash
-cp .env.example .env
-# BETIX_LOG_OUTPUT=both  → escribe en consola y en archivo simultáneamente
+# Desarrollo local (default)
+npm run dev
+
+# UAT
+NODE_ENV=uat npm run dev
+
+# Producción
+NODE_ENV=pro npm start
 ```
+
+Todas las variables usan el prefijo `BETIX_`. Ver `.env.example` para la referencia completa.
 
 ## Tests
 
