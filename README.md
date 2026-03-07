@@ -12,7 +12,8 @@ API de estadísticas de tickets de lotería por provincia y juego, con dashboard
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
-| GET | `/health` | Verifica que el servicio está activo y responde. |
+| GET | `/healthz` | Verifica que el servicio está activo y que los datos estadísticos son accesibles y estructuralmente válidos. Devuelve `{"status":"healthy"}` (200) o `{"error":"..."}` (500). |
+| GET | `/health` | ⚠️ **DEPRECADO** — redirige con `301 Moved Permanently` a `/healthz`. |
 | GET | `/api/estadisticas/provincia` | Devuelve el total de tickets, ingresos, costos y rentabilidad agrupados por provincia. Útil para comparar el rendimiento entre regiones. |
 | GET | `/api/estadisticas/juego` | Devuelve el total de tickets, ingresos, costos y rentabilidad agrupados por tipo de juego (Quiniela, Lotería, Raspadita). Permite comparar qué juego genera más volumen o margen. |
 | GET | `/api/estadisticas/resumen` | Devuelve los totales consolidados del negocio: cantidad total de tickets, ingresos, costos y rentabilidad global. Pensado para vistas ejecutivas. |
@@ -40,10 +41,17 @@ npm install
 npm run dev       # servidor con nodemon en puerto 3000
 ```
 
+Copiá `.env.example` a `.env` para configurar el nivel de logging:
+
+```bash
+cp .env.example .env
+# LOG_LEVEL=info  (opciones: error, warn, info, http, verbose, debug, silly)
+```
+
 ## Tests
 
 ```bash
-npm test                # Jest (35 tests) + Cucumber (26 scenarios)
+npm test                # Jest (38 tests) + Cucumber (27 scenarios)
 npm run test:functional # Solo Cucumber en modo verbose
 npm run test:ci         # Solo Jest con cobertura (para CI)
 npm run lint            # ESLint

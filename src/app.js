@@ -1,6 +1,8 @@
 const path = require('path');
 const express = require('express');
 const cors = require('cors');
+const logger = require('./logger');
+const healthRouter = require('./routes/health');
 const estadisticasRouter = require('./routes/estadisticas');
 const mapaRouter = require('./routes/mapa');
 const dashboardRouter = require('./routes/dashboard');
@@ -13,7 +15,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
-app.get('/health', (req, res) => res.json({ status: 'ok', service: 'betix-api' }));
+app.use(healthRouter);
 
 app.use('/api/estadisticas', estadisticasRouter);
 app.use('/api/mapa-estadisticas', mapaRouter);
@@ -33,7 +35,7 @@ app.get('/dashboard-interactivo', (_req, res) =>
 );
 
 if (require.main === module) {
-  app.listen(PORT, () => console.log(`Betix API corriendo en puerto ${PORT}`));
+  app.listen(PORT, () => logger.info(`Betix API corriendo en puerto ${PORT}`));
 }
 
 module.exports = app;
