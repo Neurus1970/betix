@@ -41,11 +41,20 @@ npm install
 npm run dev       # servidor con nodemon en puerto 3000
 ```
 
-Copiá `.env.example` a `.env` para configurar el nivel de logging:
+La configuración por defecto está en [`betix.properties`](betix.properties) y usa el prefijo `BETIX.*`:
+
+```properties
+BETIX.log.level=info        # nivel de logging
+BETIX.log.output=console    # console | file | both
+BETIX.log.file=logs/betix.log
+BETIX.port=3000
+```
+
+Las variables de entorno tienen prioridad sobre `betix.properties`. Copiá `.env.example` a `.env` para sobrescribir valores en local:
 
 ```bash
 cp .env.example .env
-# LOG_LEVEL=info  (opciones: error, warn, info, http, verbose, debug, silly)
+# BETIX_LOG_OUTPUT=both  → escribe en consola y en archivo simultáneamente
 ```
 
 ## Tests
