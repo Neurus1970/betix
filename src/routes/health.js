@@ -6,7 +6,7 @@ const logger = require('../logger');
 
 const router = express.Router();
 
-router.get('/healthz', (req, res) => {
+router.get('/healthz', (_req, res) => {
   try {
     checkDataAccess();
     logger.info('Health check exitoso');
@@ -17,8 +17,5 @@ router.get('/healthz', (req, res) => {
   }
 });
 
-router.get('/health', (req, res) => {
-  res.redirect(301, '/healthz');
-});
 
 module.exports = router;
