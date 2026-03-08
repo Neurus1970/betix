@@ -21,20 +21,20 @@ API de estadísticas de tickets de lotería por provincia y juego, con dashboard
 
 ## Desarrollo local
 
-\`\`\`bash
+```bash
 npm install
 npm run dev       # servidor con nodemon en puerto 3000
-\`\`\`
+```
 
-El perfil activo se controla con \`NODE_ENV\`. Hay un archivo por entorno incluido en el repo:
+El perfil activo se controla con `NODE_ENV`. Hay un archivo por entorno incluido en el repo:
 
-| \`NODE_ENV\` | Archivo | Log level | Salida |
+| `NODE_ENV` | Archivo | Log level | Salida |
 |------------|---------|-----------|--------|
-| \`dev\` (default) | \`.env.dev\` | \`debug\` | consola |
-| \`uat\` | \`.env.uat\` | \`info\` | consola + archivo |
-| \`pro\` | \`.env.pro\` | \`warn\` | archivo |
+| `dev` (default) | `.env.dev` | `debug` | consola |
+| `uat` | `.env.uat` | `info` | consola + archivo |
+| `pro` | `.env.pro` | `warn` | archivo |
 
-\`\`\`bash
+```bash
 # Desarrollo local (default)
 npm run dev
 
@@ -43,25 +43,26 @@ NODE_ENV=uat npm run dev
 
 # Producción
 NODE_ENV=pro npm start
-\`\`\`
+```
 
-Todas las variables usan el prefijo \`BETIX_\`. Ver \`.env.example\` para la referencia completa.
+Todas las variables usan el prefijo `BETIX_`. Ver `.env.example` para la referencia completa.
 
 ## Tests
 
-\`\`\`bash
+```bash
+
 npm test                # Jest + Cucumber
 npm run test:functional # Solo Cucumber en modo verbose
 npm run test:ci         # Solo Jest con cobertura (para CI)
 npm run lint            # ESLint
-\`\`\`
+```
 
 ## Pipeline CI/CD
 
-Cada Pull Request hacia \`main\` ejecuta automáticamente:
+Cada Pull Request hacia `main` ejecuta automáticamente:
 1. **Lint** — Verificación de estilo de código (ESLint)
 2. **Tests** — Jest con cobertura + reporte JUnit
 3. **SonarCloud** — Análisis de calidad y security hotspots
 4. **AI Review** — Revisión automática y documentación generada por Claude
 
-Al crear un branch con código de ticket (ej. \`feature/BETIX-7-...\`) el ticket Jira pasa a **In Progress** automáticamente. Al hacer merge de la PR pasa a **Done**.
+Al crear un branch con código de ticket (ej. `feature/BETIX-7-...`) el ticket Jira pasa a **In Progress** automáticamente. Al hacer merge de la PR pasa a **Done**.
