@@ -31,3 +31,15 @@ Feature: Dashboard interactivo con mapa y gráfico de torta
   Scenario: La página consume el endpoint de geodata
     When hago GET a "/dashboard-interactivo"
     Then el HTML contiene '/api/datos/geodata'
+
+  Scenario: La página consume el endpoint de datos temporales
+    When hago GET a "/dashboard-interactivo"
+    Then el HTML contiene '/api/datos/temporal'
+
+  Scenario: La página incluye el tab de Tendencia temporal
+    When hago GET a "/dashboard-interactivo"
+    Then el HTML contiene 'tab-line'
+
+  Scenario: La página incluye el SVG del gráfico de líneas
+    When hago GET a "/dashboard-interactivo"
+    Then el HTML contiene 'id="line-svg"'

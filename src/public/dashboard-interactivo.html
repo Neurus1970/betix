@@ -39,7 +39,7 @@
       flex-wrap: wrap;
       justify-content: center;
       gap: 20px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
 
     .filter-group {
@@ -70,6 +70,40 @@
 
     select:hover, select:focus { border-color: #7ee8a2; }
 
+    /* ── Tabs ──────────────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid #1e2228;
+      max-width: 1200px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: #64748b;
+      padding: 10px 20px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+      margin-bottom: -1px;
+    }
+
+    .tab-btn:hover { color: #e2e8f0; }
+
+    .tab-btn.active {
+      color: #7ee8a2;
+      border-bottom-color: #7ee8a2;
+    }
+
+    /* ── Tab panels ────────────────────────────────────────────────────── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
     /* ── Charts layout ────────────────────────────────────────────────── */
     .charts-container {
       display: flex;
@@ -89,6 +123,13 @@
       position: relative;
     }
 
+    .chart-box.full-width {
+      flex: none;
+      width: 100%;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
     .chart-box h2 {
       font-size: 0.85rem;
       font-weight: 600;
@@ -97,6 +138,16 @@
       border-bottom: 1px solid #1e2228;
       text-transform: uppercase;
       letter-spacing: 0.05em;
+    }
+
+    .chart-subtitle {
+      font-size: 0.75rem;
+      color: #64748b;
+      font-style: italic;
+      margin-left: 8px;
+      font-weight: normal;
+      text-transform: none;
+      letter-spacing: 0;
     }
 
     /* ── Map ───────────────────────────────────────────────────────────── */
@@ -125,9 +176,7 @@
       min-height: 24px;
     }
 
-    .pie-legend {
-      padding: 4px 18px 16px;
-    }
+    .pie-legend { padding: 4px 18px 16px; }
 
     .pie-legend-item {
       display: flex;
@@ -148,6 +197,51 @@
       flex-shrink: 0;
     }
 
+    /* ── Line chart ────────────────────────────────────────────────────── */
+    .line-chart-wrap { padding: 12px 4px 4px; }
+
+    #line-svg { width: 100%; display: block; }
+
+    .line { fill: none; stroke-width: 2; }
+
+    .brush .selection {
+      fill: #7ee8a2;
+      fill-opacity: 0.12;
+      stroke: #7ee8a2;
+      stroke-width: 0.5;
+    }
+
+    .line-legend {
+      padding: 8px 18px 16px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      font-size: 0.76rem;
+      color: #94a3b8;
+      padding: 3px 10px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      transition: border-color 0.15s, color 0.15s, opacity 0.15s;
+      user-select: none;
+    }
+
+    .legend-item:hover { border-color: #1e2228; color: #e2e8f0; }
+    .legend-item.dimmed { opacity: 0.3; }
+
+    .legend-dot {
+      width: 14px;
+      height: 3px;
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
     /* ── Tooltip ───────────────────────────────────────────────────────── */
     #tooltip {
       position: fixed;
@@ -161,7 +255,7 @@
       transition: opacity 0.15s;
       z-index: 200;
       line-height: 1.7;
-      max-width: 220px;
+      max-width: 260px;
     }
 
     #tooltip strong { color: #7ee8a2; display: block; margin-bottom: 2px; }
@@ -201,7 +295,7 @@
 
   <header>
     <h1>Dashboard Interactivo</h1>
-    <p class="subtitle">Betix · Análisis por provincia y juego — hover en el mapa para ver detalle</p>
+    <p class="subtitle">Betix · Análisis por provincia y juego</p>
   </header>
 
   <div class="controls">
@@ -221,345 +315,628 @@
     </div>
   </div>
 
-  <div class="charts-container">
-    <!-- MAP -->
-    <div class="chart-box" id="map-box">
-      <h2>Mapa por provincia</h2>
-      <div class="loader" id="map-loader"><div class="spinner"></div></div>
-      <svg id="map-svg"></svg>
-    </div>
+  <!-- ── Tabs ──────────────────────────────────────────────────────────── -->
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="tab-map"  title="Tecla 1">Mapa &amp; Torta</button>
+    <button class="tab-btn"        data-tab="tab-line" title="Tecla 2">Tendencia temporal</button>
+  </nav>
 
-    <!-- PIE -->
-    <div class="chart-box" id="pie-box">
-      <h2>Distribución</h2>
-      <p class="pie-title" id="pie-title">Todas las provincias</p>
-      <svg id="pie-svg"></svg>
-      <div class="pie-legend" id="pie-legend"></div>
+  <!-- ── Tab: Mapa + Torta ─────────────────────────────────────────────── -->
+  <div class="tab-panel active" id="tab-map">
+    <div class="charts-container">
+      <!-- MAP -->
+      <div class="chart-box" id="map-box">
+        <h2>Mapa por provincia</h2>
+        <div class="loader" id="map-loader"><div class="spinner"></div></div>
+        <svg id="map-svg"></svg>
+      </div>
+
+      <!-- PIE -->
+      <div class="chart-box" id="pie-box">
+        <h2>Distribución</h2>
+        <p class="pie-title" id="pie-title">Todas las provincias</p>
+        <svg id="pie-svg"></svg>
+        <div class="pie-legend" id="pie-legend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tab: Tendencia temporal ───────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-line">
+    <div class="chart-box full-width" id="line-box">
+      <h2>
+        Tendencia temporal — Evolución mensual por provincia
+        <span class="chart-subtitle">Jun 2025 – Mar 2026 · Brush inferior para zoom</span>
+      </h2>
+      <div class="loader" id="line-loader"><div class="spinner"></div></div>
+      <div class="line-chart-wrap">
+        <svg id="line-svg"></svg>
+      </div>
+      <div class="line-legend" id="line-legend"></div>
     </div>
   </div>
 
   <div id="tooltip"></div>
 
   <script>
-    const GEO_URL = '/argentina.geojson';
-    const API_URL = '/api/datos/geodata';
+  'use strict';
 
-    const METRIC_LABELS = {
-      cantidad:  'Cantidad',
-      importe:   'Importe ($)',
-      beneficio: 'Beneficio ($)',
-    };
+  const GEO_URL      = '/argentina.geojson';
+  const API_URL      = '/api/datos/geodata';
+  const TEMPORAL_URL = '/api/datos/temporal';
 
-    const PIE_COLORS = [
-      '#7ee8a2', '#3b82f6', '#f59e0b', '#ef4444',
-      '#a855f7', '#06b6d4', '#ec4899', '#84cc16',
-      '#f97316', '#14b8a6',
-    ];
+  const METRIC_LABELS = {
+    cantidad:  'Cantidad',
+    importe:   'Importe ($)',
+    beneficio: 'Beneficio ($)',
+  };
 
-    const fmt = (metrica, v) =>
-      metrica === 'cantidad'
-        ? (v || 0).toLocaleString('es-AR')
-        : '$' + (v || 0).toLocaleString('es-AR');
+  const PIE_COLORS = [
+    '#7ee8a2', '#3b82f6', '#f59e0b', '#ef4444',
+    '#a855f7', '#06b6d4', '#ec4899', '#84cc16',
+    '#f97316', '#14b8a6',
+  ];
 
-    // ── State ──────────────────────────────────────────────────────────────
-    let rawData = [];
-    let geoData = null;
-    let hoveredProvince = null;
-    let pinnedProvince = null;
-    let explodedIdx    = null;
+  // Distinct palette for the 10 provinces in the line chart
+  const LINE_COLORS = [
+    '#7ee8a2', '#3b82f6', '#f59e0b', '#ef4444',
+    '#a855f7', '#06b6d4', '#ec4899', '#84cc16',
+    '#f97316', '#14b8a6',
+  ];
 
-    const tooltip   = document.getElementById('tooltip');
-    const selJuego  = document.getElementById('sel-juego');
-    const selMetrica = document.getElementById('sel-metrica');
+  const fmt = (metrica, v) =>
+    metrica === 'cantidad'
+      ? (v || 0).toLocaleString('es-AR')
+      : '$' + (v || 0).toLocaleString('es-AR');
 
-    const getJuego   = () => selJuego.value;
-    const getMetrica = () => selMetrica.value;
+  // ── State ──────────────────────────────────────────────────────────────
+  let rawData = [], geoData = null;
+  let hoveredProvince = null, pinnedProvince = null, explodedIdx = null;
 
-    // ── Tooltip ────────────────────────────────────────────────────────────
-    function showTooltip(html, event) {
-      tooltip.innerHTML = html;
-      tooltip.style.opacity = '1';
-      tooltip.style.left = (event.clientX + 16) + 'px';
-      tooltip.style.top  = (event.clientY - 10) + 'px';
+  const temporalCache = {}; // juego → { meses, series }
+  const hiddenProvs   = new Set();
+  let lineRendered    = false;
+
+  const tooltip    = document.getElementById('tooltip');
+  const selJuego   = document.getElementById('sel-juego');
+  const selMetrica = document.getElementById('sel-metrica');
+
+  const getJuego   = () => selJuego.value;
+  const getMetrica = () => selMetrica.value;
+
+  // ── Tooltip ────────────────────────────────────────────────────────────
+  function showTooltip(html, event) {
+    tooltip.innerHTML = html;
+    tooltip.style.opacity = '1';
+    tooltip.style.left = (event.clientX + 16) + 'px';
+    tooltip.style.top  = (event.clientY - 10) + 'px';
+  }
+  function moveTooltip(event) {
+    tooltip.style.left = (event.clientX + 16) + 'px';
+    tooltip.style.top  = (event.clientY - 10) + 'px';
+  }
+  function hideTooltip() { tooltip.style.opacity = '0'; }
+
+  // ── Aggregation ────────────────────────────────────────────────────────
+  function aggregateByProvince(juego, metrica) {
+    const filtered = juego === 'Todos' ? rawData : rawData.filter(d => d.juego === juego);
+    const map = {};
+    for (const d of filtered) {
+      map[d.provincia] = (map[d.provincia] || 0) + (d[metrica] || 0);
     }
-    function moveTooltip(event) {
-      tooltip.style.left = (event.clientX + 16) + 'px';
-      tooltip.style.top  = (event.clientY - 10) + 'px';
-    }
-    function hideTooltip() { tooltip.style.opacity = '0'; }
+    return map;
+  }
 
-    // ── Aggregation ────────────────────────────────────────────────────────
-    function aggregateByProvince(juego, metrica) {
-      const filtered = juego === 'Todos' ? rawData : rawData.filter(d => d.juego === juego);
-      const map = {};
-      for (const d of filtered) {
-        map[d.provincia] = (map[d.provincia] || 0) + (d[metrica] || 0);
-      }
-      return map;
-    }
+  function getProvinceGames(provincia, metrica) {
+    const juego = getJuego();
+    return rawData
+      .filter(d => d.provincia === provincia && (juego === 'Todos' || d.juego === juego))
+      .map(d => ({ label: d.juego, value: d[metrica] || 0 }))
+      .filter(d => d.value > 0)
+      .sort((a, b) => b.value - a.value);
+  }
 
-    function getProvinceGames(provincia, metrica) {
-      const juego = getJuego();
-      const items = rawData.filter(d =>
-        d.provincia === provincia && (juego === 'Todos' || d.juego === juego)
-      );
-      return items
-        .map(d => ({ label: d.juego, value: d[metrica] || 0 }))
+  // ── Tabs ───────────────────────────────────────────────────────────────
+  const TAB_ORDER = ['tab-map', 'tab-line'];
+
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(b =>
+      b.classList.toggle('active', b.dataset.tab === tabId)
+    );
+    document.querySelectorAll('.tab-panel').forEach(p =>
+      p.classList.toggle('active', p.id === tabId)
+    );
+    if (tabId === 'tab-line' && !lineRendered && rawData.length) {
+      renderTendencia();
+    }
+  }
+
+  // ── Map ────────────────────────────────────────────────────────────────
+  const mapSvg = d3.select('#map-svg');
+
+  function renderMap() {
+    const juego   = getJuego();
+    const metrica = getMetrica();
+    const values  = aggregateByProvince(juego, metrica);
+    const maxVal  = d3.max(Object.values(values)) || 1;
+
+    const colorScale = d3.scaleSequential()
+      .domain([0, maxVal])
+      .interpolator(d3.interpolate('#1a2535', '#7ee8a2'));
+
+    const box = document.getElementById('map-box');
+    const w   = box.clientWidth || 520;
+    const h   = w * 1.3;
+
+    mapSvg
+      .attr('viewBox', `0 0 ${w} ${h}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
+
+    mapSvg.selectAll('g').remove();
+    const g = mapSvg.append('g');
+
+    const projection = d3.geoMercator()
+      .center([-65, -38])
+      .scale(w * 1.4)
+      .translate([w / 2, h / 2]);
+
+    const pathGen = d3.geoPath().projection(projection);
+
+    g.selectAll('.province')
+      .data(geoData.features)
+      .join('path')
+      .attr('class', d => {
+        let cls = 'province';
+        const name = d.properties.NAME_1;
+        if (pinnedProvince && name !== pinnedProvince) cls += ' dimmed';
+        if (name === hoveredProvince) cls += ' highlighted';
+        return cls;
+      })
+      .attr('d', pathGen)
+      .attr('fill', d => {
+        const val = values[d.properties.NAME_1];
+        return val != null ? colorScale(val) : '#1a2535';
+      })
+      .on('mouseenter', function(event, d) {
+        const name = d.properties.NAME_1;
+        hoveredProvince = name;
+        d3.select(this).classed('highlighted', true);
+        renderPie();
+        const val = values[name];
+        showTooltip(
+          val != null
+            ? `<strong>${name}</strong>${METRIC_LABELS[metrica]}: ${fmt(metrica, val)}`
+            : `<strong>${name}</strong><span style="color:#64748b">Sin datos</span>`,
+          event
+        );
+      })
+      .on('mousemove', moveTooltip)
+      .on('mouseleave', function() {
+        hoveredProvince = null;
+        d3.select(this).classed('highlighted', false);
+        renderPie();
+        hideTooltip();
+      });
+  }
+
+  // ── Pie ────────────────────────────────────────────────────────────────
+  const pieSvg   = d3.select('#pie-svg');
+  const pieTitle = document.getElementById('pie-title');
+  const pieLeg   = document.getElementById('pie-legend');
+
+  function renderPie() {
+    const metrica = getMetrica();
+    const juego   = getJuego();
+
+    let pieData, titleText;
+
+    if (hoveredProvince) {
+      pieData   = getProvinceGames(hoveredProvince, metrica);
+      titleText = hoveredProvince;
+    } else {
+      const values = aggregateByProvince(juego, metrica);
+      pieData = Object.entries(values)
+        .map(([label, value]) => ({ label, value }))
         .filter(d => d.value > 0)
         .sort((a, b) => b.value - a.value);
+      titleText = juego === 'Todos' ? 'Todas las provincias' : juego;
     }
 
-    // ── Map ────────────────────────────────────────────────────────────────
-    const mapSvg = d3.select('#map-svg');
+    pieTitle.textContent = titleText;
 
-    function renderMap() {
-      const juego   = getJuego();
-      const metrica = getMetrica();
-      const values  = aggregateByProvince(juego, metrica);
+    const box    = document.getElementById('pie-box');
+    const w      = box.clientWidth || 480;
+    const h      = Math.min(w * 0.75, 340);
+    const radius = Math.min(w, h) / 2 - 24;
+    const cx = w / 2, cy = h / 2;
 
-      const allVals  = Object.values(values);
-      const maxVal   = allVals.length ? d3.max(allVals) : 1;
+    pieSvg
+      .attr('viewBox', `0 0 ${w} ${h}`)
+      .attr('preserveAspectRatio', 'xMidYMid meet');
+    pieSvg.selectAll('*').remove();
 
-      const colorScale = d3.scaleSequential()
-        .domain([0, maxVal])
-        .interpolator(d3.interpolate('#1a2535', '#7ee8a2'));
-
-      const box = document.getElementById('map-box');
-      const w   = box.clientWidth || 520;
-      const h   = w * 1.3;
-
-      mapSvg
-        .attr('viewBox', `0 0 ${w} ${h}`)
-        .attr('preserveAspectRatio', 'xMidYMid meet');
-
-      mapSvg.selectAll('g').remove();
-      const g = mapSvg.append('g');
-
-      const projection = d3.geoMercator()
-        .center([-65, -38])
-        .scale(w * 1.4)
-        .translate([w / 2, h / 2]);
-
-      const pathGen = d3.geoPath().projection(projection);
-
-      g.selectAll('.province')
-        .data(geoData.features)
-        .join('path')
-        .attr('class', d => {
-          let cls = 'province';
-          const name = d.properties.NAME_1;
-          if (pinnedProvince && name !== pinnedProvince) cls += ' dimmed';
-          if (name === hoveredProvince) cls += ' highlighted';
-          return cls;
-        })
-        .attr('d', pathGen)
-        .attr('fill', d => {
-          const val = values[d.properties.NAME_1];
-          return val != null ? colorScale(val) : '#1a2535';
-        })
-        .on('mouseenter', function(event, d) {
-          const name = d.properties.NAME_1;
-          hoveredProvince = name;
-          d3.select(this).classed('highlighted', true);
-          renderPie();
-          const val = values[name];
-          showTooltip(
-            val != null
-              ? `<strong>${name}</strong>${METRIC_LABELS[metrica]}: ${fmt(metrica, val)}`
-              : `<strong>${name}</strong><span style="color:#64748b">Sin datos</span>`,
-            event
-          );
-        })
-        .on('mousemove', moveTooltip)
-        .on('mouseleave', function() {
-          hoveredProvince = null;
-          d3.select(this).classed('highlighted', false);
-          renderPie();
-          hideTooltip();
-        });
+    if (!pieData.length) {
+      pieSvg.append('text')
+        .attr('x', w / 2).attr('y', h / 2)
+        .attr('text-anchor', 'middle')
+        .attr('fill', '#64748b').attr('font-size', '0.88rem')
+        .text('No hay datos para esta combinación');
+      pieLeg.innerHTML = '';
+      return;
     }
 
-    // ── Pie ────────────────────────────────────────────────────────────────
-    const pieSvg   = d3.select('#pie-svg');
-    const pieTitle = document.getElementById('pie-title');
-    const pieLeg   = document.getElementById('pie-legend');
+    const colorMap = {};
+    pieData.forEach((d, i) => { colorMap[d.label] = PIE_COLORS[i % PIE_COLORS.length]; });
 
-    function renderPie() {
-      const metrica = getMetrica();
-      const juego   = getJuego();
+    const pie    = d3.pie().value(d => d.value).sort(null);
+    const arc    = d3.arc().innerRadius(radius * 0.38).outerRadius(radius);
+    const arcBig = d3.arc().innerRadius(radius * 0.38).outerRadius(radius + 14);
 
-      let pieData;
-      let titleText;
+    const g     = pieSvg.append('g').attr('transform', `translate(${cx},${cy})`);
+    const total = pieData.reduce((s, d) => s + d.value, 0);
 
-      if (hoveredProvince) {
-        pieData   = getProvinceGames(hoveredProvince, metrica);
-        titleText = hoveredProvince;
-      } else {
-        const values = aggregateByProvince(juego, metrica);
-        pieData = Object.entries(values)
-          .map(([label, value]) => ({ label, value }))
-          .filter(d => d.value > 0)
-          .sort((a, b) => b.value - a.value);
-        titleText = juego === 'Todos' ? 'Todas las provincias' : juego;
-      }
+    g.selectAll('.arc')
+      .data(pie(pieData))
+      .join('g').attr('class', 'arc')
+      .each(function(d, i) {
+        const arcNode = d3.select(this);
+        let tx = 0, ty = 0;
+        if (i === explodedIdx && !hoveredProvince) {
+          const mid = (d.startAngle + d.endAngle) / 2;
+          tx = Math.cos(mid - Math.PI / 2) * 14;
+          ty = Math.sin(mid - Math.PI / 2) * 14;
+        }
+        arcNode.append('path')
+          .attr('d', arc)
+          .attr('fill', colorMap[d.data.label])
+          .attr('stroke', '#0b0c0f')
+          .attr('stroke-width', 1.5)
+          .attr('transform', `translate(${tx},${ty})`)
+          .on('mouseenter', function(event) {
+            d3.select(this).transition().duration(180).attr('d', arcBig);
+            const pct = total > 0 ? ((d.data.value / total) * 100).toFixed(1) : 0;
+            showTooltip(
+              `<strong>${d.data.label}</strong>${METRIC_LABELS[metrica]}: ${fmt(metrica, d.data.value)}<br/><span style="color:#94a3b8">${pct}% del total</span>`,
+              event
+            );
+          })
+          .on('mousemove', moveTooltip)
+          .on('mouseleave', function() {
+            d3.select(this).transition().duration(180).attr('d', arc);
+            hideTooltip();
+          })
+          .on('click', function() {
+            if (hoveredProvince) return;
+            if (pinnedProvince === d.data.label && explodedIdx === i) {
+              pinnedProvince = null; explodedIdx = null;
+            } else {
+              pinnedProvince = d.data.label; explodedIdx = i;
+            }
+            renderMap(); renderPie();
+          });
+      });
 
-      pieTitle.textContent = titleText;
+    pieLeg.innerHTML = '';
+    pieData.forEach(d => {
+      const pct  = total > 0 ? ((d.value / total) * 100).toFixed(1) : 0;
+      const item = document.createElement('div');
+      item.className = 'pie-legend-item';
+      item.title = `${d.label}: ${fmt(metrica, d.value)} (${pct}%)`;
+      item.innerHTML = `<div class="pie-legend-dot" style="background:${colorMap[d.label]}"></div>
+        <span>${d.label}: ${fmt(metrica, d.value)} (${pct}%)</span>`;
+      pieLeg.appendChild(item);
+    });
+  }
 
-      const box    = document.getElementById('pie-box');
-      const w      = box.clientWidth || 480;
-      const h      = Math.min(w * 0.75, 340);
-      const radius = Math.min(w, h) / 2 - 24;
-      const cx     = w / 2;
-      const cy     = h / 2;
+  // ── Tendencia (multi-line + focus+context brush) ────────────────────────
+  async function renderTendencia() {
+    const juego   = getJuego();
+    const metrica = getMetrica();
 
-      pieSvg
-        .attr('viewBox', `0 0 ${w} ${h}`)
-        .attr('preserveAspectRatio', 'xMidYMid meet');
-
-      pieSvg.selectAll('*').remove();
-
-      if (!pieData.length) {
-        pieSvg.append('text')
-          .attr('x', w / 2).attr('y', h / 2)
-          .attr('text-anchor', 'middle')
-          .attr('fill', '#64748b')
-          .attr('font-size', '0.88rem')
-          .text('No hay datos para esta combinación');
-        pieLeg.innerHTML = '';
+    if (!temporalCache[juego]) {
+      try {
+        const res  = await fetch(`${TEMPORAL_URL}?juego=${encodeURIComponent(juego)}`);
+        const json = await res.json();
+        temporalCache[juego] = json.data;
+      } catch (err) {
+        document.getElementById('line-loader').innerHTML =
+          '<span style="color:#ef4444;font-size:.85rem">⚠ Error al cargar datos temporales</span>';
         return;
       }
+    }
 
-      const colorMap = {};
-      pieData.forEach((d, i) => { colorMap[d.label] = PIE_COLORS[i % PIE_COLORS.length]; });
+    document.getElementById('line-loader').style.display = 'none';
+    drawLineChart(temporalCache[juego], metrica);
+    lineRendered = true;
+  }
 
-      const pie     = d3.pie().value(d => d.value).sort(null);
-      const arc     = d3.arc().innerRadius(radius * 0.38).outerRadius(radius);
-      const arcBig  = d3.arc().innerRadius(radius * 0.38).outerRadius(radius + 14);
+  function drawLineChart({ meses, series }, metrica) {
+    const parseMonth = d3.timeParse('%Y-%m');
+    const dates = meses.map(parseMonth);
 
-      const g = pieSvg.append('g').attr('transform', `translate(${cx},${cy})`);
-      const total = pieData.reduce((s, d) => s + d.value, 0);
+    const lineBox = document.getElementById('line-box');
+    const W       = (lineBox ? lineBox.clientWidth : 960) - 4;
+    const margin  = { top: 16, right: 20, bottom: 90, left: 72 };
+    const focusH  = 300;
+    const ctxH    = 48;
+    const gap     = 16;
+    const H       = margin.top + focusH + gap + ctxH + margin.bottom;
+    const innerW  = W - margin.left - margin.right;
+    const ctxTop  = margin.top + focusH + gap;
 
-      g.selectAll('.arc')
-        .data(pie(pieData))
-        .join('g')
-        .attr('class', 'arc')
-        .each(function(d, i) {
-          const arcNode = d3.select(this);
+    const provColor = Object.fromEntries(
+      series.map((s, i) => [s.provincia, LINE_COLORS[i % LINE_COLORS.length]])
+    );
 
-          // Explode offset if this slice is pinned
-          let tx = 0, ty = 0;
-          if (i === explodedIdx && !hoveredProvince) {
-            const mid = (d.startAngle + d.endAngle) / 2;
-            const off = 14;
-            tx = Math.cos(mid - Math.PI / 2) * off;
-            ty = Math.sin(mid - Math.PI / 2) * off;
-          }
+    const svg = d3.select('#line-svg')
+      .attr('viewBox', `0 0 ${W} ${H}`)
+      .attr('width', W).attr('height', H);
+    svg.selectAll('*').remove();
 
-          arcNode.append('path')
-            .attr('d', arc)
-            .attr('fill', colorMap[d.data.label])
-            .attr('stroke', '#0b0c0f')
-            .attr('stroke-width', 1.5)
-            .attr('transform', `translate(${tx},${ty})`)
-            .on('mouseenter', function(event) {
-              d3.select(this)
-                .transition().duration(180)
-                .attr('d', arcBig);
-              const pct = total > 0 ? ((d.data.value / total) * 100).toFixed(1) : 0;
-              showTooltip(
-                `<strong>${d.data.label}</strong>${METRIC_LABELS[metrica]}: ${fmt(metrica, d.data.value)}<br/><span style="color:#94a3b8">${pct}% del total</span>`,
-                event
-              );
-            })
-            .on('mousemove', moveTooltip)
-            .on('mouseleave', function() {
-              d3.select(this).transition().duration(180).attr('d', arc);
-              hideTooltip();
-            })
-            .on('click', function() {
-              // Only act when pie shows provinces (no province hovered)
-              if (hoveredProvince) return;
-              if (pinnedProvince === d.data.label && explodedIdx === i) {
-                pinnedProvince = null;
-                explodedIdx    = null;
-              } else {
-                pinnedProvince = d.data.label;
-                explodedIdx    = i;
-              }
-              renderMap();
-              renderPie();
-            });
-        });
+    // Clip path
+    svg.append('defs').append('clipPath').attr('id', 'clip-focus')
+      .append('rect').attr('x', 0).attr('y', -4)
+      .attr('width', innerW).attr('height', focusH + 8);
 
-      // Legend
-      pieLeg.innerHTML = '';
-      pieData.forEach(d => {
-        const pct  = total > 0 ? ((d.value / total) * 100).toFixed(1) : 0;
-        const item = document.createElement('div');
-        item.className = 'pie-legend-item';
-        item.title = `${d.label}: ${fmt(metrica, d.value)} (${pct}%)`;
-        item.innerHTML = `
-          <div class="pie-legend-dot" style="background:${colorMap[d.label]}"></div>
-          <span>${d.label}: ${fmt(metrica, d.value)} (${pct}%)</span>
-        `;
-        pieLeg.appendChild(item);
+    // Scales
+    const xFull  = d3.scaleTime().domain(d3.extent(dates)).range([0, innerW]);
+    const xFocus = xFull.copy();
+    const xCtx   = xFull.copy();
+
+    const allVals = series.flatMap(s => s[metrica] || []);
+    const yMax    = d3.max(allVals) || 1;
+    const yFocus  = d3.scaleLinear().domain([0, yMax * 1.1]).range([focusH, 0]).nice();
+    const yCtx    = d3.scaleLinear().domain(yFocus.domain()).range([ctxH, 0]);
+
+    // Y axis formatter
+    const fmtY = metrica === 'cantidad'
+      ? v => d3.format('.2s')(v)
+      : v => '$' + d3.format('.2s')(v);
+
+    // Line generators
+    const lineFocus = d3.line()
+      .x((_, i) => xFocus(dates[i]))
+      .y(d => yFocus(d))
+      .curve(d3.curveCatmullRom.alpha(0.5));
+
+    const lineCtx = d3.line()
+      .x((_, i) => xCtx(dates[i]))
+      .y(d => yCtx(d));
+
+    // ── Focus group
+    const gFocus = svg.append('g')
+      .attr('transform', `translate(${margin.left},${margin.top})`);
+
+    // Grid
+    gFocus.append('g')
+      .call(d3.axisLeft(yFocus).ticks(5).tickSize(-innerW).tickFormat(''))
+      .call(g => {
+        g.select('.domain').remove();
+        g.selectAll('.tick line').attr('stroke', '#1e2228').attr('stroke-dasharray', '3,3');
       });
+
+    // Y axis
+    gFocus.append('g')
+      .call(d3.axisLeft(yFocus).ticks(5).tickFormat(fmtY))
+      .call(g => {
+        g.select('.domain').remove();
+        g.selectAll('.tick text').attr('fill', '#64748b').attr('font-size', '11px');
+        g.selectAll('.tick line').attr('stroke', '#1e2228');
+      });
+
+    // X axis focus
+    const xAxisFocus = d3.axisBottom(xFocus)
+      .ticks(d3.timeMonth.every(1))
+      .tickFormat(d3.timeFormat('%b %y'));
+
+    const gXAxis = gFocus.append('g')
+      .attr('transform', `translate(0,${focusH})`)
+      .call(xAxisFocus)
+      .call(g => {
+        g.select('.domain').attr('stroke', '#1e2228');
+        g.selectAll('.tick line').attr('stroke', '#1e2228');
+        g.selectAll('.tick text').attr('fill', '#64748b').attr('font-size', '11px');
+      });
+
+    // Clipped lines group
+    const gLines = gFocus.append('g').attr('clip-path', 'url(#clip-focus)');
+
+    const paths = gLines.selectAll('.line')
+      .data(series)
+      .join('path')
+      .attr('class', 'line')
+      .attr('d', s => lineFocus(s[metrica]))
+      .attr('stroke', s => provColor[s.provincia])
+      .attr('opacity', s => hiddenProvs.has(s.provincia) ? 0.03 : 0.82);
+
+    // Bisector dots
+    const dots = gLines.selectAll('.bisect-dot')
+      .data(series)
+      .join('circle')
+      .attr('class', 'bisect-dot')
+      .attr('r', 4)
+      .attr('fill', s => provColor[s.provincia])
+      .attr('stroke', '#0b0c0f').attr('stroke-width', 1.5)
+      .attr('opacity', 0);
+
+    // Vertical bisector line
+    const vLine = gFocus.append('line')
+      .attr('y1', 0).attr('y2', focusH)
+      .attr('stroke', '#64748b').attr('stroke-width', 1)
+      .attr('stroke-dasharray', '4,3').attr('opacity', 0);
+
+    const bisect = d3.bisector((_, i) => dates[i]).left;
+
+    // Invisible overlay for mouse events
+    gFocus.append('rect')
+      .attr('width', innerW).attr('height', focusH)
+      .attr('fill', 'none').attr('pointer-events', 'all')
+      .on('mousemove', function(event) {
+        const [mx] = d3.pointer(event);
+        const x0   = xFocus.invert(mx);
+        const ri   = Math.min(bisect({ length: dates.length }, x0, 1), dates.length - 1);
+        const xi   = xFocus(dates[ri]);
+
+        vLine.attr('x1', xi).attr('x2', xi).attr('opacity', 0.5);
+        dots
+          .attr('cx', xi)
+          .attr('cy', s => yFocus((s[metrica] || [])[ri] || 0))
+          .attr('opacity', s => hiddenProvs.has(s.provincia) ? 0 : 0.9);
+
+        const lines = series
+          .filter(s => !hiddenProvs.has(s.provincia))
+          .sort((a, b) => ((b[metrica] || [])[ri] || 0) - ((a[metrica] || [])[ri] || 0))
+          .map(s => {
+            const v = (s[metrica] || [])[ri] || 0;
+            return `<span style="color:${provColor[s.provincia]}">${s.provincia}: ${fmt(metrica, v)}</span>`;
+          });
+        showTooltip(`<strong>${meses[ri]}</strong>${lines.join('<br>')}`, event);
+      })
+      .on('mouseleave', () => {
+        vLine.attr('opacity', 0);
+        dots.attr('opacity', 0);
+        hideTooltip();
+      });
+
+    // ── Context group (mini chart + brush)
+    const gCtx = svg.append('g')
+      .attr('transform', `translate(${margin.left},${ctxTop})`);
+
+    // Separator
+    gCtx.append('line')
+      .attr('x1', 0).attr('x2', innerW)
+      .attr('y1', -6).attr('y2', -6)
+      .attr('stroke', '#1e2228');
+
+    // Mini lines
+    gCtx.selectAll('.ctx-line')
+      .data(series)
+      .join('path')
+      .attr('class', 'ctx-line')
+      .attr('fill', 'none')
+      .attr('stroke', s => provColor[s.provincia])
+      .attr('stroke-width', 1).attr('opacity', 0.4)
+      .attr('d', s => lineCtx(s[metrica]));
+
+    // Context x axis
+    gCtx.append('g')
+      .attr('transform', `translate(0,${ctxH})`)
+      .call(d3.axisBottom(xCtx).ticks(d3.timeMonth.every(2)).tickFormat(d3.timeFormat('%b %y')))
+      .call(g => {
+        g.select('.domain').attr('stroke', '#1e2228');
+        g.selectAll('.tick line').attr('stroke', '#1e2228');
+        g.selectAll('.tick text').attr('fill', '#64748b').attr('font-size', '10px');
+      });
+
+    // Brush
+    const brush = d3.brushX()
+      .extent([[0, 0], [innerW, ctxH]])
+      .on('brush end', function({ selection }) {
+        xFocus.domain(selection ? selection.map(xCtx.invert) : xFull.domain());
+        gXAxis.call(xAxisFocus.scale(xFocus));
+        paths.attr('d', s => lineFocus(s[metrica]));
+        dots.attr('opacity', 0);
+        hideTooltip();
+      });
+
+    gCtx.append('g').attr('class', 'brush').call(brush)
+      .call(brush.move, [0, innerW]);
+
+    // Legend
+    const legendEl = document.getElementById('line-legend');
+    legendEl.innerHTML = '';
+    for (const s of series) {
+      const item = document.createElement('div');
+      item.className = 'legend-item' + (hiddenProvs.has(s.provincia) ? ' dimmed' : '');
+      item.innerHTML = `<div class="legend-dot" style="background:${provColor[s.provincia]}"></div>${s.provincia}`;
+      item.addEventListener('click', () => {
+        if (hiddenProvs.has(s.provincia)) {
+          hiddenProvs.delete(s.provincia);
+          item.classList.remove('dimmed');
+        } else {
+          hiddenProvs.add(s.provincia);
+          item.classList.add('dimmed');
+        }
+        paths.attr('opacity', s2 => hiddenProvs.has(s2.provincia) ? 0.03 : 0.82);
+      });
+      legendEl.appendChild(item);
     }
+  }
 
-    // ── Load data ──────────────────────────────────────────────────────────
-    async function loadData() {
-      try {
-        const [geoRes, apiRes] = await Promise.all([
-          fetch(GEO_URL),
-          fetch(API_URL),
-        ]);
-        if (!geoRes.ok || !apiRes.ok) throw new Error('Error en la respuesta del servidor');
+  // ── Load data ──────────────────────────────────────────────────────────
+  async function loadData() {
+    try {
+      const [geoRes, apiRes] = await Promise.all([
+        fetch(GEO_URL),
+        fetch(API_URL),
+      ]);
+      if (!geoRes.ok || !apiRes.ok) throw new Error('Error en la respuesta del servidor');
 
-        geoData = await geoRes.json();
-        const apiJson = await apiRes.json();
+      geoData = await geoRes.json();
+      const apiJson = await apiRes.json();
 
-        rawData = apiJson.data.provinces.flatMap(p =>
-          p.games.map(g => ({ provincia: p.provincia, ...g }))
-        );
+      rawData = apiJson.data.provinces.flatMap(p =>
+        p.games.map(g => ({ provincia: p.provincia, ...g }))
+      );
 
-        // Populate game dropdown dynamically from actual data
-        const games = [...new Set(rawData.map(d => d.juego))].sort();
-        games.forEach(game => {
-          const opt = document.createElement('option');
-          opt.value = game;
-          opt.textContent = game;
-          selJuego.appendChild(opt);
-        });
+      const games = [...new Set(rawData.map(d => d.juego))].sort();
+      games.forEach(game => {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = game;
+        selJuego.appendChild(opt);
+      });
 
-        document.getElementById('map-loader').style.display = 'none';
-        renderMap();
-        renderPie();
-      } catch (err) {
-        const loader = document.getElementById('map-loader');
-        loader.innerHTML = '<span style="color:#ef4444;font-size:0.88rem">⚠ Error al cargar los datos</span>';
-        console.error(err);
-      }
-    }
-
-    // ── Event listeners ────────────────────────────────────────────────────
-    selJuego.addEventListener('change', () => {
-      pinnedProvince = null;
-      explodedIdx    = null;
-      hoveredProvince = null;
+      document.getElementById('map-loader').style.display = 'none';
       renderMap();
       renderPie();
-    });
+    } catch (err) {
+      document.getElementById('map-loader').innerHTML =
+        '<span style="color:#ef4444;font-size:0.88rem">⚠ Error al cargar los datos</span>';
+      console.error(err);
+    }
+  }
 
-    selMetrica.addEventListener('change', () => {
-      renderMap();
-      renderPie();
-    });
+  // ── Event listeners ────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-btn').forEach(btn =>
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab))
+  );
 
-    window.addEventListener('resize', () => {
-      if (rawData.length) { renderMap(); renderPie(); }
-    });
+  selJuego.addEventListener('change', () => {
+    pinnedProvince = null; explodedIdx = null; hoveredProvince = null;
+    lineRendered = false;
+    renderMap(); renderPie();
+    const activeTab = document.querySelector('.tab-panel.active').id;
+    if (activeTab === 'tab-line') renderTendencia();
+  });
 
-    loadData();
+  selMetrica.addEventListener('change', () => {
+    renderMap(); renderPie();
+    const activeTab = document.querySelector('.tab-panel.active').id;
+    if (activeTab === 'tab-line' && lineRendered) {
+      const juego = getJuego();
+      if (temporalCache[juego]) drawLineChart(temporalCache[juego], getMetrica());
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (!rawData.length) return;
+    renderMap(); renderPie();
+    const activeTab = document.querySelector('.tab-panel.active').id;
+    if (activeTab === 'tab-line' && lineRendered) {
+      const juego = getJuego();
+      if (temporalCache[juego]) drawLineChart(temporalCache[juego], getMetrica());
+    }
+  });
+
+  // Keyboard: 1 = Mapa, 2 = Tendencia
+  window.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.key >= '1' && e.key <= String(TAB_ORDER.length)) {
+      switchTab(TAB_ORDER[parseInt(e.key) - 1]);
+    }
+  });
+
+  loadData();
   </script>
 </body>
 </html>
