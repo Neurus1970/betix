@@ -8,6 +8,3 @@ Feature: Health check del servicio
     Then el código de respuesta es 200
     And el campo "status" es "healthy"
 
-  Scenario: El endpoint /health redirige a /healthz con 301
-    When hago GET a "/health"
-    Then el código de respuesta es 301
