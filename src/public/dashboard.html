@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Betix · Dashboard</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3-sankey@0.12.3/dist/d3-sankey.min.js"></script>
+  <style>
+    /* ── Design tokens (Solarized Dark inspired) ──────────────────────── */
+    :root {
+      --bg:            #0d1117;
+      --surface:       #161b22;
+      --surface-hover: #1c2128;
+      --border:        #21262d;
+      --text:          #c9d1d9;
+      --muted:         #8b949e;
+      --accent:        #56d364;
+      --accent-blue:   #388bfd;
+      --accent-orange: #e3b341;
+      --accent-red:    #f85149;
+      --accent-purple: #a371f7;
+      --accent-cyan:   #39d4d8;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+    }
+
+    /* ── Reset ────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px 16px 48px;
+    }
+
+    /* ── Header ───────────────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; }
+
+    .brand-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--accent);
+      box-shadow: 0 0 8px var(--accent);
+    }
+
+    h1 { font-size: 1.4rem; font-weight: 700; color: #f0f6fc; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* ── Select / Filters ─────────────────────────────────────────────── */
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+
+    .filter-group label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    select {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 7px 12px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      outline: none;
+      transition: border-color .2s;
+      min-width: 175px;
+    }
+    select:hover, select:focus { border-color: var(--accent); }
+
+    .btn-reset {
+      margin-top: 18px;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: var(--radius-sm);
+      padding: 7px 14px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: border-color .2s, color .2s;
+    }
+    .btn-reset:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── KPI Bar ──────────────────────────────────────────────────────── */
+    .kpi-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .kpi-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .kpi-label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .kpi-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #f0f6fc;
+      letter-spacing: -0.02em;
+    }
+
+    .kpi-card.positive .kpi-value { color: var(--accent); }
+    .kpi-card.info     .kpi-value { color: var(--accent-blue); }
+    .kpi-card.warning  .kpi-value { color: var(--accent-orange); }
+
+    /* ── Tabs ─────────────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      padding: 10px 18px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: color .2s, border-color .2s;
+      margin-bottom: -1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tab-btn:hover { color: var(--text); }
+
+    .tab-btn.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-btn .kbd {
+      font-size: 0.65rem;
+      background: var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      color: var(--muted);
+    }
+
+    /* ── Tab panels ───────────────────────────────────────────────────── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Chart containers ─────────────────────────────────────────────── */
+    .charts-row {
+      display: flex;
+      gap: 16px;
+      align-items: flex-start;
+    }
+
+    .chart-box {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chart-box.full { flex: none; width: 100%; }
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chart-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .chart-subtitle {
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    svg.chart-svg { width: 100%; display: block; }
+
+    /* ── Map ──────────────────────────────────────────────────────────── */
+    .province {
+      stroke: var(--bg);
+      stroke-width: 0.5;
+      transition: fill .35s ease, opacity .3s ease;
+      cursor: pointer;
+    }
+    .province:hover { stroke: var(--accent); stroke-width: 1.5; }
+    .province.highlighted { stroke: var(--accent); stroke-width: 2; }
+    .province.dimmed { opacity: 0.15; }
+
+    .color-legend {
+      padding: 8px 18px 14px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.72rem;
+      color: var(--muted);
+    }
+
+    .legend-gradient {
+      flex: 1;
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(to right, #1a2a3a, var(--accent));
+    }
+
+    /* ── Pie ──────────────────────────────────────────────────────────── */
+    .pie-title {
+      font-size: 0.78rem;
+      text-align: center;
+      color: var(--accent);
+      padding: 6px 18px 2px;
+      font-style: italic;
+      min-height: 24px;
+    }
+
+    .pie-legend { padding: 4px 18px 14px; }
+
+    .pie-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin-bottom: 3px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .pie-legend-dot {
+      width: 10px; height: 10px;
+      border-radius: 3px;
+      flex-shrink: 0;
+    }
+
+    /* ── Sunburst ─────────────────────────────────────────────────────── */
+    .sunburst-wrap {
+      display: flex;
+      justify-content: center;
+      padding: 12px;
+    }
+
+    /* ── Sankey ───────────────────────────────────────────────────────── */
+    .sankey-wrap { padding: 12px 8px; }
+
+    .s-link { fill: none; cursor: default; }
+    .s-node rect { cursor: pointer; }
+    .s-node text { pointer-events: none; }
+
+    /* ── Table ────────────────────────────────────────────────────────── */
+    .table-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+
+    .search-input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 7px 12px;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color .2s;
+      width: 220px;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--muted); }
+
+    .table-meta {
+      font-size: 0.78rem;
+      color: var(--muted);
+      margin-left: auto;
+    }
+
+    .btn-export {
+      background: transparent;
+      border: 1px solid var(--accent-blue);
+      color: var(--accent-blue);
+      border-radius: var(--radius-sm);
+      padding: 7px 14px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    .btn-export:hover { background: var(--accent-blue); color: var(--bg); }
+
+    .table-wrapper { overflow-x: auto; }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    thead th {
+      padding: 10px 16px;
+      text-align: left;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      position: sticky;
+      top: 0;
+      background: var(--surface);
+    }
+
+    thead th:hover { color: var(--text); }
+    thead th.sorted { color: var(--accent); }
+    thead th .sort-icon { margin-left: 4px; opacity: 0.5; }
+    thead th.sorted .sort-icon { opacity: 1; }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    tbody tr:hover { background: var(--surface-hover); }
+    tbody tr.top-row { background: rgba(86,211,100,0.05); }
+
+    td { padding: 9px 16px; }
+
+    td.num { text-align: right; font-variant-numeric: tabular-nums; }
+    td.pos { color: var(--accent); }
+    td.neg { color: var(--accent-red); }
+    td.warn { color: var(--accent-orange); }
+
+    /* ── Tooltip ──────────────────────────────────────────────────────── */
+    #tooltip {
+      position: fixed;
+      background: #0d1117;
+      border: 1px solid var(--accent);
+      border-radius: var(--radius-sm);
+      padding: 10px 14px;
+      font-size: 0.82rem;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity .15s;
+      z-index: 300;
+      line-height: 1.7;
+      max-width: 240px;
+    }
+    #tooltip strong { color: var(--accent); display: block; margin-bottom: 2px; }
+
+    /* ── Loader ───────────────────────────────────────────────────────── */
+    .loader {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      inset: 0;
+      background: var(--surface);
+      border-radius: var(--radius-lg);
+      z-index: 10;
+    }
+
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Responsive ───────────────────────────────────────────────────── */
+    @media (max-width: 900px) {
+      .kpi-bar { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 1.1rem; }
+      .kpi-bar { grid-template-columns: repeat(2, 1fr); }
+      .charts-row { flex-direction: column; }
+      .header-right { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ────────────────────────────────────────────────────────── -->
+  <header>
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <h1>Betix · Dashboard</h1>
+    </div>
+    <div class="header-right">
+      <div class="filter-group">
+        <label for="sel-juego">Juego</label>
+        <select id="sel-juego">
+          <option value="Todos">Todos los juegos</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label for="sel-metrica">Métrica</label>
+        <select id="sel-metrica">
+          <option value="cantidad">Cantidad de apuestas</option>
+          <option value="importe">Importe total ($)</option>
+          <option value="beneficio">Beneficio neto ($)</option>
+        </select>
+      </div>
+      <button class="btn-reset" id="btn-reset" title="Restablecer filtros (Esc)">↺ Reset</button>
+    </div>
+  </header>
+
+  <!-- ── KPI Bar ────────────────────────────────────────────────────────── -->
+  <div class="kpi-bar">
+    <div class="kpi-card">
+      <span class="kpi-label">Total apuestas</span>
+      <span class="kpi-value" id="kpi-cantidad">—</span>
+    </div>
+    <div class="kpi-card info">
+      <span class="kpi-label">Importe total</span>
+      <span class="kpi-value" id="kpi-importe">—</span>
+    </div>
+    <div class="kpi-card positive">
+      <span class="kpi-label">Beneficio neto</span>
+      <span class="kpi-value" id="kpi-beneficio">—</span>
+    </div>
+    <div class="kpi-card warning">
+      <span class="kpi-label">Margen %</span>
+      <span class="kpi-value" id="kpi-margen">—</span>
+    </div>
+  </div>
+
+  <!-- ── Tabs ──────────────────────────────────────────────────────────── -->
+  <nav class="tabs" role="tablist">
+    <button class="tab-btn active" data-tab="tab-map"      title="Tecla 1">Mapa &amp; Torta <span class="kbd">1</span></button>
+    <button class="tab-btn"        data-tab="tab-sunburst" title="Tecla 2">Sunburst        <span class="kbd">2</span></button>
+    <button class="tab-btn"        data-tab="tab-sankey"   title="Tecla 3">Sankey          <span class="kbd">3</span></button>
+    <button class="tab-btn"        data-tab="tab-table"    title="Tecla 4">Tabla           <span class="kbd">4</span></button>
+  </nav>
+
+  <!-- ── Tab: Mapa + Torta ─────────────────────────────────────────────── -->
+  <div class="tab-panel active" id="tab-map">
+    <div class="charts-row">
+      <div class="chart-box" id="map-box">
+        <div class="chart-header">
+          <span class="chart-title">Mapa por provincia</span>
+          <span class="chart-subtitle" id="map-subtitle">Hover para filtrar torta</span>
+        </div>
+        <div class="loader" id="map-loader"><div class="spinner"></div></div>
+        <svg class="chart-svg" id="map-svg"></svg>
+        <div class="color-legend">
+          <span>mín</span>
+          <div class="legend-gradient"></div>
+          <span>máx</span>
+        </div>
+      </div>
+
+      <div class="chart-box" id="pie-box">
+        <div class="chart-header">
+          <span class="chart-title">Distribución</span>
+        </div>
+        <p class="pie-title" id="pie-title">Todas las provincias</p>
+        <svg class="chart-svg" id="pie-svg"></svg>
+        <div class="pie-legend" id="pie-legend"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tab: Sunburst ─────────────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-sunburst">
+    <div class="chart-box full">
+      <div class="chart-header">
+        <span class="chart-title">Sunburst — Jerarquía provincia › juego</span>
+        <span class="chart-subtitle">Tamaño proporcional a la métrica seleccionada</span>
+      </div>
+      <div class="sunburst-wrap">
+        <svg class="chart-svg" id="sunburst-svg" style="max-width:560px;max-height:560px"></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tab: Sankey ───────────────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-sankey">
+    <div class="chart-box full">
+      <div class="chart-header">
+        <span class="chart-title">Sankey — Flujo provincia → juego</span>
+        <span class="chart-subtitle">Ancho del flujo proporcional a la métrica</span>
+      </div>
+      <div class="sankey-wrap">
+        <svg class="chart-svg" id="sankey-svg"></svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Tab: Tabla ────────────────────────────────────────────────────── -->
+  <div class="tab-panel" id="tab-table">
+    <div class="chart-box full">
+      <div class="chart-header">
+        <span class="chart-title">Tabla de datos</span>
+      </div>
+      <div class="table-controls">
+        <input class="search-input" id="table-search" type="text" placeholder="Buscar provincia o juego…" />
+        <span class="table-meta" id="table-count"></span>
+        <button class="btn-export" id="btn-export">↓ Exportar CSV</button>
+      </div>
+      <div class="table-wrapper">
+        <table id="data-table">
+          <thead>
+            <tr>
+              <th data-col="provincia">Provincia <span class="sort-icon">↕</span></th>
+              <th data-col="juego">Juego <span class="sort-icon">↕</span></th>
+              <th data-col="cantidad" class="num sorted">Cantidad <span class="sort-icon">↓</span></th>
+              <th data-col="importe"  class="num">Importe <span class="sort-icon">↕</span></th>
+              <th data-col="beneficio" class="num">Beneficio <span class="sort-icon">↕</span></th>
+              <th data-col="margen"   class="num">Margen % <span class="sort-icon">↕</span></th>
+            </tr>
+          </thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div id="tooltip"></div>
+
+  <script>
+  'use strict';
+
+  /* ── Constants ─────────────────────────────────────────────────────── */
+  const GEO_URL = '/argentina.geojson';
+  const API_URL = '/api/datos/geodata';
+
+  const PALETTE = [
+    '#56d364', '#388bfd', '#e3b341', '#f85149',
+    '#a371f7', '#39d4d8', '#ff8c00', '#ff69b4',
+    '#90ee90', '#87ceeb',
+  ];
+
+  const METRIC_LABELS = {
+    cantidad:  'Cantidad',
+    importe:   'Importe ($)',
+    beneficio: 'Beneficio ($)',
+  };
+
+  /* ── State ─────────────────────────────────────────────────────────── */
+  let rawData = [], geoData = null;
+  let hoveredProvince = null, pinnedProvince = null, explodedIdx = null;
+  let sortCol = 'importe', sortDir = 'desc', searchText = '';
+  let rendered = { sunburst: false, sankey: false };
+
+  /* ── DOM refs ──────────────────────────────────────────────────────── */
+  const selJuego   = document.getElementById('sel-juego');
+  const selMetrica = document.getElementById('sel-metrica');
+  const tooltip    = document.getElementById('tooltip');
+
+  /* ── Helpers ───────────────────────────────────────────────────────── */
+  const getJuego   = () => selJuego.value;
+  const getMetrica = () => selMetrica.value;
+
+  const fmt = (metrica, v) =>
+    metrica === 'cantidad'
+      ? (v || 0).toLocaleString('es-AR')
+      : '$' + (v || 0).toLocaleString('es-AR');
+
+  const fmtShort = v => {
+    if (v >= 1e6) return '$' + (v / 1e6).toFixed(1) + 'M';
+    if (v >= 1e3) return '$' + (v / 1e3).toFixed(0) + 'K';
+    return '$' + v.toLocaleString('es-AR');
+  };
+
+  function showTooltip(html, event) {
+    tooltip.innerHTML = html;
+    tooltip.style.opacity = '1';
+    tooltip.style.left = (event.clientX + 16) + 'px';
+    tooltip.style.top  = (event.clientY - 10) + 'px';
+  }
+  function moveTooltip(event) {
+    tooltip.style.left = (event.clientX + 16) + 'px';
+    tooltip.style.top  = (event.clientY - 10) + 'px';
+  }
+  function hideTooltip() { tooltip.style.opacity = '0'; }
+
+  function aggregateByProvince(juego, metrica) {
+    const filtered = juego === 'Todos' ? rawData : rawData.filter(d => d.juego === juego);
+    const map = {};
+    for (const d of filtered) {
+      map[d.provincia] = (map[d.provincia] || 0) + (d[metrica] || 0);
+    }
+    return map;
+  }
+
+  function getProvinceGames(provincia, metrica) {
+    const juego = getJuego();
+    return rawData
+      .filter(d => d.provincia === provincia && (juego === 'Todos' || d.juego === juego))
+      .map(d => ({ label: d.juego, value: d[metrica] || 0 }))
+      .filter(d => d.value > 0)
+      .sort((a, b) => b.value - a.value);
+  }
+
+  /* ── KPI ───────────────────────────────────────────────────────────── */
+  function updateKPIs() {
+    const juego   = getJuego();
+    const filtered = juego === 'Todos' ? rawData : rawData.filter(d => d.juego === juego);
+
+    const totalCantidad  = filtered.reduce((s, d) => s + (d.cantidad  || 0), 0);
+    const totalImporte   = filtered.reduce((s, d) => s + (d.importe   || 0), 0);
+    const totalBeneficio = filtered.reduce((s, d) => s + (d.beneficio || 0), 0);
+    const margen = totalImporte > 0 ? ((totalBeneficio / totalImporte) * 100).toFixed(1) : '0.0';
+
+    document.getElementById('kpi-cantidad').textContent  = totalCantidad.toLocaleString('es-AR');
+    document.getElementById('kpi-importe').textContent   = fmtShort(totalImporte);
+    document.getElementById('kpi-beneficio').textContent = fmtShort(totalBeneficio);
+    document.getElementById('kpi-margen').textContent    = margen + '%';
+  }
+
+  /* ── Tabs ──────────────────────────────────────────────────────────── */
+  const TAB_ORDER = ['tab-map', 'tab-sunburst', 'tab-sankey', 'tab-table'];
+
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-btn').forEach(b => {
+      b.classList.toggle('active', b.dataset.tab === tabId);
+    });
+    document.querySelectorAll('.tab-panel').forEach(p => {
+      p.classList.toggle('active', p.id === tabId);
+    });
+    // Lazy-render charts on first visit
+    if (rawData.length) {
+      if (tabId === 'tab-sunburst' && !rendered.sunburst) { renderSunburst(); rendered.sunburst = true; }
+      if (tabId === 'tab-sankey'   && !rendered.sankey)   { renderSankey();   rendered.sankey   = true; }
+      if (tabId === 'tab-table')   renderTable();
+    }
+    document.title = `Betix · ${document.querySelector(`[data-tab="${tabId}"]`).textContent.trim()}`;
+  }
+
+  function rerenderAll() {
+    rendered = { sunburst: false, sankey: false };
+    updateKPIs();
+    renderMap();
+    renderPie();
+    const activeTab = document.querySelector('.tab-panel.active').id;
+    if (activeTab === 'tab-sunburst') { renderSunburst(); rendered.sunburst = true; }
+    if (activeTab === 'tab-sankey')   { renderSankey();   rendered.sankey   = true; }
+    if (activeTab === 'tab-table')    renderTable();
+  }
+
+  /* ── Map ───────────────────────────────────────────────────────────── */
+  const mapSvg = d3.select('#map-svg');
+
+  function renderMap() {
+    const juego   = getJuego();
+    const metrica = getMetrica();
+    const values  = aggregateByProvince(juego, metrica);
+    const allVals = Object.values(values);
+    const maxVal  = allVals.length ? d3.max(allVals) : 1;
+
+    const colorScale = d3.scaleSequential()
+      .domain([0, maxVal])
+      .interpolator(d3.interpolate('#1a2a3a', '#56d364'));
+
+    const box = document.getElementById('map-box');
+    const w   = box.clientWidth || 520;
+    const h   = w * 1.28;
+
+    mapSvg.attr('viewBox', `0 0 ${w} ${h}`).attr('preserveAspectRatio', 'xMidYMid meet');
+    mapSvg.selectAll('g').remove();
+    const g = mapSvg.append('g');
+
+    const projection = d3.geoMercator()
+      .center([-65, -38])
+      .scale(w * 1.4)
+      .translate([w / 2, h / 2]);
+
+    const pathGen = d3.geoPath().projection(projection);
+
+    g.selectAll('.province')
+      .data(geoData.features)
+      .join('path')
+      .attr('class', d => {
+        const name = d.properties.NAME_1;
+        let cls = 'province';
+        if (pinnedProvince && name !== pinnedProvince) cls += ' dimmed';
+        if (name === hoveredProvince) cls += ' highlighted';
+        return cls;
+      })
+      .attr('d', pathGen)
+      .attr('fill', d => {
+        const val = values[d.properties.NAME_1];
+        return val != null ? colorScale(val) : '#1a2a3a';
+      })
+      .on('mouseenter', function(event, d) {
+        const name = d.properties.NAME_1;
+        hoveredProvince = name;
+        d3.select(this).classed('highlighted', true);
+        renderPie();
+        const val = values[name];
+        showTooltip(
+          val != null
+            ? `<strong>${name}</strong>${METRIC_LABELS[metrica]}: ${fmt(metrica, val)}`
+            : `<strong>${name}</strong><span style="color:var(--muted)">Sin datos</span>`,
+          event
+        );
+      })
+      .on('mousemove', moveTooltip)
+      .on('mouseleave', function() {
+        hoveredProvince = null;
+        d3.select(this).classed('highlighted', false);
+        renderPie();
+        hideTooltip();
+      });
+  }
+
+  /* ── Pie ───────────────────────────────────────────────────────────── */
+  const pieSvg   = d3.select('#pie-svg');
+  const pieTitle = document.getElementById('pie-title');
+  const pieLeg   = document.getElementById('pie-legend');
+
+  function renderPie() {
+    const metrica = getMetrica();
+    const juego   = getJuego();
+    let pieData, titleText;
+
+    if (hoveredProvince) {
+      pieData   = getProvinceGames(hoveredProvince, metrica);
+      titleText = hoveredProvince;
+    } else {
+      const values = aggregateByProvince(juego, metrica);
+      pieData = Object.entries(values)
+        .map(([label, value]) => ({ label, value }))
+        .filter(d => d.value > 0)
+        .sort((a, b) => b.value - a.value);
+      titleText = juego === 'Todos' ? 'Todas las provincias' : juego;
+    }
+
+    pieTitle.textContent = titleText;
+
+    const box    = document.getElementById('pie-box');
+    const w      = box.clientWidth || 480;
+    const h      = Math.min(w * 0.72, 320);
+    const radius = Math.min(w, h) / 2 - 20;
+    const cx = w / 2, cy = h / 2;
+
+    pieSvg.attr('viewBox', `0 0 ${w} ${h}`).attr('preserveAspectRatio', 'xMidYMid meet');
+    pieSvg.selectAll('*').remove();
+
+    if (!pieData.length) {
+      pieSvg.append('text')
+        .attr('x', w / 2).attr('y', h / 2)
+        .attr('text-anchor', 'middle')
+        .attr('fill', 'var(--muted)').attr('font-size', '0.85rem')
+        .text('No hay datos para esta combinación');
+      pieLeg.innerHTML = '';
+      return;
+    }
+
+    const colorMap = {};
+    pieData.forEach((d, i) => { colorMap[d.label] = PALETTE[i % PALETTE.length]; });
+
+    const pie    = d3.pie().value(d => d.value).sort(null);
+    const arc    = d3.arc().innerRadius(radius * 0.4).outerRadius(radius);
+    const arcBig = d3.arc().innerRadius(radius * 0.4).outerRadius(radius + 12);
+
+    const g     = pieSvg.append('g').attr('transform', `translate(${cx},${cy})`);
+    const total = pieData.reduce((s, d) => s + d.value, 0);
+
+    // Center total label
+    g.append('text').attr('text-anchor', 'middle').attr('dy', '-0.3em')
+      .attr('fill', 'var(--muted)').attr('font-size', '0.7rem').text(METRIC_LABELS[metrica]);
+    g.append('text').attr('text-anchor', 'middle').attr('dy', '1em')
+      .attr('fill', '#f0f6fc').attr('font-size', '0.88rem').attr('font-weight', '600')
+      .text(fmt(metrica, total));
+
+    g.selectAll('.arc')
+      .data(pie(pieData))
+      .join('g').attr('class', 'arc')
+      .each(function(d, i) {
+        const node = d3.select(this);
+        let tx = 0, ty = 0;
+        if (i === explodedIdx && !hoveredProvince) {
+          const mid = (d.startAngle + d.endAngle) / 2;
+          tx = Math.cos(mid - Math.PI / 2) * 12;
+          ty = Math.sin(mid - Math.PI / 2) * 12;
+        }
+        node.append('path')
+          .attr('d', arc)
+          .attr('fill', colorMap[d.data.label])
+          .attr('stroke', 'var(--bg)')
+          .attr('stroke-width', 1.5)
+          .attr('transform', `translate(${tx},${ty})`)
+          .on('mouseenter', function(event) {
+            d3.select(this).transition().duration(160).attr('d', arcBig);
+            const pct = total > 0 ? ((d.data.value / total) * 100).toFixed(1) : 0;
+            showTooltip(
+              `<strong>${d.data.label}</strong>${METRIC_LABELS[metrica]}: ${fmt(metrica, d.data.value)}<br/><span style="color:var(--muted)">${pct}% del total</span>`,
+              event
+            );
+          })
+          .on('mousemove', moveTooltip)
+          .on('mouseleave', function() {
+            d3.select(this).transition().duration(160).attr('d', arc);
+            hideTooltip();
+          })
+          .on('click', function() {
+            if (hoveredProvince) return;
+            if (pinnedProvince === d.data.label && explodedIdx === i) {
+              pinnedProvince = null; explodedIdx = null;
+            } else {
+              pinnedProvince = d.data.label; explodedIdx = i;
+            }
+            renderMap(); renderPie();
+          });
+      });
+
+    pieLeg.innerHTML = '';
+    pieData.forEach(d => {
+      const pct  = total > 0 ? ((d.value / total) * 100).toFixed(1) : 0;
+      const item = document.createElement('div');
+      item.className = 'pie-legend-item';
+      item.title = `${d.label}: ${fmt(metrica, d.value)} (${pct}%)`;
+      item.innerHTML = `<div class="pie-legend-dot" style="background:${colorMap[d.label]}"></div>
+        <span>${d.label}: ${fmt(metrica, d.value)} <span style="opacity:.6">(${pct}%)</span></span>`;
+      pieLeg.appendChild(item);
+    });
+  }
+
+  /* ── Sunburst ──────────────────────────────────────────────────────── */
+  function renderSunburst() {
+    const metrica = getMetrica();
+    const juego   = getJuego();
+    const filtered = juego === 'Todos' ? rawData : rawData.filter(d => d.juego === juego);
+
+    const provMap = {};
+    for (const d of filtered) {
+      if (!provMap[d.provincia]) provMap[d.provincia] = [];
+      provMap[d.provincia].push({ name: d.juego, value: d[metrica] || 0 });
+    }
+
+    const hierarchyData = {
+      name: 'Total',
+      children: Object.entries(provMap).map(([p, games]) => ({ name: p, children: games })),
+    };
+
+    const svg = d3.select('#sunburst-svg');
+    const size = Math.min(
+      document.getElementById('tab-sunburst').clientWidth - 48,
+      540
+    );
+    const radius = size / 2;
+
+    svg.attr('viewBox', `0 0 ${size} ${size}`)
+       .attr('width', size).attr('height', size);
+    svg.selectAll('*').remove();
+
+    const root = d3.hierarchy(hierarchyData)
+      .sum(d => d.value)
+      .sort((a, b) => b.value - a.value);
+
+    d3.partition().size([2 * Math.PI, radius])(root);
+
+    const arc = d3.arc()
+      .startAngle(d => d.x0)
+      .endAngle(d => d.x1)
+      .padAngle(d => Math.min((d.x1 - d.x0) / 2, 0.005))
+      .padRadius(radius / 2)
+      .innerRadius(d => d.y0)
+      .outerRadius(d => Math.max(d.y0, d.y1 - 1));
+
+    // Province → fixed color mapping
+    const provinceNames = [...new Set(rawData.map(d => d.provincia))].sort();
+    const provColor = Object.fromEntries(
+      provinceNames.map((p, i) => [p, PALETTE[i % PALETTE.length]])
+    );
+
+    function getColor(d) {
+      if (d.depth === 0) return 'var(--border)';
+      if (d.depth === 1) return provColor[d.data.name] || PALETTE[0];
+      const base = d3.color(provColor[d.parent.data.name] || PALETTE[0]);
+      return base ? base.brighter(0.6).toString() : PALETTE[0];
+    }
+
+    const g = svg.append('g').attr('transform', `translate(${radius},${radius})`);
+
+    g.selectAll('path')
+      .data(root.descendants().filter(d => d.depth > 0))
+      .join('path')
+      .attr('d', arc)
+      .attr('fill', d => getColor(d))
+      .attr('opacity', 0.88)
+      .attr('stroke', 'var(--bg)')
+      .attr('stroke-width', 0.5)
+      .on('mouseenter', function(event, d) {
+        d3.select(this).attr('opacity', 1);
+        const path = d.ancestors().map(a => a.data.name).reverse().slice(1).join(' › ');
+        const pct  = root.value > 0 ? ((d.value / root.value) * 100).toFixed(1) : 0;
+        showTooltip(
+          `<strong>${path}</strong>${METRIC_LABELS[metrica]}: ${fmt(metrica, d.value)}<br><span style="color:var(--muted)">${pct}% del total</span>`,
+          event
+        );
+      })
+      .on('mousemove', moveTooltip)
+      .on('mouseleave', function() { d3.select(this).attr('opacity', 0.88); hideTooltip(); });
+
+    // Center label
+    g.append('text').attr('text-anchor', 'middle').attr('dy', '-0.4em')
+      .attr('fill', 'var(--muted)').attr('font-size', '0.72rem').text(METRIC_LABELS[metrica]);
+    g.append('text').attr('text-anchor', 'middle').attr('dy', '0.9em')
+      .attr('fill', '#f0f6fc').attr('font-size', '0.9rem').attr('font-weight', '700')
+      .text(fmt(metrica, root.value));
+  }
+
+  /* ── Sankey ────────────────────────────────────────────────────────── */
+  function renderSankey() {
+    const metrica = getMetrica();
+    const juego   = getJuego();
+    const filtered = juego === 'Todos' ? rawData : rawData.filter(d => d.juego === juego);
+
+    if (!filtered.length) return;
+
+    const provinces = [...new Set(filtered.map(d => d.provincia))].sort();
+    const games     = [...new Set(filtered.map(d => d.juego))].sort();
+
+    const nodes = [
+      ...provinces.map(p => ({ name: p, type: 'province' })),
+      ...games.map(g     => ({ name: g, type: 'game' })),
+    ];
+    const nodeIdx = Object.fromEntries(nodes.map((n, i) => [n.name, i]));
+
+    // Aggregate links (province → game)
+    const linkMap = {};
+    for (const d of filtered) {
+      const key = `${d.provincia}||${d.juego}`;
+      if (!linkMap[key]) linkMap[key] = { source: nodeIdx[d.provincia], target: nodeIdx[d.juego], value: 0 };
+      linkMap[key].value += d[metrica] || 0;
+    }
+    const links = Object.values(linkMap).filter(l => l.value > 0);
+
+    const svg  = d3.select('#sankey-svg');
+    const box  = document.getElementById('sankey-box') || document.getElementById('tab-sankey');
+    const w    = (box.clientWidth || 800) - 16;
+    const h    = Math.max(340, provinces.length * 36);
+
+    svg.attr('viewBox', `0 0 ${w} ${h}`).attr('width', w).attr('height', h);
+    svg.selectAll('*').remove();
+
+    const sankey = d3.sankey()
+      .nodeWidth(18)
+      .nodePadding(12)
+      .extent([[120, 12], [w - 120, h - 12]]);
+
+    const { nodes: sNodes, links: sLinks } = sankey({
+      nodes: nodes.map(d => Object.assign({}, d)),
+      links: links.map(d => Object.assign({}, d)),
+    });
+
+    const provinceColor = Object.fromEntries(
+      provinces.map((p, i) => [p, PALETTE[i % PALETTE.length]])
+    );
+
+    // Links
+    svg.append('g').selectAll('.s-link')
+      .data(sLinks)
+      .join('path')
+      .attr('class', 's-link')
+      .attr('d', d3.sankeyLinkHorizontal())
+      .attr('stroke', d => provinceColor[d.source.name] || PALETTE[0])
+      .attr('stroke-width', d => Math.max(1, d.width))
+      .attr('opacity', 0.3)
+      .on('mouseenter', function(event, d) {
+        d3.select(this).attr('opacity', 0.7);
+        showTooltip(
+          `<strong>${d.source.name} → ${d.target.name}</strong>${METRIC_LABELS[metrica]}: ${fmt(metrica, d.value)}`,
+          event
+        );
+      })
+      .on('mousemove', moveTooltip)
+      .on('mouseleave', function() { d3.select(this).attr('opacity', 0.3); hideTooltip(); });
+
+    // Nodes
+    const nodeG = svg.append('g').selectAll('.s-node')
+      .data(sNodes)
+      .join('g').attr('class', 's-node')
+      .attr('transform', d => `translate(${d.x0},${d.y0})`);
+
+    nodeG.append('rect')
+      .attr('width',  d => d.x1 - d.x0)
+      .attr('height', d => Math.max(1, d.y1 - d.y0))
+      .attr('fill',   d => d.type === 'province' ? (provinceColor[d.name] || PALETTE[0]) : 'var(--muted)')
+      .attr('rx', 3)
+      .attr('opacity', 0.9);
+
+    nodeG.append('text')
+      .attr('x', d => d.type === 'province' ? -8 : (d.x1 - d.x0) + 8)
+      .attr('y', d => (d.y1 - d.y0) / 2)
+      .attr('dy', '0.35em')
+      .attr('text-anchor', d => d.type === 'province' ? 'end' : 'start')
+      .attr('fill', 'var(--text)')
+      .attr('font-size', '11px')
+      .text(d => d.name);
+  }
+
+  /* ── Table ─────────────────────────────────────────────────────────── */
+  function renderTable() {
+    const juego = getJuego();
+    let data = juego === 'Todos' ? [...rawData] : rawData.filter(d => d.juego === juego);
+
+    if (searchText) {
+      const q = searchText.toLowerCase();
+      data = data.filter(d =>
+        d.provincia.toLowerCase().includes(q) || d.juego.toLowerCase().includes(q)
+      );
+    }
+
+    // Sort
+    const isStr = sortCol === 'provincia' || sortCol === 'juego';
+    data.sort((a, b) => {
+      const va = sortCol === 'margen'
+        ? (a.importe > 0 ? a.beneficio / a.importe : 0)
+        : (a[sortCol] || 0);
+      const vb = sortCol === 'margen'
+        ? (b.importe > 0 ? b.beneficio / b.importe : 0)
+        : (b[sortCol] || 0);
+      if (isStr) {
+        const sa = String(a[sortCol] || ''), sb = String(b[sortCol] || '');
+        return sortDir === 'asc' ? sa.localeCompare(sb) : sb.localeCompare(sa);
+      }
+      return sortDir === 'asc' ? va - vb : vb - va;
+    });
+
+    // Find best beneficio for highlight
+    const bestBeneficio = data.length ? Math.max(...data.map(d => d.beneficio || 0)) : 0;
+
+    const tbody = document.getElementById('table-body');
+    tbody.innerHTML = '';
+    for (const d of data) {
+      const margen = d.importe > 0 ? ((d.beneficio / d.importe) * 100).toFixed(1) : '0.0';
+      const tr = document.createElement('tr');
+      if (d.beneficio === bestBeneficio && bestBeneficio > 0) tr.className = 'top-row';
+      tr.innerHTML = `
+        <td>${d.provincia}</td>
+        <td>${d.juego}</td>
+        <td class="num">${(d.cantidad || 0).toLocaleString('es-AR')}</td>
+        <td class="num">$${(d.importe  || 0).toLocaleString('es-AR')}</td>
+        <td class="num ${(d.beneficio || 0) >= 0 ? 'pos' : 'neg'}">$${(d.beneficio || 0).toLocaleString('es-AR')}</td>
+        <td class="num ${parseFloat(margen) >= 25 ? 'pos' : parseFloat(margen) < 15 ? 'warn' : ''}">${margen}%</td>
+      `;
+      tbody.appendChild(tr);
+    }
+    document.getElementById('table-count').textContent = `${data.length} registros`;
+
+    // Update header sort icons
+    document.querySelectorAll('#data-table thead th').forEach(th => {
+      const col = th.dataset.col;
+      th.classList.toggle('sorted', col === sortCol);
+      th.querySelector('.sort-icon').textContent =
+        col !== sortCol ? '↕' : sortDir === 'asc' ? '↑' : '↓';
+    });
+  }
+
+  function exportCSV() {
+    const juego = getJuego();
+    const data  = juego === 'Todos' ? rawData : rawData.filter(d => d.juego === juego);
+    const rows  = [['Provincia', 'Juego', 'Cantidad', 'Importe', 'Beneficio', 'Margen %']];
+    for (const d of data) {
+      const margen = d.importe > 0 ? ((d.beneficio / d.importe) * 100).toFixed(1) : '0.0';
+      rows.push([d.provincia, d.juego, d.cantidad, d.importe, d.beneficio, margen]);
+    }
+    const csv  = rows.map(r => r.join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = `betix-datos-${juego.replace(/ /g, '_')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
+  /* ── Load data ─────────────────────────────────────────────────────── */
+  async function loadData() {
+    try {
+      const [geoRes, apiRes] = await Promise.all([fetch(GEO_URL), fetch(API_URL)]);
+      if (!geoRes.ok || !apiRes.ok) throw new Error('Error en la respuesta del servidor');
+
+      geoData = await geoRes.json();
+      const apiJson = await apiRes.json();
+
+      rawData = apiJson.data.provinces.flatMap(p =>
+        p.games.map(g => ({ provincia: p.provincia, ...g }))
+      );
+
+      // Populate game dropdown
+      const games = [...new Set(rawData.map(d => d.juego))].sort();
+      for (const game of games) {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = game;
+        selJuego.appendChild(opt);
+      }
+
+      document.getElementById('map-loader').style.display = 'none';
+      updateKPIs();
+      renderMap();
+      renderPie();
+    } catch (err) {
+      document.getElementById('map-loader').innerHTML =
+        '<span style="color:var(--accent-red);font-size:.85rem">⚠ Error al cargar datos</span>';
+      console.error(err);
+    }
+  }
+
+  /* ── Event listeners ───────────────────────────────────────────────── */
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => switchTab(btn.dataset.tab));
+  });
+
+  selJuego.addEventListener('change', () => {
+    pinnedProvince = null; explodedIdx = null; hoveredProvince = null;
+    rerenderAll();
+  });
+
+  selMetrica.addEventListener('change', rerenderAll);
+
+  document.getElementById('btn-reset').addEventListener('click', () => {
+    selJuego.value = 'Todos'; selMetrica.value = 'cantidad';
+    pinnedProvince = null; explodedIdx = null; hoveredProvince = null;
+    searchText = ''; document.getElementById('table-search').value = '';
+    rerenderAll();
+  });
+
+  document.getElementById('table-search').addEventListener('input', e => {
+    searchText = e.target.value;
+    renderTable();
+  });
+
+  document.getElementById('btn-export').addEventListener('click', exportCSV);
+
+  document.querySelectorAll('#data-table thead th').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (sortCol === col) {
+        sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      } else {
+        sortCol = col;
+        sortDir = col === 'provincia' || col === 'juego' ? 'asc' : 'desc';
+      }
+      renderTable();
+    });
+  });
+
+  window.addEventListener('resize', () => {
+    if (!rawData.length) return;
+    renderMap(); renderPie();
+    const activeTab = document.querySelector('.tab-panel.active').id;
+    if (activeTab === 'tab-sunburst') renderSunburst();
+    if (activeTab === 'tab-sankey')   renderSankey();
+  });
+
+  // Keyboard shortcuts: 1-4 for tabs, Esc for reset
+  window.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+    if (e.key >= '1' && e.key <= '4') switchTab(TAB_ORDER[parseInt(e.key) - 1]);
+    if (e.key === 'Escape') {
+      pinnedProvince = null; explodedIdx = null; hoveredProvince = null;
+      renderMap(); renderPie();
+    }
+  });
+
+  loadData();
+  </script>
+</body>
+</html>
