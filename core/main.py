@@ -1,6 +1,7 @@
 import os
 from flask import Flask, jsonify, request
 from .services.geodata_service import get_geodata
+from .services.mapa_burbujas_service import get_mapa_burbujas
 from .services.proyecciones_service import calcular_proyecciones, get_provincias, get_juegos
 from .services.health_service import check_data_access
 
@@ -19,6 +20,14 @@ def health():
 @app.get("/geodata")
 def geodata():
     return jsonify({"status": "ok", "data": get_geodata()})
+
+
+@app.get("/mapa-burbujas")
+def mapa_burbujas():
+    juego       = request.args.get("juego")       or None
+    fecha_desde = request.args.get("fecha_desde") or None
+    fecha_hasta = request.args.get("fecha_hasta") or None
+    return jsonify({"status": "ok", "data": get_mapa_burbujas(juego, fecha_desde, fecha_hasta)})
 
 
 @app.get("/proyectado")

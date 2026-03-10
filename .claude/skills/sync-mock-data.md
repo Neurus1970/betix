@@ -1,40 +1,39 @@
 # Skill: Modify Mock Data
 
-Mock data exists in **two separate copies** that must always stay in sync.
+Mock data lives exclusively in `core/data/` — the single source of truth. The Node.js layer has no local copy; it proxies all data from the Python core.
 
-## Files to Edit (always both)
+## Files to Edit
 
-| Layer | Static data | Time-series data |
-|-------|------------|-----------------|
-| Node.js | `src/data/mockData.js` | `src/data/ticketsPorMes.js` |
-| Python | `core/data/mock_data.py` | `core/data/tickets_por_mes.py` |
+| File | Purpose |
+|------|---------|
+| `core/data/mock_data.py` | Static snapshot — 30 records (10 provinces × 3 games) |
+| `core/data/tickets_por_mes.py` | Time-series — 360 records (10 provinces × 3 games × 12 months) |
 
 ## Data Shapes
 
-### Static (`mockData` / `mock_data`)
-30 records — 10 provinces × 3 games:
-```
-{ id, provincia, juego, cantidad, ingresos, costo }
+### Static (`TICKETS` in `mock_data.py`)
+```python
+{"id": int, "provincia": str, "juego": str, "cantidad": int, "ingresos": int, "costo": int}
 ```
 
-### Time-series (`ticketsPorMes` / `tickets_por_mes`)
-360 records — 10 provinces × 3 games × 12 months (2025-03 to 2026-02):
-```
-{ fecha: "YYYY-MM", provincia, juego, cantidad, ingresos, costo, beneficio }
+### Time-series (`TICKETS_POR_MES` in `tickets_por_mes.py`)
+```python
+{"fecha": "YYYY-MM", "provincia": str, "juego": str, "cantidad": int, "ingresos": int, "costo": int, "beneficio": int}
 ```
 `beneficio = ingresos - costo` — always derive it, never hardcode independently.
 
+## Valid Values
+
+**Provinces (10 — Tecno Acción):**
+Salta, Santiago del Estero, Neuquén, La Pampa, Santa Cruz, La Rioja, Catamarca, Tierra del Fuego, Corrientes, Río Negro
+
+**Games (3):** Quiniela, Lotería, Raspadita
+
+Do not add new provinces or games without updating both files and the coordinate map in `core/services/geodata_service.py`.
+
 ## Checklist
 
-- [ ] Edit `src/data/` file(s)
-- [ ] Mirror the exact same change in `core/data/` file(s)
-- [ ] Run `make test` to confirm both layers still pass
-- [ ] Verify derived field `beneficio` is consistent
-
-## Provinces and Games
-
-Valid values (do not add new ones without updating both layers):
-
-**Provinces (10):** Buenos Aires, Córdoba, Santa Fe, Mendoza, Tucumán, Entre Ríos, Salta, Misiones, Chaco, Corrientes
-
-**Games (3):** Lotería, Quiniela, Raspadita
+- [ ] Edit `core/data/mock_data.py` (static records)
+- [ ] Edit `core/data/tickets_por_mes.py` (time-series records, same change)
+- [ ] Verify `beneficio = ingresos - costo` in all modified time-series rows
+- [ ] Run `make test` to confirm both `test-core` and `test-api` pass

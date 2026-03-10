@@ -6,7 +6,7 @@ Betix es un monorepo con tres microservicios (`core/`, `src/`, `frontend/`) que 
 
 ---
 
-## Mejora 1 — CI con path filters
+## Patrón 1 - CI con path filters
 
 ### Problema
 
@@ -50,7 +50,7 @@ GitHub marca como "required" los checks que aplican. Si un job no corre porque s
 
 ---
 
-## Mejora 2 — Versionado independiente por servicio
+## Patrón 2 — Versionado independiente por servicio
 
 ### Problema
 
@@ -96,7 +96,7 @@ Para builds de CI en ramas no-main, usar el SHA corto del commit como tag evita 
 
 ---
 
-## Mejora 3 — Makefile por servicio
+## Patrón 3 — Makefile por servicio
 
 ### Problema
 
