@@ -2,19 +2,10 @@ name: CI - Node.js API
 
 on:
   pull_request:
-    branches: [main, develop]
-    paths:
-      - 'src/**'
-      - 'tests/**'
-      - 'features/**'
-      - 'frontend/**'
-      - 'package.json'
-      - 'package-lock.json'
-      - '.eslintrc*'
-      - 'cucumber.js'
+    branches: [main, develop]   # sin path filter: corre en todo PR a develop o main
   push:
     branches: [main, develop]
-    paths:
+    paths:                       # en push sí filtramos para evitar doble ejecución
       - 'src/**'
       - 'tests/**'
       - 'features/**'

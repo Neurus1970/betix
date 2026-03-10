@@ -2,12 +2,10 @@ name: CI - Python Core
 
 on:
   pull_request:
-    branches: [main, develop]
-    paths:
-      - 'core/**'
+    branches: [main, develop]   # sin path filter: corre en todo PR a develop o main
   push:
     branches: [main, develop]
-    paths:
+    paths:                       # en push sí filtramos para evitar doble ejecución
       - 'core/**'
 
 jobs:
