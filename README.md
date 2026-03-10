@@ -190,6 +190,14 @@ La arquitectura de Betix está documentada siguiendo el modelo **C4** (Context, 
 
 ---
 
+## Caché
+
+El proxy Node.js incorpora una capa de caché sobre Redis que se interpone antes de cada llamada al core Python. Si la respuesta ya está almacenada, se devuelve directamente sin invocar Flask, ahorrando el procesamiento de negocio (cálculos de geodata, proyecciones SMA, etc.) en cada petición repetida.
+
+→ [docs/caching.md](docs/caching.md)
+
+---
+
 ## Pipeline CI/CD
 
 Cada Pull Request hacia `main` ejecuta automáticamente (jobs en paralelo):
