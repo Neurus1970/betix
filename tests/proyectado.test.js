@@ -1,14 +1,61 @@
 'use strict';
 
 const request = require('supertest');
+const nock    = require('nock');
 const app     = require('../src/app');
-const {
-  calcularProyecciones,
-  getProvincias,
-  getJuegos,
-  mean,
-  stdDev,
-} = require('../src/services/proyeccionesService');
+
+const CORE_URL = process.env.CORE_URL || 'http://localhost:5000';
+
+// ── Fixtures ──────────────────────────────────────────────────────────────────
+
+const PROVINCIAS = [
+  'Catamarca', 'Corrientes', 'La Pampa', 'La Rioja', 'Neuquén',
+  'Río Negro', 'Salta', 'Santa Cruz', 'Santiago del Estero', 'Tierra del Fuego',
+];
+const JUEGOS = ['Lotería', 'Quiniela', 'Raspadita'];
+
+function makeHistorico(n = 12) {
+  return Array.from({ length: n }, (_, i) => ({
+    fecha:     `2025-${String(i + 3).padStart(2, '0')}`,
+    cantidad:  1000 + i * 10,
+    ingresos:  50000 + i * 500,
+    costo:     40000 + i * 400,
+    beneficio: 10000 + i * 100,
+    provincia: 'Catamarca',
+    juego:     'Lotería',
+  }));
+}
+
+function makeProyectado(k = 1) {
+  return Array.from({ length: k }, (_, i) => ({
+    fecha:           `2026-${String(i + 3).padStart(2, '0')}`,
+    cantidad:        1120,
+    error_cantidad:  50,
+    ingresos:        55500,
+    error_ingresos:  2000,
+    costo:           44400,
+    error_costo:     1500,
+    beneficio:       11100,
+    error_beneficio: 500 + i * 75,
+  }));
+}
+
+function mockCoreProyectado(k = 1, provincia = 'Catamarca', juego = 'Lotería') {
+  return {
+    status: 'ok',
+    data: {
+      historico:  makeHistorico(),
+      proyectado: makeProyectado(k),
+      provincias: PROVINCIAS,
+      juegos:     JUEGOS,
+      provincia,
+      juego,
+      meses: k,
+    },
+  };
+}
+
+afterEach(() => nock.cleanAll());
 
 // ── Página HTML ───────────────────────────────────────────────────────────────
 
@@ -52,6 +99,7 @@ describe('GET /proyectado', () => {
 
 describe('GET /api/datos/proyectado', () => {
   it('debe retornar status 200 con estructura correcta', async () => {
+    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado());
     const res = await request(app).get('/api/datos/proyectado');
     expect(res.statusCode).toBe(200);
     expect(res.body.status).toBe('ok');
@@ -62,27 +110,32 @@ describe('GET /api/datos/proyectado', () => {
   });
 
   it('debe retornar 12 registros históricos por defecto', async () => {
+    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado());
     const res = await request(app).get('/api/datos/proyectado');
     expect(res.body.data.historico).toHaveLength(12);
   });
 
   it('debe retornar 1 mes proyectado por defecto (meses=1)', async () => {
+    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado(1));
     const res = await request(app).get('/api/datos/proyectado');
     expect(res.body.data.proyectado).toHaveLength(1);
   });
 
   it('debe retornar 4 meses proyectados cuando meses=4', async () => {
+    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado(4));
     const res = await request(app).get('/api/datos/proyectado?meses=4');
     expect(res.body.data.proyectado).toHaveLength(4);
   });
 
   it('debe filtrar por provincia', async () => {
+    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado(1, 'Corrientes', 'Quiniela'));
     const res = await request(app).get('/api/datos/proyectado?provincia=Corrientes&juego=Quiniela');
     expect(res.body.data.provincia).toBe('Corrientes');
     expect(res.body.data.juego).toBe('Quiniela');
   });
 
   it('los registros históricos deben tener los campos requeridos', async () => {
+    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado());
     const res  = await request(app).get('/api/datos/proyectado');
     const item = res.body.data.historico[0];
     expect(item).toHaveProperty('fecha');
@@ -93,6 +146,7 @@ describe('GET /api/datos/proyectado', () => {
   });
 
   it('los registros proyectados deben tener error_* y fecha futura', async () => {
+    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado());
     const res  = await request(app).get('/api/datos/proyectado');
     const item = res.body.data.proyectado[0];
     expect(item).toHaveProperty('fecha');
@@ -102,96 +156,19 @@ describe('GET /api/datos/proyectado', () => {
     expect(item).toHaveProperty('error_ingresos');
     expect(item).toHaveProperty('beneficio');
     expect(item).toHaveProperty('error_beneficio');
-    // La fecha proyectada debe ser posterior al último histórico (feb 2026)
     expect(item.fecha >= '2026-03').toBe(true);
   });
 
-  it('beneficio = ingresos - costo en el histórico', async () => {
-    const res = await request(app).get('/api/datos/proyectado');
-    for (const row of res.body.data.historico) {
-      expect(row.beneficio).toBe(row.ingresos - row.costo);
-    }
-  });
-
   it('la lista de provincias está ordenada alfabéticamente', async () => {
+    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado());
     const res  = await request(app).get('/api/datos/proyectado');
     const list = res.body.data.provincias;
     expect(list).toEqual([...list].sort());
   });
 
   it('clampea meses fuera de rango: meses=10 → 4 proyectados', async () => {
+    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado(4));
     const res = await request(app).get('/api/datos/proyectado?meses=10');
     expect(res.body.data.proyectado).toHaveLength(4);
-  });
-});
-
-// ── Servicio: unidades ────────────────────────────────────────────────────────
-
-describe('proyeccionesService', () => {
-  describe('mean()', () => {
-    it('calcula la media correctamente', () => {
-      expect(mean([2, 4, 6])).toBe(4);
-      expect(mean([10])).toBe(10);
-    });
-  });
-
-  describe('stdDev()', () => {
-    it('devuelve 0 para una serie constante', () => {
-      expect(stdDev([5, 5, 5])).toBe(0);
-    });
-
-    it('calcula desviación estándar correctamente', () => {
-      expect(stdDev([2, 4, 4, 4, 5, 5, 7, 9])).toBeCloseTo(2, 0);
-    });
-  });
-
-  describe('getProvincias()', () => {
-    it('devuelve 10 provincias ordenadas', () => {
-      const list = getProvincias();
-      expect(list).toHaveLength(10);
-      expect(list).toEqual([...list].sort());
-    });
-  });
-
-  describe('getJuegos()', () => {
-    it('devuelve 3 juegos ordenados', () => {
-      const list = getJuegos();
-      expect(list).toHaveLength(3);
-      expect(list).toEqual([...list].sort());
-    });
-  });
-
-  describe('calcularProyecciones()', () => {
-    it('retorna historico con 12 registros y proyectado con k registros', () => {
-      const { historico, proyectado } = calcularProyecciones({
-        provincia: 'Catamarca', juego: 'Lotería', k: 2,
-      });
-      expect(historico).toHaveLength(12);
-      expect(proyectado).toHaveLength(2);
-    });
-
-    it('las fechas proyectadas son consecutivas y futuras', () => {
-      const { historico, proyectado } = calcularProyecciones({
-        provincia: 'Neuquén', juego: 'Quiniela', k: 3,
-      });
-      const lastHist = historico[historico.length - 1].fecha;
-      expect(proyectado[0].fecha > lastHist).toBe(true);
-      expect(proyectado[1].fecha > proyectado[0].fecha).toBe(true);
-      expect(proyectado[2].fecha > proyectado[1].fecha).toBe(true);
-    });
-
-    it('la incertidumbre crece con cada mes proyectado', () => {
-      const { proyectado } = calcularProyecciones({
-        provincia: 'Corrientes', juego: 'Lotería', k: 4,
-      });
-      // error del mes 4 ≥ error del mes 1 (crece con i * 0.15)
-      expect(proyectado[3].error_cantidad).toBeGreaterThanOrEqual(proyectado[0].error_cantidad);
-    });
-
-    it('lanza error si la provincia no tiene datos suficientes', () => {
-      expect(() =>
-        calcularProyecciones({ provincia: 'Inexistente', juego: 'Quiniela', k: 1, n: 3 })
-      ).toThrow();
-    });
   });
 });

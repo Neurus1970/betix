@@ -1,0 +1,40 @@
+services:
+  core:
+    build:
+      context: .
+      dockerfile: core/Dockerfile
+    image: betix-core:latest
+    ports:
+      - "5001:5000"
+    environment:
+      CORE_PORT: "5000"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: betix-api:latest
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      BETIX_PORT: "3000"
+      CORE_URL: "http://core:5000"
+    depends_on:
+      core:
+        condition: service_healthy
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    image: betix-frontend:latest
+    ports:
+      - "8080:80"
+    depends_on:
+      - api
