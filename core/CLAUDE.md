@@ -16,7 +16,7 @@ python3 -m core.main   # always run as a package, not python core/main.py
 core/
 ├── main.py          # Flask app, route definitions
 ├── services/        # Business logic (one file per domain)
-├── data/            # In-memory mock data (mirrors src/data/ — keep in sync)
+├── data/            # In-memory mock data — single source of truth (no JS copy)
 └── tests/           # pytest test suite
 ```
 
@@ -34,7 +34,7 @@ core/
 - Error bands: `std × (1 + 0.15 × month_index)` — grows monotonically
 - Applied independently to: `cantidad`, `ingresos`, `costo`, `beneficio`
 
-Do not change the error band formula without updating tests and the Node.js mirror in `src/services/proyeccionesService.js`.
+Do not change the error band formula without updating tests.
 
 ## Tests
 
