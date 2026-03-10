@@ -18,6 +18,10 @@ Plataforma de estadísticas de tickets de lotería por provincia y juego, con da
 
 ![Betix Kubernetes](docs/diagrams/betix_k8s.png)
 
+### AWS (EKS + ECR + VPC)
+
+![Betix AWS](docs/diagrams/betix_aws.png)
+
 > Los diagramas se generan automáticamente desde código Python con [diagrams-mingrammer](https://diagrams.mingrammer.com/). Fuentes en [`docs/diagrams/`](docs/diagrams/).
 
 ---
@@ -137,6 +141,7 @@ Los diagramas de arquitectura se generan desde código Python:
 pip3 install -r docs/diagrams/requirements.txt
 python3 docs/diagrams/architecture_local.py   # → docs/diagrams/betix_local.png
 python3 docs/diagrams/architecture_k8s.py     # → docs/diagrams/betix_k8s.png
+python3 docs/diagrams/architecture_aws.py     # → docs/diagrams/betix_aws.png
 ```
 
 ---

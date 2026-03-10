@@ -30,6 +30,7 @@ jobs:
         run: |
           python3 docs/diagrams/architecture_local.py
           python3 docs/diagrams/architecture_k8s.py
+          python3 docs/diagrams/architecture_aws.py
 
       - name: Publicar diagramas
         uses: actions/upload-artifact@v4
