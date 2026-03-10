@@ -7,6 +7,7 @@ Uso:    python3 docs/diagrams/architecture_k8s.py
 
 from diagrams import Cluster, Diagram, Edge
 from diagrams.onprem.client import User
+from diagrams.onprem.inmemory import Redis
 from diagrams.k8s.network import Ingress, Service
 from diagrams.k8s.compute import Deployment
 
@@ -43,7 +44,13 @@ with Diagram(
             core_dep = Deployment("Flask\n(lógica)")
             core_svc >> core_dep
 
+        with Cluster("redis"):
+            redis_svc = Service("svc :6379")
+            redis_dep = Redis("Redis\n(caché)")
+            redis_svc >> redis_dep
+
     browser >> Edge(label="HTTP") >> ingress
     ingress >> Edge(label="/") >> fe_svc
     ingress >> Edge(label="/api/*\n/healthz") >> api_svc
-    api_dep >> Edge(label="HTTP interno") >> core_svc
+    api_dep >> Edge(label="cache get/set", style="dashed") >> redis_svc
+    api_dep >> Edge(label="HTTP interno\n(cache miss)") >> core_svc
