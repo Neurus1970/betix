@@ -1,0 +1,49 @@
+name: CI - Architecture Diagrams
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'docs/diagrams/**'   # fuentes Python de los diagramas
+      - 'docker-compose.yml' # arquitectura local
+      - 'k8s/**'             # arquitectura Kubernetes
+      - 'terraform/**'       # arquitectura AWS
+  push:
+    branches: [main]
+    paths:
+      - 'docs/diagrams/**'
+      - 'docker-compose.yml'
+      - 'k8s/**'
+      - 'terraform/**'
+
+jobs:
+  diagrams:
+    name: Generate Architecture Diagrams
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Instalar Graphviz
+        run: sudo apt-get install -y graphviz
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependencias de diagramas
+        run: pip install -r docs/diagrams/requirements.txt
+
+      - name: Generar diagramas
+        run: |
+          python3 docs/diagrams/architecture_local.py
+          python3 docs/diagrams/architecture_k8s.py
+          python3 docs/diagrams/architecture_aws.py
+
+      - name: Publicar diagramas
+        uses: actions/upload-artifact@v4
+        with:
+          name: architecture-diagrams
+          path: docs/diagrams/*.png

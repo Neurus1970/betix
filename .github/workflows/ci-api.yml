@@ -1,14 +1,32 @@
-name: CI - Lint & Tests
+name: CI - Node.js API
 
 on:
   pull_request:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'features/**'
+      - 'frontend/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.eslintrc*'
+      - 'cucumber.js'
   push:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'features/**'
+      - 'frontend/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.eslintrc*'
+      - 'cucumber.js'
 
 jobs:
   lint-and-test:
-    name: Lint & Test
+    name: Lint & Test (Node.js)
     runs-on: ubuntu-latest
 
     steps:
@@ -49,4 +67,3 @@ jobs:
         with:
           name: coverage-report
           path: coverage/
-

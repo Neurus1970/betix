@@ -27,4 +27,6 @@ if (fs.existsSync(envFile)) {
   dotenv.config({ path: path.join(__dirname, '..', '.env'), quiet: true });
 }
 
-module.exports = { profile };
+const CORE_URL = process.env.CORE_URL || 'http://localhost:5000';
+
+module.exports = { profile, CORE_URL };
