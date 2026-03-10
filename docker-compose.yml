@@ -5,7 +5,7 @@ services:
       dockerfile: core/Dockerfile
     image: betix-core:latest
     ports:
-      - "5000:5000"
+      - "5001:5000"
     environment:
       CORE_PORT: "5000"
     healthcheck:
