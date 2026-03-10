@@ -314,15 +314,20 @@ main (production releases)
 
 - **`develop`** — default branch, integration target for all PRs, CI runs on every push
 - **`main`** — production; receives merges from `develop` or `release/*` only
-- **`feature/BETIX-XX-description`** — one branch per Jira ticket; creation triggers Jira → "In Progress"
+- **`feature/BETIX-XX-description`** — new functionality; creation triggers Jira → "In Progress"
 - **`fix/BETIX-XX-description`** — bug fixes
+- **`refactor/BETIX-XX-description`** — code restructuring without behaviour change
 - **`release/vX.Y.Z`** — release preparation
 
-**Key rules:**
+**Branch naming rules:**
+- Prefix **must** be one of: `feature/`, `fix/`, or `refactor/` depending on the type of change
+- Jira ticket ID (`BETIX-XX`) is required for automation to work
+- Pattern: `<prefix>/BETIX-XX-short-description` (kebab-case)
+
+**Workflow rules:**
 - Open PRs against `develop`, not `main`
 - CI (`ci-api.yml`, `ci-core.yml`) triggers on push and PR to both `develop` and `main`
 - PR merge to `develop` or `main` automatically transitions the Jira ticket to "Done"
-- Branch names must include the Jira ticket ID for automation to work (`BETIX-XX`)
 
 ### Versioning
 
