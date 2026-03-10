@@ -188,6 +188,12 @@ La arquitectura de Betix está documentada siguiendo el modelo **C4** (Context, 
 
 → [docs/ArquitecturaC4.md](docs/ArquitecturaC4.md)
 
+### Caché
+
+Las rutas `/api/datos/*` utilizan **Redis** como capa de caché entre el proxy Node.js y el core Python. Esto evita que el core recalcule estadísticas (agregaciones, proyecciones SMA) en cada petición: el primer request procesa y almacena el resultado; los siguientes lo sirven directamente desde memoria. Si Redis no está disponible, las peticiones pasan al core sin interrupciones (degradación elegante).
+
+→ [docs/caching.md](docs/caching.md)
+
 ---
 
 ## Pipeline CI/CD
