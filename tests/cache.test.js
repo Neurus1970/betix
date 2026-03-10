@@ -46,7 +46,10 @@ describe('cacheMiddleware — sin Redis (modo pass-through)', () => {
   });
 
   it('sigue funcionando aunque el core esté caído (no swallows 502)', async () => {
-    nock(CORE_URL).get('/geodata').replyWithError('connection refused');
+    // replyWithError emite un error de socket que en Node.js 20 puede dispararse
+    // antes de que node-fetch registre su listener. Usamos JSON inválido para
+    // provocar el mismo 502 via el catch del controller, sin timing issues.
+    nock(CORE_URL).get('/geodata').reply(200, 'invalid-json', { 'content-type': 'application/json' });
     const res = await request(app).get('/api/datos/geodata');
     expect(res.status).toBe(502);
   });
