@@ -1,4 +1,5 @@
 name: Build
+
 on:
   push:
     branches:
@@ -22,11 +23,22 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
-      - name: Instalar dependencias
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependencias Node.js
         run: npm ci
 
-      - name: Ejecutar tests con cobertura
+      - name: Instalar dependencias Python
+        run: pip install -r core/requirements.txt
+
+      - name: Ejecutar tests Node.js con cobertura
         run: npm run test:ci
+
+      - name: Ejecutar tests Python con cobertura
+        run: python3 -m pytest core/tests/ --cov=core --cov-report=xml:coverage-core.xml
 
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
@@ -38,8 +50,9 @@ jobs:
             -Dsonar.organization=neurus1970
             -Dsonar.projectName=BETIX
             -Dsonar.projectVersion=1.0
-            -Dsonar.sources=src
-            -Dsonar.tests=tests
+            -Dsonar.sources=src,core,terraform
+            -Dsonar.tests=tests,features
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info
-            -Dsonar.exclusions=node_modules/**,coverage/**,test-results/**
-            -Dsonar.coverage.exclusions=src/app.js
+            -Dsonar.python.coverage.reportPaths=coverage-core.xml
+            -Dsonar.exclusions=node_modules/**,coverage/**,test-results/**,core/tests/**,**/__pycache__/**,**/*.pyc
+            -Dsonar.coverage.exclusions=src/app.js,terraform/**

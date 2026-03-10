@@ -9,6 +9,64 @@ Plataforma de estadísticas de tickets de lotería por provincia y juego, con da
 
 ---
 
+## Inicio rápido
+
+Guía para tener el proyecto corriendo en local y empezar a colaborar.
+
+### Requisitos previos
+
+| Herramienta | Versión mínima | Verificar |
+|---|---|---|
+| [Docker Desktop](https://www.docker.com/products/docker-desktop/) | 24+ | `docker --version` |
+| [Node.js](https://nodejs.org/) | 18+ | `node --version` |
+| [Python](https://www.python.org/) | 3.12+ | `python3 --version` |
+| [Make](https://www.gnu.org/software/make/) | cualquiera | `make --version` |
+
+> En macOS: `brew install node python make`. Docker Desktop se instala desde su sitio oficial.
+
+### 1. Clonar el repositorio
+
+```bash
+git clone https://github.com/Neurus1970/betix.git
+cd betix
+git checkout develop   # rama de integración activa
+```
+
+### 2. Levantar el entorno (camino más corto)
+
+```bash
+make up
+```
+
+Esto ejecuta `docker-compose up --build` y levanta los tres servicios. La primera vez tarda unos minutos en descargar imágenes base.
+
+| Servicio | URL |
+|---|---|
+| Frontend (nginx) | http://localhost:8080 |
+| API (Node.js proxy) | http://localhost:3000 |
+| Core (Flask) | http://localhost:5001 |
+
+Abrí http://localhost:8080/dashboard para verificar que todo funciona.
+
+### 3. Correr los tests
+
+```bash
+make test          # todos los tests: pytest + Jest + Cucumber
+make test-core     # solo tests Python (pytest)
+make test-api      # solo tests Node.js (Jest + Cucumber)
+make lint          # ESLint
+```
+
+Los tests de Node.js **no requieren que el servidor esté corriendo** — usan `nock` para interceptar las llamadas HTTP al core.
+
+### 4. Próximos pasos
+
+- Flujo de ramas, convenciones y comandos del `Makefile` → [docs/monorepo-guide.md](docs/monorepo-guide.md)
+- Arquitectura del sistema (modelo C4) → [docs/ArquitecturaC4.md](docs/ArquitecturaC4.md)
+- Bajar el entorno: `make down`
+
+---
+
 ## Componentes
 
 | Componente | Tecnología | Puerto | Responsabilidad |
