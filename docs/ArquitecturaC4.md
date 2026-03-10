@@ -43,15 +43,17 @@ C4Container
 
     Container_Boundary(betix, "Betix") {
         Container(frontend, "Frontend", "nginx + HTML5 + D3.js v7", "Sirve páginas estáticas y proxea /api/* hacia Node.js API")
-        Container(api, "Betix API", "Node.js 18 + Express 4", "Thin proxy HTTP hacia Python core. Expone /healthz, /api/datos/*")
-        Container(core, "Betix Core", "Python 3.12 + Flask", "Lógica de negocio: geodata, proyecciones SMA rolling, health check")
+        Container(api, "Betix API", "Node.js 18 + Express 4", "Thin proxy HTTP hacia Python core. Caché Redis en todas las rutas /api/datos/*")
+        ContainerDb(redis, "Redis", "Redis 7 (in-memory)", "Caché de respuestas del core. TTL configurable (default 60s). Degradación elegante si no está disponible")
+        Container(core, "Betix Core", "Python 3.12 + Flask", "Lógica de negocio: geodata, proyecciones SMA rolling, mapa burbujas, health check")
         ContainerDb(dataStatic, "mock_data.py", "Módulo Python en memoria", "30 registros estáticos: 10 provincias × 3 juegos")
         ContainerDb(dataMonthly, "tickets_por_mes.py", "Módulo Python en memoria", "360 registros mensuales con factores estacionales (mar 2025–feb 2026)")
     }
 
     Rel(usuario, frontend, "Navega y filtra datos", "HTTPS :8080")
     Rel(frontend, api, "Proxea /api/* y /healthz", "HTTP interno :3000")
-    Rel(api, core, "HTTP proxy", "HTTP interno :5000")
+    Rel(api, redis, "Cache HIT: sirve respuesta / Cache MISS: almacena resultado", "ioredis :6379")
+    Rel(api, core, "HTTP proxy (solo en cache miss)", "HTTP interno :5000")
     Rel(core, dataStatic, "Lee snapshot de datos", "import")
     Rel(core, dataMonthly, "Lee series temporales", "import")
 ```
@@ -70,9 +72,11 @@ C4Component
         Component(healthEp, "Health Endpoint", "Flask route", "GET /health")
         Component(geodataEp, "Geodata Endpoint", "Flask route", "GET /geodata")
         Component(proyectadoEp, "Proyectado Endpoint", "Flask route", "GET /proyectado")
+        Component(mapaBurbujasEp, "Mapa Burbujas Endpoint", "Flask route", "GET /mapa-burbujas?juego&fecha_desde&fecha_hasta")
 
         Component(geodataSvc, "geodata_service", "Python", "Agrega métricas por provincia con coordenadas geográficas")
         Component(proyeccionesSvc, "proyecciones_service", "Python", "Calcula SMA rolling, SD histórica y bandas de error crecientes")
+        Component(mapaBurbujasSvc, "mapa_burbujas_service", "Python", "Agrega TICKETS_POR_MES por provincia con filtros de juego y período")
         Component(healthSvc, "health_service", "Python", "Valida estructura y tipos de los datos en memoria")
 
         ComponentDb(mockData, "mock_data.py", "Python module", "Snapshot: 30 registros")
@@ -82,8 +86,10 @@ C4Component
     Rel(healthEp, healthSvc, "Invoca validación")
     Rel(geodataEp, geodataSvc, "Delega agregación")
     Rel(proyectadoEp, proyeccionesSvc, "Delega cálculo")
+    Rel(mapaBurbujasEp, mapaBurbujasSvc, "Delega agregación filtrada")
     Rel(geodataSvc, mockData, "Lee")
     Rel(proyeccionesSvc, ticketsPorMes, "Lee")
+    Rel(mapaBurbujasSvc, ticketsPorMes, "Lee y filtra")
     Rel(healthSvc, mockData, "Valida")
 ```
 

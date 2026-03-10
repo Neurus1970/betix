@@ -7,6 +7,7 @@ Uso:    python3 docs/diagrams/architecture_aws.py
 
 from diagrams import Cluster, Diagram, Edge
 from diagrams.onprem.client import User
+from diagrams.onprem.inmemory import Redis
 from diagrams.aws.network import VPC, PublicSubnet, PrivateSubnet, NATGateway, InternetGateway, ELB
 from diagrams.aws.compute import EKS, ECR
 from diagrams.k8s.network import Ingress, Service
@@ -52,6 +53,9 @@ with Diagram(
                         with Cluster("core"):
                             core = Deployment("Flask\ncore")
 
+                        with Cluster("redis"):
+                            redis = Redis("Redis\n(caché)")
+
         with Cluster("ECR"):
             ecr_core     = ECR("betix-core")
             ecr_api      = ECR("betix-api")
@@ -59,7 +63,9 @@ with Diagram(
 
     user  >> Edge(label="HTTPS") >> igw >> alb >> ing
     ing   >> fe
-    ing   >> api  >> core
+    ing   >> api
+    api   >> Edge(label="cache get/set", style="dashed") >> redis
+    api   >> Edge(label="cache miss") >> core
     nat   >> Edge(label="pull images", style="dashed") >> ecr_core
     nat   >> Edge(style="dashed") >> ecr_api
     nat   >> Edge(style="dashed") >> ecr_frontend

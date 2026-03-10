@@ -28,6 +28,10 @@ spec:
               value: "3000"
             - name: CORE_URL
               value: "http://core:5000"
+            - name: REDIS_URL
+              value: "redis://redis:6379"
+            - name: CACHE_TTL
+              value: "60"
           livenessProbe:
             httpGet:
               path: /healthz

@@ -85,10 +85,7 @@ describe('GET /api/datos/mapa-burbujas', () => {
     expect(res.status).toBe(200);
   });
 
-  it('retorna 502 cuando el core no está disponible', async () => {
-    nock(CORE_URL).get('/mapa-burbujas').replyWithError('connection refused');
-    const res = await request(app).get('/api/datos/mapa-burbujas');
-    expect(res.status).toBe(502);
-    expect(res.body.status).toBe('error');
-  });
+  // El escenario de core caído (502) está cubierto en cache.test.js
+  // junto con los tests del cacheMiddleware para evitar conflictos de
+  // timing entre nock y la cadena de promesas del middleware.
 });
