@@ -35,6 +35,12 @@ app.get('/mapa-burbujas', (_req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'mapa-burbujas.html'))
 );
 
+// eslint-disable-next-line no-unused-vars
+app.use((err, _req, res, _next) => {
+  logger.error(`Unhandled error: ${err.message}`);
+  res.status(502).json({ status: 'error', message: 'Core service unavailable' });
+});
+
 if (require.main === module) {
   app.listen(PORT, () => logger.info(`Betix API corriendo en puerto ${PORT}`));
 }
