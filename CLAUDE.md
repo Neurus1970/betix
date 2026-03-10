@@ -27,15 +27,36 @@ betix/
 ## HOW — Essential Commands
 
 ```bash
-# Run everything
-make up           # docker-compose up --build
-make test         # pytest + jest + cucumber
+# Desarrollo local
+make up           # docker-compose up --build (levanta los 3 servicios)
+make down         # docker-compose down
+make logs         # tail de logs de todos los servicios
+
+# Tests
+make test         # pytest + jest + cucumber (todos)
+make test-core    # solo pytest core/
+make test-api     # solo Jest + Cucumber
 make lint         # ESLint on src/ and tests/
 
 # Individual
 npm test                         # Jest + Cucumber
 python3 -m pytest core/tests/ -v # pytest
-make test-api / make test-core   # via Makefile
+
+# Build y push de imágenes Docker (requiere credenciales ECR)
+make build        # build de las 3 imágenes
+make push         # push de las 3 imágenes a ECR
+make build-core   # build solo betix-core:<version>
+make push-core    # push solo betix-core:<version>
+make build-api    # build solo betix-api:<version>
+make push-api     # push solo betix-api:<version>
+
+# Kubernetes (requiere minikube o cluster configurado)
+make k8s-apply    # kubectl apply -f k8s/namespace.yaml && kubectl apply -f k8s/
+make k8s-status   # kubectl get all -n betix
+make k8s-delete   # kubectl delete -f k8s/
+
+# Versionado
+make version      # muestra versión actual de los 3 servicios
 ```
 
 ---
@@ -69,8 +90,46 @@ Pattern: `<prefix>/BETIX-XX-short-description` (kebab-case, Jira ID required).
 
 ### Versioning
 
-Independent `VERSION` file per service. Bump with:
-`make bump-api v=X.Y.Z` / `make bump-core v=X.Y.Z` / `make bump-frontend v=X.Y.Z`
+Cada servicio tiene su propio archivo `VERSION` con semver independiente (`MAJOR.MINOR.PATCH`):
+
+```
+core/VERSION      # ej: 1.3.0  → imagen betix-core:1.3.0
+src/VERSION       # ej: 2.1.0  → imagen betix-api:2.1.0
+frontend/VERSION  # ej: 1.0.5  → imagen betix-frontend:1.0.5
+```
+
+**Convención de tags en ECR:**
+
+| Tag | Cuándo se genera |
+|-----|-----------------|
+| `1.3.0` | release estable (merge a `main`) |
+| `1.3.0-rc.1` | release candidate |
+| `sha-abc1234` | builds de `develop`/`feature` (CI automático) |
+| `latest` | apunta siempre al último release estable |
+
+> Para builds de CI en ramas no-main usar el SHA corto del commit como tag (evita colisiones y permite trazar qué código está corriendo).
+
+**Bumpar una versión antes de mergear a `main`:**
+```bash
+make bump-core v=X.Y.Z
+make bump-api v=X.Y.Z
+make bump-frontend v=X.Y.Z
+```
+El `Makefile` lee ese archivo automáticamente en los targets `build-*` y `push-*`.
+
+### CI — Path Filters
+
+Tres workflows independientes en `.github/workflows/`. Cada job solo corre si sus paths cambiaron:
+
+```
+Cambio en core/                  → ci-core.yml     (pytest)
+Cambio en src/ tests/ features/  → ci-api.yml      (Jest + Cucumber)
+Cambio en docs/diagrams/         → ci-diagrams.yml (regenera PNGs)
+Cambio en terraform/ k8s/ docker-compose.yml → ci-diagrams.yml
+Cambio en README.md              → ningún job corre
+```
+
+> Si un job no corre porque sus paths no cambiaron, GitHub lo considera automáticamente pasado — no bloquea branch protection rules.
 
 ---
 
