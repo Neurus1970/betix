@@ -1,0 +1,38 @@
+name: CI - Python Core
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'core/**'
+  push:
+    branches: [main]
+    paths:
+      - 'core/**'
+
+jobs:
+  test-core:
+    name: Python Core Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependencias Python
+        run: pip install -r core/requirements.txt
+
+      - name: Ejecutar tests Python con cobertura
+        run: python3 -m pytest core/tests/ --cov=core --cov-report=xml:coverage-core.xml --cov-report=term-missing
+
+      - name: Publicar cobertura Python
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-core
+          path: coverage-core.xml
