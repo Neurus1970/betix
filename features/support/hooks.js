@@ -65,6 +65,23 @@ Before(function () {
     },
   }).persist();
 
+  // Mapa burbujas
+  nock(CORE_URL).get('/mapa-burbujas').query(true).reply(200, {
+    status: 'ok',
+    data: {
+      provinces: PROVINCIAS.map(name => ({
+        provincia: name,
+        lat: -30.0,
+        lng: -65.0,
+        cantidad: 5000,
+        ingresos: 120000,
+        beneficio: 25000,
+      })),
+      juegos: JUEGOS,
+      fechas: Array.from({ length: 12 }, (_, i) => `2025-${String(i + 3).padStart(2, '0')}`),
+    },
+  }).persist();
+
   // Proyectado — dynamic response based on meses query param
   nock(CORE_URL).get('/proyectado').query(true).reply(function (uri) {
     const params  = new URLSearchParams(uri.split('?')[1] || '');
