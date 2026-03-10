@@ -302,14 +302,27 @@ The `proyecciones_service.py` / `proyeccionesService.js` implements:
 
 ### Git / Branching
 
-Follows **Git Flow** with Jira integration:
-- `main` — production
-- `develop` — integration branch
-- `feature/BETIX-XX-description` — feature branches (triggers Jira "In Progress")
-- `fix/BETIX-XX-description` — bug fixes
-- `release/vX.Y.Z` — release preparation
+Follows **feature branching** with `develop` as the **default branch** (where all PRs target by default).
 
-PR merge to `main`/`develop` automatically transitions Jira tickets to "Done".
+```
+main (production releases)
+  └── develop  ← DEFAULT BRANCH — all feature PRs merge here
+        ├── feature/BETIX-XX-description
+        ├── fix/BETIX-XX-description
+        └── release/vX.Y.Z
+```
+
+- **`develop`** — default branch, integration target for all PRs, CI runs on every push
+- **`main`** — production; receives merges from `develop` or `release/*` only
+- **`feature/BETIX-XX-description`** — one branch per Jira ticket; creation triggers Jira → "In Progress"
+- **`fix/BETIX-XX-description`** — bug fixes
+- **`release/vX.Y.Z`** — release preparation
+
+**Key rules:**
+- Open PRs against `develop`, not `main`
+- CI (`ci-api.yml`, `ci-core.yml`) triggers on push and PR to both `develop` and `main`
+- PR merge to `develop` or `main` automatically transitions the Jira ticket to "Done"
+- Branch names must include the Jira ticket ID for automation to work (`BETIX-XX`)
 
 ### Versioning
 
