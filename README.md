@@ -1,8 +1,8 @@
 # Betix API
 
-[![Unit Tests](https://img.shields.io/github/actions/workflow/status/Neurus1970/betix/ci-api.yml?branch=main&label=unit%20tests&logo=jest)](https://github.com/Neurus1970/betix/actions/workflows/ci-api.yml)
-[![Functional Tests](https://img.shields.io/github/actions/workflow/status/Neurus1970/betix/ci-api.yml?branch=main&label=functional%20tests&logo=cucumber)](https://github.com/Neurus1970/betix/actions/workflows/ci-api.yml)
-[![Python Core](https://img.shields.io/github/actions/workflow/status/Neurus1970/betix/ci-core.yml?branch=main&label=python%20core&logo=python)](https://github.com/Neurus1970/betix/actions/workflows/ci-core.yml)
+[![Unit Tests](https://img.shields.io/github/actions/workflow/status/Neurus1970/betix/ci-api.yml?branch=develop&label=unit%20tests&logo=jest)](https://github.com/Neurus1970/betix/actions/workflows/ci-api.yml)
+[![Functional Tests](https://img.shields.io/github/actions/workflow/status/Neurus1970/betix/ci-api.yml?branch=develop&label=functional%20tests&logo=cucumber)](https://github.com/Neurus1970/betix/actions/workflows/ci-api.yml)
+[![Python Core](https://img.shields.io/github/actions/workflow/status/Neurus1970/betix/ci-core.yml?branch=develop&label=python%20core&logo=python)](https://github.com/Neurus1970/betix/actions/workflows/ci-core.yml)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Neurus1970_betix&metric=coverage)](https://sonarcloud.io/dashboard?id=Neurus1970_betix)
 
 Plataforma de estadísticas de tickets de lotería por provincia y juego, con dashboards interactivos D3.js y proyecciones estadísticas con SMA rolling. Arquitectura de microservicios: Python Flask core, Node.js thin proxy y nginx frontend, desplegable con docker-compose o Kubernetes.
