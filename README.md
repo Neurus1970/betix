@@ -180,6 +180,32 @@ Este repositorio sigue una estructura de monorepo con tres microservicios indepe
 
 → [docs/monorepo-guide.md](docs/monorepo-guide.md)
 
+### Flujo de trabajo con ramas (Feature Branching)
+
+**`develop` es la rama de integración. Nunca se modifica directamente en local.**
+
+Todo cambio se realiza en una rama dedicada y se integra a `develop` mediante Pull Request:
+
+| Prefijo | Cuándo usarlo |
+|---------|--------------|
+| `feature/BETIX-XX-descripcion` | nueva funcionalidad |
+| `fix/BETIX-XX-descripcion` | corrección de bug |
+| `refactor/BETIX-XX-descripcion` | reestructuración sin cambio de comportamiento |
+
+```bash
+# Flujo estándar
+git checkout develop
+git pull origin develop
+git checkout -b feature/BETIX-42-nueva-funcionalidad
+
+# ... trabajar, commitear ...
+
+git push origin feature/BETIX-42-nueva-funcionalidad
+# → abrir PR contra develop en GitHub
+```
+
+> El ID de Jira en el nombre de la rama (`BETIX-XX`) mueve el ticket automáticamente a **In Progress** al crear la rama y a **Done** al hacer merge.
+
 ---
 
 ## Arquitectura
