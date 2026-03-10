@@ -2,11 +2,11 @@ name: CI - Python Core
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - 'core/**'
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - 'core/**'
 

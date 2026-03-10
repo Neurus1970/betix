@@ -2,14 +2,14 @@ name: CI - Architecture Diagrams
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - 'docs/diagrams/**'   # fuentes Python de los diagramas
       - 'docker-compose.yml' # arquitectura local
       - 'k8s/**'             # arquitectura Kubernetes
       - 'terraform/**'       # arquitectura AWS
   push:
-    branches: [main]
+    branches: [main, develop]
     paths:
       - 'docs/diagrams/**'
       - 'docker-compose.yml'
