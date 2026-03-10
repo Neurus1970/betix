@@ -4,11 +4,17 @@ on:
   pull_request:
     branches: [main]
     paths:
-      - 'docs/diagrams/**'
+      - 'docs/diagrams/**'   # fuentes Python de los diagramas
+      - 'docker-compose.yml' # arquitectura local
+      - 'k8s/**'             # arquitectura Kubernetes
+      - 'terraform/**'       # arquitectura AWS
   push:
     branches: [main]
     paths:
       - 'docs/diagrams/**'
+      - 'docker-compose.yml'
+      - 'k8s/**'
+      - 'terraform/**'
 
 jobs:
   diagrams:

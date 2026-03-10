@@ -17,10 +17,13 @@ Sin path filters, cualquier cambio en el repositorio (aunque sea un comentario e
 Cada job declara los paths que le incumben. Si ningún archivo de esos paths cambió, el job se salta automáticamente.
 
 ```
-Cambio en core/       → corre solo test-core
-Cambio en src/        → corre solo lint-and-test
-Cambio en docs/       → corre solo diagrams
-Cambio en README.md   → ningún job corre (correcto)
+Cambio en core/            → corre solo ci-core (pytest)
+Cambio en src/ tests/      → corre solo ci-api (Jest + Cucumber)
+Cambio en docs/diagrams/   → corre solo ci-diagrams (regenera PNGs)
+Cambio en terraform/       → corre solo ci-diagrams (arquitectura AWS cambió)
+Cambio en k8s/             → corre solo ci-diagrams (arquitectura K8s cambió)
+Cambio en docker-compose   → corre solo ci-diagrams (arquitectura local cambió)
+Cambio en README.md        → ningún job corre (correcto)
 ```
 
 ### Cómo funciona
@@ -28,11 +31,15 @@ Cambio en README.md   → ningún job corre (correcto)
 Los workflows en `.github/workflows/` tienen filtros `paths` en el trigger `on`. GitHub Actions evalúa si algún archivo modificado en el commit/PR coincide con esos paths antes de encolar el job.
 
 ```yaml
+# ci-diagrams.yml — también se dispara con cambios en infraestructura
 on:
   pull_request:
     branches: [main]
     paths:
-      - 'core/**'          # solo si cambió el servicio Python
+      - 'docs/diagrams/**'   # fuentes Python de los diagramas
+      - 'docker-compose.yml' # arquitectura local
+      - 'k8s/**'             # arquitectura Kubernetes
+      - 'terraform/**'       # arquitectura AWS
 ```
 
 > **Nota**: los path filters aplican a nivel de workflow (archivo `.yml`), no a nivel de job. Por eso los tres jobs se separaron en tres archivos independientes: `ci-core.yml`, `ci-api.yml` y `ci-diagrams.yml`.
