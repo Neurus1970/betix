@@ -9,6 +9,28 @@ Plataforma de estadísticas de tickets de lotería por provincia y juego, con da
 
 ---
 
+## Onboarding a la plataforma
+
+Este repositorio es el **proyecto de referencia** de nuestra plataforma corporativa de desarrollo. Antes de sumarte a un proyecto productivo, el recorrido recomendado es practicar el ciclo completo aquí:
+
+```
+Ticket → Branch → Código → Tests → PR → CI → Review → Merge → Release
+```
+
+1. **Ticket** — Tomás un ticket del sprint activo en Jira. El ID del ticket (`BETIX-XX`) va en el nombre de tu rama.
+2. **Branch** — Creás una rama desde `develop` con el prefijo correcto (`feature/`, `fix/`, `refactor/`). Esto mueve el ticket a *In Progress* automáticamente.
+3. **Código** — Desarrollás el cambio siguiendo las convenciones del proyecto (ver [CLAUDE.md](CLAUDE.md)).
+4. **Tests** — Escribís tests que cubran el comportamiento nuevo. El umbral mínimo de cobertura se valida en CI.
+5. **PR** — Abrís un Pull Request contra `develop`. La IA genera una revisión automatizada; un humano aprueba.
+6. **CI** — GitHub Actions ejecuta lint, tests y análisis de SonarCloud. Todo debe estar en verde.
+7. **Review** — El revisor humano aprueba o solicita cambios. Solo se mergea con aprobación + CI verde.
+8. **Merge** — Al mergear, el ticket pasa a *Done* automáticamente en Jira.
+9. **Release** — Al acumular cambios en `main`, Release Please genera el tag de versión y el CHANGELOG de forma automática.
+
+Para una descripción exhaustiva de cada etapa y las herramientas que la soportan → [docs/SDLC.md](docs/SDLC.md)
+
+---
+
 ## Inicio rápido
 
 Guía para tener el proyecto corriendo en local y empezar a colaborar.
