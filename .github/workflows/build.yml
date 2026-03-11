@@ -40,6 +40,10 @@ jobs:
       - name: Ejecutar tests Python con cobertura
         run: python3 -m pytest core/tests/ --cov=core --cov-report=xml:coverage-core.xml
 
+      - name: Get project version
+        id: version
+        run: echo "value=$(node -p "require('./package.json').version")" >> $GITHUB_OUTPUT
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v6
         env:
@@ -49,7 +53,7 @@ jobs:
             -Dsonar.projectKey=Neurus1970_betix
             -Dsonar.organization=neurus1970
             -Dsonar.projectName=BETIX
-            -Dsonar.projectVersion=1.0
+            -Dsonar.projectVersion=${{ steps.version.outputs.value }}
             -Dsonar.sources=src,core,terraform
             -Dsonar.tests=tests,features
             -Dsonar.javascript.lcov.reportPaths=coverage/lcov.info

@@ -1,0 +1,25 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    "core": {
+      "release-type": "generic",
+      "version-file": "core/VERSION",
+      "changelog-path": "core/CHANGELOG.md",
+      "component": "betix-core",
+      "include-component-in-tag": true
+    },
+    "src": {
+      "release-type": "node",
+      "changelog-path": "src/CHANGELOG.md",
+      "component": "betix-api",
+      "include-component-in-tag": true
+    },
+    "frontend": {
+      "release-type": "generic",
+      "version-file": "frontend/VERSION",
+      "changelog-path": "frontend/CHANGELOG.md",
+      "component": "betix-frontend",
+      "include-component-in-tag": true
+    }
+  }
+}

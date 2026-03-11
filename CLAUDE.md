@@ -69,8 +69,13 @@ Pattern: `<prefix>/BETIX-XX-short-description` (kebab-case, Jira ID required).
 
 ### Versioning
 
-Independent `VERSION` file per service. Bump with:
+Versioning is automated via **Release Please**. Merging to `main` triggers
+the `release.yml` workflow, which opens a release PR with bumped versions
+and changelogs based on Conventional Commits.
+
 `make bump-api v=X.Y.Z` / `make bump-core v=X.Y.Z` / `make bump-frontend v=X.Y.Z`
+are **emergency bypasses only** — do not use them in normal development.
+After a manual bump, sync `.release-please-manifest.json` to match.
 
 ---
 
