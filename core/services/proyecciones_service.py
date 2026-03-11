@@ -1,5 +1,6 @@
 import math
-from ..data.tickets_por_mes import TICKETS_POR_MES
+from psycopg.rows import dict_row
+from ..db import get_connection
 
 SMA_WINDOW = 3
 
@@ -24,22 +25,46 @@ def _add_month(fecha_yyyy_mm: str) -> str:
 
 
 def get_provincias() -> list:
-    return sorted({t["provincia"] for t in TICKETS_POR_MES})
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT nombre FROM betix.provincias ORDER BY nombre")
+            return [r[0] for r in cur.fetchall()]
 
 
 def get_juegos() -> list:
-    return sorted({t["juego"] for t in TICKETS_POR_MES})
+    with get_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT nombre FROM betix.juegos ORDER BY nombre")
+            return [r[0] for r in cur.fetchall()]
 
 
 def calcular_proyecciones(provincia: str, juego: str, k: int, n: int = SMA_WINDOW) -> dict:
-    historico = sorted(
-        [
-            {**t, "beneficio": t["ingresos"] - t["costo"]}
-            for t in TICKETS_POR_MES
-            if t["provincia"] == provincia and t["juego"] == juego
-        ],
-        key=lambda x: x["fecha"],
-    )
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT
+                    TO_CHAR(t.fecha, 'YYYY-MM') AS fecha,
+                    t.cantidad,
+                    t.ingresos,
+                    t.costo,
+                    (t.ingresos - t.costo)      AS beneficio
+                FROM betix.tickets_mensuales t
+                JOIN betix.provincias p ON p.id = t.provincia_id
+                JOIN betix.juegos     j ON j.id = t.juego_id
+                WHERE p.nombre = %s
+                  AND j.nombre = %s
+                ORDER BY t.fecha
+            """, (provincia, juego))
+            historico = [
+                {
+                    "fecha":     r["fecha"],
+                    "cantidad":  r["cantidad"],
+                    "ingresos":  int(r["ingresos"]),
+                    "costo":     int(r["costo"]),
+                    "beneficio": int(r["beneficio"]),
+                }
+                for r in cur.fetchall()
+            ]
 
     if len(historico) < n:
         raise ValueError(
@@ -48,10 +73,7 @@ def calcular_proyecciones(provincia: str, juego: str, k: int, n: int = SMA_WINDO
 
     metricas = ["cantidad", "ingresos", "costo", "beneficio"]
 
-    # Series de trabajo para rolling SMA (se extienden con cada proyectado)
-    series = {met: [h[met] for h in historico] for met in metricas}
-
-    # SD base calculada sobre el histórico (últimos n meses): garantiza crecimiento monotónico del error
+    series   = {met: [h[met] for h in historico] for met in metricas}
     base_sds = {met: std_dev([h[met] for h in historico][-n:]) for met in metricas}
 
     last_fecha = historico[-1]["fecha"]
@@ -66,9 +88,9 @@ def calcular_proyecciones(provincia: str, juego: str, k: int, n: int = SMA_WINDO
             valor  = round(mean(window))
             error  = round(base_sds[met] * (1 + i * 0.15))
 
-            entry[met]             = valor
-            entry[f"error_{met}"]  = error
-            series[met]            = series[met] + [valor]
+            entry[met]            = valor
+            entry[f"error_{met}"] = error
+            series[met]           = series[met] + [valor]
 
         proyectado.append(entry)
         last_fecha = fecha

@@ -1,4 +1,54 @@
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB:       betix
+      POSTGRES_USER:     betix
+      POSTGRES_PASSWORD: betix
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U betix -d betix"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  db-seed:
+    image: postgres:16-alpine
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./db:/db
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        export PGPASSWORD=betix
+        echo "==> Ejecutando migraciones..."
+        psql -h db -U betix -d betix -f /db/migrations/001_init.sql
+        echo "==> Truncando tablas..."
+        psql -h db -U betix -d betix -c "TRUNCATE betix.tickets_mensuales, betix.provincias, betix.juegos RESTART IDENTITY CASCADE;"
+        echo "==> Cargando provincias..."
+        psql -h db -U betix -d betix -c "\copy betix.provincias(nombre,lat,lng) FROM '/db/seeds/_provincias.csv' CSV HEADER;"
+        echo "==> Cargando juegos..."
+        psql -h db -U betix -d betix -c "\copy betix.juegos(nombre) FROM '/db/seeds/_juegos.csv' CSV HEADER;"
+        echo "==> Cargando tickets_mensuales..."
+        psql -h db -U betix -d betix -c "
+          CREATE TEMP TABLE tmp_tickets (
+            provincia_nombre VARCHAR(100), juego_nombre VARCHAR(50),
+            fecha DATE, cantidad INTEGER, ingresos DECIMAL(14,2), costo DECIMAL(14,2)
+          );
+          \copy tmp_tickets FROM '/db/seeds/_tickets_mensuales.csv' CSV HEADER;
+          INSERT INTO betix.tickets_mensuales (provincia_id, juego_id, fecha, cantidad, ingresos, costo)
+          SELECT p.id, j.id, t.fecha, t.cantidad, t.ingresos, t.costo
+          FROM tmp_tickets t
+          JOIN betix.provincias p ON p.nombre = t.provincia_nombre
+          JOIN betix.juegos j ON j.nombre = t.juego_nombre;
+        "
+        echo "==> Carga completada."
+
   redis:
     image: redis:7-alpine
     ports:
@@ -17,7 +67,13 @@ services:
     ports:
       - "5001:5000"
     environment:
-      CORE_PORT: "5000"
+      CORE_PORT:    "5000"
+      BETIX_DB_URL: postgresql://betix:betix@db:5432/betix
+    depends_on:
+      db:
+        condition: service_healthy
+      db-seed:
+        condition: service_completed_successfully
     healthcheck:
       test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
       interval: 10s
@@ -32,11 +88,11 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NODE_ENV: production
+      NODE_ENV:   production
       BETIX_PORT: "3000"
-      CORE_URL: "http://core:5000"
-      REDIS_URL: "redis://redis:6379"
-      CACHE_TTL: "60"
+      CORE_URL:   "http://core:5000"
+      REDIS_URL:  "redis://redis:6379"
+      CACHE_TTL:  "60"
     depends_on:
       core:
         condition: service_healthy
@@ -52,3 +108,6 @@ services:
       - "8080:80"
     depends_on:
       - api
+
+volumes:
+  db_data:

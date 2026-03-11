@@ -1,7 +1,7 @@
 """
-Betix — Arquitectura AWS (EKS + ECR + VPC)
+Betix — Arquitectura AWS (EKS + ECR + RDS + VPC)
 
-Generado desde terraform/: vpc.tf, eks.tf, ecr.tf
+Generado desde terraform/: vpc.tf, eks.tf, ecr.tf, rds.tf
 Genera: docs/diagrams/betix_aws.png
 Uso:    python3 docs/diagrams/architecture_aws.py
 """
@@ -11,6 +11,7 @@ from diagrams.onprem.client import User
 from diagrams.onprem.inmemory import Redis
 from diagrams.aws.network import VPC, PublicSubnet, PrivateSubnet, NATGateway, InternetGateway, ELB, RouteTable
 from diagrams.aws.compute import EKS, ECR
+from diagrams.aws.database import RDS
 from diagrams.aws.security import IAM
 from diagrams.k8s.network import Ingress, Service
 from diagrams.k8s.compute import Deployment
@@ -23,7 +24,7 @@ graph_attr = {
 }
 
 with Diagram(
-    "Betix · AWS (EKS + ECR + VPC)",
+    "Betix · AWS (EKS + ECR + RDS + VPC)",
     filename="docs/diagrams/betix_aws",
     show=False,
     graph_attr=graph_attr,
@@ -62,6 +63,8 @@ with Diagram(
                         with Cluster("redis"):
                             redis = Redis("Redis\n(caché)")
 
+                rds = RDS("RDS PostgreSQL 16\ndb.t3.micro\n(betix schema)")
+
         with Cluster("ECR  (lifecycle: keep 10 images)"):
             ecr_core     = ECR("betix-core")
             ecr_api      = ECR("betix-api")
@@ -72,6 +75,7 @@ with Diagram(
     ing   >> api
     api   >> Edge(label="cache get/set", style="dashed") >> redis
     api   >> Edge(label="cache miss") >> core
+    core  >> Edge(label="SQL queries") >> rds
     nat   >> Edge(label="pull images", style="dashed") >> ecr_core
     nat   >> Edge(style="dashed") >> ecr_api
     nat   >> Edge(style="dashed") >> ecr_frontend

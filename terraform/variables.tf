@@ -50,3 +50,21 @@ variable "eks_node_max" {
   type        = number
   default     = 3
 }
+
+variable "rds_instance_class" {
+  description = "Clase de instancia RDS PostgreSQL"
+  type        = string
+  default     = "db.t3.micro"
+}
+
+variable "rds_allocated_storage" {
+  description = "Almacenamiento asignado a RDS en GB"
+  type        = number
+  default     = 20
+}
+
+variable "rds_password" {
+  description = "Contraseña del usuario betix en RDS (sensible — no usar default en producción)"
+  type        = string
+  sensitive   = true
+}

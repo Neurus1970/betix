@@ -96,6 +96,10 @@ Los tests de Node.js **no requieren que el servidor esté corriendo** — usan `
 | `core/` | Python 3.12 + Flask | 5000 | Toda la lógica de negocio (geodata, proyecciones SMA, health) |
 | `src/` (api) | Node.js 18 + Express | 3000 | Thin HTTP proxy hacia core |
 | `frontend/` | nginx | 80 | Sirve archivos estáticos (HTML + D3.js) |
+| PostgreSQL | postgres:16-alpine | 5432 | Base de datos principal — schema `betix` (provincias, juegos, tickets_mensuales) |
+| Redis | redis:7-alpine | 6379 | Caché de respuestas del core (TTL configurable) |
+
+La conexión a la base de datos se configura con `BETIX_DB_URL` (DSN estándar PostgreSQL). Ver [docs/database.md](docs/database.md) para el modelo de datos, los seeds y el script de carga.
 
 ---
 

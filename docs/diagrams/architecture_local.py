@@ -9,6 +9,7 @@ from diagrams import Cluster, Diagram, Edge
 from diagrams.onprem.client import User
 from diagrams.onprem.network import Nginx
 from diagrams.onprem.inmemory import Redis
+from diagrams.onprem.database import PostgreSQL
 from diagrams.programming.language import NodeJS, Python
 
 graph_attr = {
@@ -39,7 +40,11 @@ with Diagram(
         with Cluster("core  :5000"):
             core = Python("Flask\n(lógica de negocio)")
 
+        with Cluster("db  :5432"):
+            db = PostgreSQL("PostgreSQL 16\n(betix schema)")
+
     browser >> Edge(label="HTTP :8080") >> nginx
     nginx >> Edge(label="/api/*  proxy_pass") >> api
     api >> Edge(label="cache get/set", style="dashed") >> redis
     api >> Edge(label="HTTP :5000 (cache miss)") >> core
+    core >> Edge(label="SQL queries") >> db

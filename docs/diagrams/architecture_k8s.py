@@ -8,6 +8,7 @@ Uso:    python3 docs/diagrams/architecture_k8s.py
 from diagrams import Cluster, Diagram, Edge
 from diagrams.onprem.client import User
 from diagrams.onprem.inmemory import Redis
+from diagrams.onprem.database import PostgreSQL
 from diagrams.k8s.network import Ingress, Service
 from diagrams.k8s.compute import Deployment
 
@@ -49,8 +50,14 @@ with Diagram(
             redis_dep = Redis("Redis\n(caché)")
             redis_svc >> redis_dep
 
+        with Cluster("db"):
+            db_svc = Service("svc :5432")
+            db_dep = PostgreSQL("PostgreSQL 16\n(betix schema)")
+            db_svc >> db_dep
+
     browser >> Edge(label="HTTP") >> ingress
     ingress >> Edge(label="/") >> fe_svc
     ingress >> Edge(label="/api/*\n/healthz") >> api_svc
     api_dep >> Edge(label="cache get/set", style="dashed") >> redis_svc
     api_dep >> Edge(label="HTTP interno\n(cache miss)") >> core_svc
+    core_dep >> Edge(label="SQL queries") >> db_svc
