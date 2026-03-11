@@ -16,26 +16,30 @@ El servidor Flask falla con un mensaje claro al iniciar si `BETIX_DB_URL` no est
 
 ## Modelo entidad-relación
 
-```
-provincias          juegos
-──────────          ──────
-id (PK)             id (PK)
-nombre (UNIQUE)     nombre (UNIQUE)
-lat
-lng
-    │                   │
-    └────────┬───────────┘
-             │
-    tickets_mensuales
-    ─────────────────
-    id (PK)
-    provincia_id (FK → provincias.id)
-    juego_id     (FK → juegos.id)
-    fecha        DATE  ← primer día del mes
-    cantidad     INTEGER
-    ingresos     DECIMAL(14,2)
-    costo        DECIMAL(14,2)
-    [UNIQUE (provincia_id, juego_id, fecha)]
+```mermaid
+erDiagram
+    PROVINCIAS {
+        serial      id      PK
+        varchar_100 nombre  UK "UNIQUE NOT NULL"
+        decimal_9_6 lat        "NOT NULL"
+        decimal_9_6 lng        "NOT NULL"
+    }
+    JUEGOS {
+        serial     id      PK
+        varchar_50 nombre  UK "UNIQUE NOT NULL"
+    }
+    TICKETS_MENSUALES {
+        serial       id           PK
+        integer      provincia_id FK "NOT NULL"
+        integer      juego_id     FK "NOT NULL"
+        date         fecha           "NOT NULL — primer día del mes"
+        integer      cantidad        "NOT NULL"
+        decimal_14_2 ingresos        "NOT NULL"
+        decimal_14_2 costo           "NOT NULL"
+    }
+
+    PROVINCIAS ||--o{ TICKETS_MENSUALES : "provincia_id"
+    JUEGOS     ||--o{ TICKETS_MENSUALES : "juego_id"
 ```
 
 > `beneficio` no se persiste. Se calcula en query como `ingresos - costo`.

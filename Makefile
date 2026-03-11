@@ -21,7 +21,7 @@ IMAGE_FRONTEND := betix-frontend
         push push-core push-api push-frontend \
         k8s-apply k8s-status k8s-delete \
         version bump-core bump-api bump-frontend \
-        diagrams lint
+        lint
 
 # ─── Help ─────────────────────────────────────────────────────────────────────
 help:
@@ -38,9 +38,6 @@ help:
 	@echo "    make test-core        pytest del microservicio Python"
 	@echo "    make test-api         Jest + Cucumber del API Node.js"
 	@echo "    make lint             ESLint sobre el código Node.js"
-	@echo ""
-	@echo "  Diagramas"
-	@echo "    make diagrams         Regenera todos los PNGs de arquitectura"
 	@echo ""
 	@echo "  Build de imágenes Docker"
 	@echo "    make build            Build de las 3 imágenes con su versión"
@@ -88,14 +85,6 @@ test-api:
 
 lint:
 	npm run lint
-
-# ─── Diagramas ────────────────────────────────────────────────────────────────
-diagrams:
-	pip install -q -r docs/diagrams/requirements.txt
-	python3 docs/diagrams/architecture_local.py
-	python3 docs/diagrams/architecture_k8s.py
-	python3 docs/diagrams/architecture_aws.py
-	@echo "Diagramas generados en docs/diagrams/*.png"
 
 # ─── Build ────────────────────────────────────────────────────────────────────
 build: build-core build-api build-frontend

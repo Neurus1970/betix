@@ -254,7 +254,6 @@ Cada Pull Request hacia `main` ejecuta automáticamente (jobs en paralelo):
 
 | Job | Descripción |
 |---|---|
-| `diagrams` | Genera PNGs de arquitectura con diagrams-mingrammer + Graphviz |
 | `test-core` | pytest con cobertura para el microservicio Python Flask |
 | `lint-and-test` | ESLint + Jest (cobertura) + Cucumber BDD |
 
@@ -266,22 +265,49 @@ Al crear un branch con código de ticket (ej. `feature/BETIX-7-...`) el ticket J
 
 La infraestructura de Betix en AWS está definida completamente como código con **Terraform** (`terraform/`), siguiendo el principio de Infrastructure as Code: cualquier cambio en la infraestructura pasa por revisión de código y queda versionado en git.
 
-Los diagramas a continuación se generan automáticamente desde código Python usando [diagrams-mingrammer](https://diagrams.mingrammer.com/), una librería que convierte código en PNGs de arquitectura sin herramientas de diseño. Las fuentes viven en [`docs/diagrams/`](docs/diagrams/) y se actualizan en cada PR que toca ese directorio mediante el workflow `ci-diagrams.yml`. Para regenerarlos en local: `make diagrams`.
+Los diagramas están expresados en **Mermaid** y versionados junto al código: se renderizan automáticamente en GitHub sin herramientas externas.
+
+→ [docs/diagrams/infrastructure.md](docs/diagrams/infrastructure.md)
 
 ### Local — docker-compose
 
-Representa los tres contenedores corriendo en la máquina del developer: **nginx** sirve los estáticos y proxea `/api/*` hacia el **API Node.js**, que a su vez delega toda la lógica hacia el **core Flask**. Los puertos expuestos son :8080, :3000 y :5001.
+Representa los contenedores corriendo en la máquina del developer: **nginx** sirve los estáticos y proxea `/api/*` hacia el **API Node.js**, que delega la lógica al **core Flask**. Redis actúa como caché entre el proxy y el core. PostgreSQL persiste los datos del schema `betix`.
 
-![Betix Arquitectura Local](docs/diagrams/betix_local.png)
+```mermaid
+flowchart LR
+    Browser["Browser\n:8080"]
+
+    subgraph dc["docker-compose"]
+        subgraph fe["frontend  :80"]
+            nginx["nginx\n(estáticos)"]
+        end
+        subgraph api["api  :3000"]
+            nodejs["Node.js\n(thin proxy)"]
+        end
+        subgraph cache["redis  :6379"]
+            redis["Redis\n(caché TTL 60s)"]
+        end
+        subgraph core["core  :5000"]
+            flask["Flask\n(lógica de negocio)"]
+        end
+        subgraph db["db  :5432"]
+            pg["PostgreSQL 16\n(betix schema)"]
+        end
+    end
+
+    Browser -->|"HTTP :8080"| nginx
+    nginx -->|"/api/*  proxy_pass"| nodejs
+    nodejs -. "cache get/set" .-> redis
+    nodejs -->|"HTTP :5000 (cache miss)"| flask
+    flask -->|"SQL queries"| pg
+```
 
 ### Kubernetes — minikube
 
-Muestra el mismo stack desplegado en un cluster Kubernetes local. Un **Ingress** enruta el tráfico por path hacia los tres **Services**, cada uno respaldado por un **Deployment** independiente dentro del namespace `betix`. Este diagrama es fiel a los manifests de `k8s/`.
+Muestra el mismo stack desplegado en un cluster Kubernetes local. Un **Ingress** enruta el tráfico por path hacia los **Services**, cada uno respaldado por un **Deployment** independiente dentro del namespace `betix`. Este diagrama es fiel a los manifests de `k8s/`.
 
-![Betix Kubernetes](docs/diagrams/betix_k8s.png)
+### AWS — EKS + ECR + RDS + VPC
 
-### AWS — EKS + ECR + VPC
+Representa el despliegue productivo en AWS: una **VPC** con subnets públicas (ALB + NAT Gateway) y privadas (EKS + RDS). Las imágenes se almacenan en tres repositorios **ECR** independientes (`betix-core`, `betix-api`, `betix-frontend`), uno por servicio, con política de retención de las últimas 10 versiones.
 
-Representa el despliegue productivo en AWS: una **VPC** con subnets públicas (ALB + NAT Gateway) y privadas (EKS cluster), donde corre el node group con los tres microservicios. Las imágenes se almacenan en tres repositorios **ECR** independientes (`betix-core`, `betix-api`, `betix-frontend`), uno por servicio, con política de retención de las últimas 10 versiones.
-
-![Betix AWS](docs/diagrams/betix_aws.png)
+→ [Ver diagramas completos](docs/diagrams/infrastructure.md)
