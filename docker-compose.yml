@@ -22,32 +22,9 @@ services:
         condition: service_healthy
     volumes:
       - ./db:/db
-    entrypoint: ["/bin/sh", "-c"]
-    command:
-      - |
-        export PGPASSWORD=betix
-        echo "==> Ejecutando migraciones..."
-        psql -h db -U betix -d betix -f /db/migrations/001_init.sql
-        echo "==> Truncando tablas..."
-        psql -h db -U betix -d betix -c "TRUNCATE betix.tickets_mensuales, betix.provincias, betix.juegos RESTART IDENTITY CASCADE;"
-        echo "==> Cargando provincias..."
-        psql -h db -U betix -d betix -c "\copy betix.provincias(nombre,lat,lng) FROM '/db/seeds/_provincias.csv' CSV HEADER;"
-        echo "==> Cargando juegos..."
-        psql -h db -U betix -d betix -c "\copy betix.juegos(nombre) FROM '/db/seeds/_juegos.csv' CSV HEADER;"
-        echo "==> Cargando tickets_mensuales..."
-        psql -h db -U betix -d betix -c "
-          CREATE TEMP TABLE tmp_tickets (
-            provincia_nombre VARCHAR(100), juego_nombre VARCHAR(50),
-            fecha DATE, cantidad INTEGER, ingresos DECIMAL(14,2), costo DECIMAL(14,2)
-          );
-          \copy tmp_tickets FROM '/db/seeds/_tickets_mensuales.csv' CSV HEADER;
-          INSERT INTO betix.tickets_mensuales (provincia_id, juego_id, fecha, cantidad, ingresos, costo)
-          SELECT p.id, j.id, t.fecha, t.cantidad, t.ingresos, t.costo
-          FROM tmp_tickets t
-          JOIN betix.provincias p ON p.nombre = t.provincia_nombre
-          JOIN betix.juegos j ON j.nombre = t.juego_nombre;
-        "
-        echo "==> Carga completada."
+    environment:
+      BETIX_DB_URL: postgresql://betix:betix@db:5432/betix
+    entrypoint: ["/bin/sh", "/db/load_data.sh"]
 
   redis:
     image: redis:7-alpine

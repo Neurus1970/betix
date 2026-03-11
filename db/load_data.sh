@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+#!/bin/sh
 # Carga (o recarga) todos los datos en la base de datos Betix.
 #
 # Uso:
@@ -11,9 +11,9 @@
 #
 # Requiere: psql (cliente PostgreSQL) en el PATH y la variable BETIX_DB_URL definida.
 
-set -euo pipefail
+set -eu
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MIGRATIONS_DIR="${SCRIPT_DIR}/migrations"
 SEEDS_DIR="${SCRIPT_DIR}/seeds"
 
