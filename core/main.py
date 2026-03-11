@@ -28,7 +28,7 @@ def proyectado():
 
     provincia = request.args.get("provincia") or provincias[0]
     juego     = request.args.get("juego")     or juegos[0]
-    k         = min(4, max(1, int(request.args.get("meses", 1) or 1)))
+    k         = min(6, max(1, int(request.args.get("meses", 1) or 1)))
 
     try:
         result = calcular_proyecciones(provincia=provincia, juego=juego, k=k)

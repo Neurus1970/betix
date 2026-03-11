@@ -109,7 +109,7 @@ def test_proyectado_api_4_months(client):
 
 def test_proyectado_api_clamps_meses(client):
     data = client.get("/proyectado?meses=10").get_json()["data"]
-    assert len(data["proyectado"]) == 4
+    assert len(data["proyectado"]) == 6
 
 
 def test_proyectado_api_filter_provincia(client):
