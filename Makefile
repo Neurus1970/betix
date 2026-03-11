@@ -82,7 +82,9 @@ logs:
 test: test-core test-api
 
 test-core:
-	python3 -m pytest core/tests/ -v
+	docker-compose up -d db
+	@echo "Esperando PostgreSQL..."; until docker-compose exec -T db pg_isready -U betix -d betix -q 2>/dev/null; do sleep 1; done
+	python3 -m pytest core/tests/ -v; EXIT=$$?; docker-compose stop db; exit $$EXIT
 
 test-api:
 	npm test
