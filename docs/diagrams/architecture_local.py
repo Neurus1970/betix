@@ -8,6 +8,7 @@ Uso:    python3 docs/diagrams/architecture_local.py
 from diagrams import Cluster, Diagram, Edge
 from diagrams.onprem.client import User
 from diagrams.onprem.network import Nginx
+from diagrams.onprem.inmemory import Redis
 from diagrams.programming.language import NodeJS, Python
 
 graph_attr = {
@@ -32,9 +33,13 @@ with Diagram(
         with Cluster("api  :3000"):
             api = NodeJS("Node.js\n(thin proxy)")
 
+        with Cluster("redis  :6379"):
+            redis = Redis("Redis\n(caché TTL 60s)")
+
         with Cluster("core  :5000"):
             core = Python("Flask\n(lógica de negocio)")
 
     browser >> Edge(label="HTTP :8080") >> nginx
     nginx >> Edge(label="/api/*  proxy_pass") >> api
-    api >> Edge(label="HTTP :5000") >> core
+    api >> Edge(label="cache get/set", style="dashed") >> redis
+    api >> Edge(label="HTTP :5000 (cache miss)") >> core

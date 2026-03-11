@@ -1,0 +1,31 @@
+{
+  "packages": {
+    "core": {
+      "release-type": "generic",
+      "component": "betix-core",
+      "changelog-path": "core/CHANGELOG.md",
+      "version-file": "core/VERSION",
+      "include-component-in-tag": true,
+      "tag-separator": "-",
+      "include-v-in-tag": true
+    },
+    "src": {
+      "release-type": "node",
+      "component": "betix-api",
+      "changelog-path": "src/CHANGELOG.md",
+      "extra-files": ["src/VERSION"],
+      "include-component-in-tag": true,
+      "tag-separator": "-",
+      "include-v-in-tag": true
+    },
+    "frontend": {
+      "release-type": "generic",
+      "component": "betix-frontend",
+      "changelog-path": "frontend/CHANGELOG.md",
+      "version-file": "frontend/VERSION",
+      "include-component-in-tag": true,
+      "tag-separator": "-",
+      "include-v-in-tag": true
+    }
+  }
+}
