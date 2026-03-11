@@ -109,7 +109,9 @@ frontend/VERSION  # ej: 1.0.5  → imagen betix-frontend:1.0.5
 
 > Para builds de CI en ramas no-main usar el SHA corto del commit como tag (evita colisiones y permite trazar qué código está corriendo).
 
-**Bumpar una versión antes de mergear a `main`:**
+**El versionado es automatizado con Release Please** (BETIX-19). Al hacer merge a `main`, Release Please abre un PR automático que bumpa las versiones y genera el CHANGELOG según los conventional commits. Solo se bumpean los servicios cuyos paths cambiaron.
+
+Los comandos `make bump-*` son bypass de emergencia — no usar en operación normal:
 ```bash
 make bump-core v=X.Y.Z
 make bump-api v=X.Y.Z
