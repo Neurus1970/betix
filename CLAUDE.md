@@ -121,15 +121,15 @@ El `Makefile` lee ese archivo automáticamente en los targets `build-*` y `push-
 
 ### CI — Path Filters
 
-Tres workflows independientes en `.github/workflows/`. Cada job solo corre si sus paths cambiaron:
+Dos workflows independientes en `.github/workflows/`. Cada job solo corre si sus paths cambiaron:
 
 ```
-Cambio en core/                  → ci-core.yml     (pytest)
-Cambio en src/ tests/ features/  → ci-api.yml      (Jest + Cucumber)
-Cambio en docs/diagrams/         → ci-diagrams.yml (regenera PNGs)
-Cambio en terraform/ k8s/ docker-compose.yml → ci-diagrams.yml
+Cambio en core/                  → ci-core.yml  (pytest)
+Cambio en src/ tests/ features/  → ci-api.yml   (Jest + Cucumber)
 Cambio en README.md              → ningún job corre
 ```
+
+> Los diagramas de arquitectura están en Mermaid (docs/diagrams/, docs/ArquitecturaC4.md) y se renderizan automáticamente en GitHub sin CI adicional.
 
 > Si un job no corre porque sus paths no cambiaron, GitHub lo considera automáticamente pasado — no bloquea branch protection rules.
 

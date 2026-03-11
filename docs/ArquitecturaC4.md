@@ -46,16 +46,14 @@ C4Container
         Container(api, "Betix API", "Node.js 18 + Express 4", "Thin proxy HTTP hacia Python core. Caché Redis en todas las rutas /api/datos/*")
         ContainerDb(redis, "Redis", "Redis 7 (in-memory)", "Caché de respuestas del core. TTL configurable (default 60s). Degradación elegante si no está disponible")
         Container(core, "Betix Core", "Python 3.12 + Flask", "Lógica de negocio: geodata, proyecciones SMA rolling, health check")
-        ContainerDb(dataStatic, "mock_data.py", "Módulo Python en memoria", "30 registros estáticos: 10 provincias × 3 juegos")
-        ContainerDb(dataMonthly, "tickets_por_mes.py", "Módulo Python en memoria", "360 registros mensuales con factores estacionales (mar 2025–feb 2026)")
+        ContainerDb(db, "PostgreSQL", "PostgreSQL 16 — schema betix", "3 tablas: provincias (10), juegos (3), tickets_mensuales (360 registros mar 2025–feb 2026)")
     }
 
     Rel(usuario, frontend, "Navega y filtra datos", "HTTPS :8080")
     Rel(frontend, api, "Proxea /api/* y /healthz", "HTTP interno :3000")
     Rel(api, redis, "Cache HIT: sirve respuesta / Cache MISS: almacena resultado", "ioredis :6379")
     Rel(api, core, "HTTP proxy (solo en cache miss)", "HTTP interno :5000")
-    Rel(core, dataStatic, "Lee snapshot de datos", "import")
-    Rel(core, dataMonthly, "Lee series temporales", "import")
+    Rel(core, db, "Queries SQL (psycopg3)", "TCP :5432")
 ```
 
 ---
@@ -74,18 +72,19 @@ C4Component
         Component(proyectadoEp, "Proyectado Endpoint", "Flask route", "GET /proyectado")
         Component(geodataSvc, "geodata_service", "Python", "Agrega métricas por provincia con coordenadas geográficas")
         Component(proyeccionesSvc, "proyecciones_service", "Python", "Calcula SMA rolling, SD histórica y bandas de error crecientes")
-        Component(healthSvc, "health_service", "Python", "Valida estructura y tipos de los datos en memoria")
+        Component(healthSvc, "health_service", "Python", "Verifica conectividad y disponibilidad de datos en la DB")
+        Component(dbModule, "db.py", "Python / psycopg3", "Pool de conexiones. Lee BETIX_DB_URL. Falla explícitamente si no está definida")
 
-        ComponentDb(mockData, "mock_data.py", "Python module", "Snapshot: 30 registros")
-        ComponentDb(ticketsPorMes, "tickets_por_mes.py", "Python module", "Series: 360 registros mensuales")
+        ComponentDb(postgres, "PostgreSQL", "betix schema", "provincias, juegos, tickets_mensuales")
     }
 
-    Rel(healthEp, healthSvc, "Invoca validación")
+    Rel(healthEp, healthSvc, "Invoca verificación")
     Rel(geodataEp, geodataSvc, "Delega agregación")
     Rel(proyectadoEp, proyeccionesSvc, "Delega cálculo")
-    Rel(geodataSvc, mockData, "Lee")
-    Rel(proyeccionesSvc, ticketsPorMes, "Lee")
-    Rel(healthSvc, mockData, "Valida")
+    Rel(geodataSvc, dbModule, "get_connection()")
+    Rel(proyeccionesSvc, dbModule, "get_connection()")
+    Rel(healthSvc, dbModule, "get_connection()")
+    Rel(dbModule, postgres, "SQL queries", "TCP :5432")
 ```
 
 ---
