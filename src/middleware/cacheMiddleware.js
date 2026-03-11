@@ -17,7 +17,7 @@ function cacheMiddleware(req, res, next) {
   if (!cache.isEnabled) return next();
 
   const sortedQuery = Object.keys(req.query)
-    .sort()
+    .sort((a, b) => a.localeCompare(b))
     .map(k => `${k}=${req.query[k]}`)
     .join('&');
 
