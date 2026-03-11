@@ -15,6 +15,21 @@ jobs:
     name: SonarQube
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB:       betix
+          POSTGRES_USER:     betix
+          POSTGRES_PASSWORD: betix
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U betix -d betix"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -39,9 +54,13 @@ jobs:
 
       - name: Ejecutar tests Node.js con cobertura
         run: npm run test:ci
+        env:
+          REDIS_URL: ''
 
       - name: Ejecutar tests Python con cobertura
         run: python3 -m pytest core/tests/ --cov=core --cov-report=xml:coverage-core.xml
+        env:
+          BETIX_DB_URL: postgresql://betix:betix@localhost:5432/betix
 
       - name: Leer versión del API
         id: version
