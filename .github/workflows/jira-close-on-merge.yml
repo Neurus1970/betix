@@ -3,7 +3,7 @@ name: Jira - Sincronizar estado al cerrar PR
 on:
   pull_request:
     types: [closed]
-    branches: [main]
+    branches: [main, develop]
 
 jobs:
   sync-jira-ticket:
