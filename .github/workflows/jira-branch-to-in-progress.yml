@@ -2,11 +2,10 @@ name: Jira - Mover a In Progress al crear branch
 
 on:
   create:
-    branches:
-      - '**'
 
 jobs:
   move-to-in-progress:
+    if: github.ref_type == 'branch'
     runs-on: ubuntu-latest
     steps:
       - name: Extraer ticket de Jira del nombre del branch
