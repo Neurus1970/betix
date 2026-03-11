@@ -8,6 +8,9 @@ on:
     paths:                       # en push sí filtramos para evitar doble ejecución
       - 'core/**'
 
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
 jobs:
   test-core:
     name: Python Core Tests
