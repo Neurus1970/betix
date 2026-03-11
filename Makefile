@@ -87,7 +87,7 @@ test-core:
 	python3 -m pytest core/tests/ -v; EXIT=$$?; docker-compose stop db; exit $$EXIT
 
 test-api:
-	npm test
+	REDIS_URL= npm test
 
 lint:
 	npm run lint
