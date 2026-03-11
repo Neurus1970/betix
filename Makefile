@@ -3,6 +3,10 @@
 # Uso: make <target>   |   make help
 # ──────────────────────────────────────────────────────────────────────────────
 
+# Carga .env.dev si existe (variables de entorno para desarrollo local)
+-include .env.dev
+export
+
 # Versiones de cada servicio (leídas desde los archivos VERSION)
 VERSION_CORE     := $(shell cat core/VERSION | tr -d '[:space:]')
 VERSION_API      := $(shell cat src/VERSION | tr -d '[:space:]')

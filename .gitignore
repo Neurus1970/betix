@@ -3,6 +3,8 @@ coverage/
 test-results/
 .env
 .env.local
+.env.dev
+.env.uat
 *.log
 .DS_Store
 coverage-core.xml
