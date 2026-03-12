@@ -10,10 +10,10 @@
       "include-v-in-tag": true
     },
     "src": {
-      "release-type": "node",
+      "release-type": "simple",
       "component": "betix-api",
       "changelog-path": "src/CHANGELOG.md",
-      "extra-files": ["src/VERSION"],
+      "version-file": "src/VERSION",
       "include-component-in-tag": true,
       "tag-separator": "-",
       "include-v-in-tag": true
