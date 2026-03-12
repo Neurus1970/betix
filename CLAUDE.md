@@ -141,11 +141,14 @@ Ante cualquier tarea de implementación, delegar en el sub-agente correspondient
 
 | Agente | Archivo | Delegar cuando el cambio toca… |
 |--------|---------|-------------------------------|
-| **microservices** | `microservices.md` | `core/` (Python/Flask), `src/` (Node.js proxy), `tests/`, `features/` |
+| **microservices** | `microservices.md` | `core/` (Python/Flask), `src/` (Node.js proxy) — solo lógica de producción |
+| **testing** | `testing.md` | `tests/`, `features/`, `core/tests/` — CUALQUIER tarea de tests (escribir, corregir, actualizar mocks/nocks) |
 | **infra** | `infra.md` | `docker-compose.yml`, `k8s/`, `terraform/`, `.github/workflows/`, `db/`, `frontend/nginx.conf`, `Dockerfile` |
 | **frontend** | `frontend.md` | `frontend/` (nginx config), `src/public/` (HTML/CSS/JS/D3.js) |
 
 **Regla:** Si una tarea toca múltiples áreas, delegar en cada agente por separado en paralelo cuando sea posible, o secuencialmente cuando haya dependencias entre los cambios.
+
+**Regla de testing:** Toda tarea que involucre escribir, modificar, corregir o ejecutar tests (Jest, Cucumber, pytest) debe delegarse al agente **testing**, incluso si el cambio de producción fue hecho por otro agente.
 
 ---
 

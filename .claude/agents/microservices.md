@@ -1,6 +1,6 @@
 ---
 name: microservices
-description: Especialista en los microservicios de Betix. Usar para tareas en core/ (Python Flask) y src/ (Node.js Express), incluyendo endpoints, business logic, tests unitarios/BDD y contratos entre servicios. Ejemplos: "agregar un endpoint", "corregir un bug en las proyecciones", "escribir tests para la nueva ruta", "implementar una feature end-to-end core+api".
+description: Especialista en los microservicios de Betix. Usar para tareas en core/ (Python Flask) y src/ (Node.js Express) — solo lógica de producción. Para cualquier tarea de tests (escribir, corregir, actualizar mocks), usar el agente testing. Ejemplos: "agregar un endpoint", "corregir un bug en las proyecciones", "implementar una feature en core+api". NO usar para escribir o corregir tests (→ agente testing).
 tools: Read, Edit, Write, Bash, Glob, Grep
 ---
 
