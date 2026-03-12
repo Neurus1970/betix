@@ -11,9 +11,9 @@ services:
       - db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U betix -d betix"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
+      interval: 5s
+      timeout: 3s
+      retries: 10
 
   db-seed:
     image: postgres:16-alpine
@@ -52,9 +52,8 @@ services:
       db-seed:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/healthz')"]
-      interval: 60s
-      start_interval: 5s
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 10s
       timeout: 5s
       retries: 3
 

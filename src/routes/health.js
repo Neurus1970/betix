@@ -9,7 +9,7 @@ const router = express.Router();
 
 router.get('/healthz', async (_req, res) => {
   try {
-    const upstream = await fetch(`${CORE_URL}/healthz`);
+    const upstream = await fetch(`${CORE_URL}/health`);
     const body = await upstream.json();
     logger.info('Health check exitoso');
     res.status(upstream.status).json(body);

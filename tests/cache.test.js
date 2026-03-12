@@ -1,9 +1,5 @@
 'use strict';
 
-// Deshabilitar Redis — .env.dev tiene REDIS_URL seteado y dotenv no sobreescribe
-// vars ya existentes, así que esto debe ir antes de cualquier require.
-process.env.REDIS_URL = '';
-
 /**
  * Tests para src/cache.js y src/middleware/cacheMiddleware.js.
  *
