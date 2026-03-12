@@ -1,0 +1,9 @@
+# Normalizar line endings
+* text=auto
+
+# Shell scripts siempre LF (se rompen con CRLF en Linux/Alpine)
+*.sh text eol=lf
+
+# SQL y CSV LF
+*.sql text eol=lf
+*.csv text eol=lf
