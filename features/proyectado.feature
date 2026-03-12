@@ -1,38 +1,8 @@
-Feature: Página de proyecciones estadísticas
+Feature: API endpoint de proyecciones estadísticas
 
   Como usuario de la demo de BETIX
-  Quiero una página dedicada a proyecciones futuras de métricas de apuestas por provincia
+  Quiero acceder a proyecciones futuras de métricas de apuestas por provincia
   Para anticipar tendencias basadas en datos históricos con media móvil
-
-  # ── Página HTML ──────────────────────────────────────────────────────────────
-
-  Scenario: La página es accesible
-    When hago GET a "/proyectado"
-    Then el código de respuesta es 200
-    And el Content-Type es "text/html"
-
-  Scenario: La página contiene los selectores de filtros
-    When hago GET a "/proyectado"
-    Then el HTML contiene 'id="sel-provincia"'
-    And el HTML contiene 'id="sel-juego"'
-    And el HTML contiene 'id="sel-meses"'
-    And el HTML contiene 'id="sel-metrica"'
-
-  Scenario: La página contiene el SVG del gráfico de proyecciones
-    When hago GET a "/proyectado"
-    Then el HTML contiene 'id="chart-svg"'
-
-  Scenario: La página contiene la tabla de datos numéricos
-    When hago GET a "/proyectado"
-    Then el HTML contiene 'id="table-proyectado"'
-
-  Scenario: La página usa D3.js para las visualizaciones
-    When hago GET a "/proyectado"
-    Then el HTML contiene 'd3js.org'
-
-  Scenario: La página consume el endpoint de proyectado
-    When hago GET a "/proyectado"
-    Then el HTML contiene '/api/datos/proyectado'
 
   # ── API endpoint ──────────────────────────────────────────────────────────────
 

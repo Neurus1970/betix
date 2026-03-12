@@ -57,44 +57,6 @@ function mockCoreProyectado(k = 1, provincia = 'Catamarca', juego = 'Lotería') 
 
 afterEach(() => nock.cleanAll());
 
-// ── Página HTML ───────────────────────────────────────────────────────────────
-
-describe('GET /proyectado', () => {
-  it('debe retornar status 200 y Content-Type html', async () => {
-    const res = await request(app).get('/proyectado');
-    expect(res.statusCode).toBe(200);
-    expect(res.headers['content-type']).toMatch(/html/);
-  });
-
-  it('debe incluir los selectores de filtros', async () => {
-    const res = await request(app).get('/proyectado');
-    expect(res.text).toContain('id="sel-provincia"');
-    expect(res.text).toContain('id="sel-juego"');
-    expect(res.text).toContain('id="sel-meses"');
-    expect(res.text).toContain('id="sel-metrica"');
-  });
-
-  it('debe incluir el SVG del gráfico', async () => {
-    const res = await request(app).get('/proyectado');
-    expect(res.text).toContain('id="chart-svg"');
-  });
-
-  it('debe incluir la tabla de datos', async () => {
-    const res = await request(app).get('/proyectado');
-    expect(res.text).toContain('id="table-proyectado"');
-  });
-
-  it('debe usar D3.js', async () => {
-    const res = await request(app).get('/proyectado');
-    expect(res.text).toContain('d3js.org');
-  });
-
-  it('debe consumir el endpoint /api/datos/proyectado', async () => {
-    const res = await request(app).get('/proyectado');
-    expect(res.text).toContain('/api/datos/proyectado');
-  });
-});
-
 // ── API endpoint ──────────────────────────────────────────────────────────────
 
 describe('GET /api/datos/proyectado', () => {

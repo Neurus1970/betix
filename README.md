@@ -126,7 +126,6 @@ La conexión a la base de datos se configura con `BETIX_DB_URL` (DSN estándar P
 | Ruta | Descripción |
 |------|-------------|
 | `/dashboard` | Dashboard principal con 5 tabs: Mapa & Torta, Sunburst, Sankey, Tabla y Proyecciones. KPIs globales. Teclas `1`–`5` para navegar entre tabs. |
-| `/proyectado` | Vista standalone de proyecciones por provincia y juego. Gráfico de líneas con banda de confianza ±SD. |
 
 ---
 

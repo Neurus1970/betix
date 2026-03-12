@@ -19,7 +19,7 @@ frontend/
 └── VERSION         # Versión semver del frontend (ej: 1.0.5)
 
 src/public/         # Assets estáticos servidos por nginx
-├── index.html      # Dashboard principal
+├── dashboard.html  # Dashboard principal (único punto de entrada frontend)
 ├── css/            # Estilos
 └── js/             # JavaScript del cliente, incluyendo D3.js visualizaciones
 ```
@@ -35,9 +35,9 @@ src/public/         # Assets estáticos servidos por nginx
 
 Todos retornan JSON:
 
-- `GET /geodata` — Datos geográficos de provincias con estadísticas de ventas
-- `GET /proyectado` — Proyecciones SMA (Simple Moving Average) de tickets
-- `GET /health` — Health check del sistema
+- `GET /api/datos/geodata` — Datos geográficos de provincias con estadísticas de ventas
+- `GET /api/datos/proyectado` — Proyecciones SMA (Simple Moving Average) de tickets
+- `GET /healthz` — Health check del sistema
 
 ## Stack tecnológico
 

@@ -615,10 +615,6 @@
           <select id="sel-proy-prov"></select>
         </div>
         <div class="filter-group">
-          <label for="sel-proy-juego">Juego</label>
-          <select id="sel-proy-juego"></select>
-        </div>
-        <div class="filter-group">
           <label for="sel-proy-meses">Meses a futuro</label>
           <select id="sel-proy-meses">
             <option value="1">1 mes</option>
@@ -1213,7 +1209,11 @@
 
   /* ── Proyecciones ──────────────────────────────────────────────────── */
   async function renderProyecciones() {
-    const juego   = document.getElementById('sel-proy-juego').value;
+    // Juego: usa el selector global; si es "Todos" toma el primer juego disponible
+    const juegoGlobal = getJuego();
+    const juego   = juegoGlobal === 'Todos'
+      ? (document.querySelector('#sel-juego option:not([value="Todos"])') || {}).value || juegoGlobal
+      : juegoGlobal;
     const metrica = getMetrica();
     const prov    = document.getElementById('sel-proy-prov').value;
     const meses   = document.getElementById('sel-proy-meses').value;
@@ -1228,6 +1228,12 @@
     tbody.innerHTML  = '';
     msgEl.style.display = 'none';
 
+    if (!juego || juego === 'Todos') {
+      msgEl.textContent = 'Seleccioná un juego específico para ver proyecciones.';
+      msgEl.style.display = 'block';
+      return;
+    }
+
     // Spinner
     svg.attr('viewBox', '0 0 400 60').attr('height', 60);
     svg.append('text')
@@ -1237,14 +1243,62 @@
       .text('Cargando proyecciones…');
 
     try {
-      const res = await fetch(
-        `${PROY_URL}?provincia=${encodeURIComponent(prov)}&juego=${encodeURIComponent(juego)}&meses=${meses}`
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const json = await res.json();
+      let historico, proyectado;
 
-      const historico  = json.data.historico  || [];
-      const proyectado = json.data.proyectado || [];
+      if (prov === 'Todas') {
+        // Fetch en paralelo para todas las provincias y agregar sumando
+        const provList = [...new Set(rawData.map(d => d.provincia))].sort();
+        const results = await Promise.all(
+          provList.map(p =>
+            fetch(`${PROY_URL}?provincia=${encodeURIComponent(p)}&juego=${encodeURIComponent(juego)}&meses=${meses}`)
+              .then(r => r.ok ? r.json() : null)
+          )
+        );
+        const valid = results.filter(r => r && r.data);
+
+        // Sumar histórico por fecha
+        const histMap = new Map();
+        for (const r of valid) {
+          for (const d of (r.data.historico || [])) {
+            const prev = histMap.get(d.fecha) || { fecha: d.fecha, cantidad: 0, ingresos: 0, costo: 0, beneficio: 0 };
+            histMap.set(d.fecha, {
+              fecha:     d.fecha,
+              cantidad:  prev.cantidad  + (+d.cantidad  || 0),
+              ingresos:  prev.ingresos  + (+d.ingresos  || 0),
+              costo:     prev.costo     + (+d.costo     || 0),
+              beneficio: prev.beneficio + (+d.beneficio || 0),
+            });
+          }
+        }
+        historico = [...histMap.values()].sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+        // Sumar proyectado por fecha (errores se suman)
+        const projMap = new Map();
+        for (const r of valid) {
+          for (const d of (r.data.proyectado || [])) {
+            const prev = projMap.get(d.fecha) || { fecha: d.fecha, cantidad: 0, ingresos: 0, costo: 0, beneficio: 0, error_cantidad: 0, error_ingresos: 0, error_beneficio: 0 };
+            projMap.set(d.fecha, {
+              fecha:           d.fecha,
+              cantidad:        prev.cantidad        + (+d.cantidad        || 0),
+              ingresos:        prev.ingresos        + (+d.ingresos        || 0),
+              costo:           prev.costo           + (+d.costo           || 0),
+              beneficio:       prev.beneficio       + (+d.beneficio       || 0),
+              error_cantidad:  prev.error_cantidad  + (+d.error_cantidad  || 0),
+              error_ingresos:  prev.error_ingresos  + (+d.error_ingresos  || 0),
+              error_beneficio: prev.error_beneficio + (+d.error_beneficio || 0),
+            });
+          }
+        }
+        proyectado = [...projMap.values()].sort((a, b) => a.fecha.localeCompare(b.fecha));
+      } else {
+        const res = await fetch(
+          `${PROY_URL}?provincia=${encodeURIComponent(prov)}&juego=${encodeURIComponent(juego)}&meses=${meses}`
+        );
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const json = await res.json();
+        historico  = json.data.historico  || [];
+        proyectado = json.data.proyectado || [];
+      }
 
       svg.selectAll('*').remove();
 
@@ -1315,11 +1369,16 @@
         .call(d3.axisLeft(yScale).ticks(5).tickSize(-iw).tickFormat(''))
         .call(ax => { ax.selectAll('line').attr('stroke', 'var(--border)').attr('stroke-dasharray', '2 3'); ax.select('.domain').remove(); });
 
-      // Confidence band
+      // Confidence band: arranca desde el último punto histórico (error=0) para continuidad visual
       const projPts = allData.filter(d => d._tipo === 'proj');
+      const histPts = allData.filter(d => d._tipo === 'hist');
       if (projPts.length && projPts[0][errKey] != null) {
+        const bandAnchor = histPts.length
+          ? [{ ...histPts[histPts.length - 1], [errKey]: 0 }]
+          : [];
+        const bandPts = [...bandAnchor, ...projPts];
         g.append('path')
-          .datum(projPts)
+          .datum(bandPts)
           .attr('fill', 'rgba(163,113,247,.12)')
           .attr('d', d3.area()
             .x(d => xScale(d._date))
@@ -1344,7 +1403,6 @@
         .y(d => yScale(+d[metKey] || 0))
         .curve(d3.curveMonotoneX);
 
-      const histPts = allData.filter(d => d._tipo === 'hist');
       if (histPts.length) {
         g.append('path').datum(histPts)
           .attr('fill', 'none').attr('stroke', 'var(--accent-blue)').attr('stroke-width', 2.5)
@@ -1443,21 +1501,16 @@
         selJuego.appendChild(opt);
       }
 
-      // Populate provincia dropdown for proyecciones tab
+      // Populate provincia dropdown for proyecciones tab (con opción "Todas")
       const selProvProy = document.getElementById('sel-proy-prov');
-      const provinces   = [...new Set(rawData.map(d => d.provincia))].sort();
+      const optTodas = document.createElement('option');
+      optTodas.value = 'Todas'; optTodas.textContent = 'Todas las provincias';
+      selProvProy.appendChild(optTodas);
+      const provinces = [...new Set(rawData.map(d => d.provincia))].sort();
       for (const p of provinces) {
         const opt = document.createElement('option');
         opt.value = opt.textContent = p;
         selProvProy.appendChild(opt);
-      }
-
-      // Populate juego dropdown for proyecciones tab (excludes "Todos")
-      const selJuegoProy = document.getElementById('sel-proy-juego');
-      for (const g of games) {
-        const opt = document.createElement('option');
-        opt.value = opt.textContent = g;
-        selJuegoProy.appendChild(opt);
       }
 
       document.getElementById('map-loader').style.display = 'none';
@@ -1520,10 +1573,6 @@
   });
 
   document.getElementById('sel-proy-prov').addEventListener('change', () => {
-    if (document.querySelector('.tab-panel.active').id === 'tab-proyectado') renderProyecciones();
-  });
-
-  document.getElementById('sel-proy-juego').addEventListener('change', () => {
     if (document.querySelector('.tab-panel.active').id === 'tab-proyectado') renderProyecciones();
   });
 
