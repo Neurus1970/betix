@@ -37,3 +37,13 @@ CREATE TABLE IF NOT EXISTS betix.tickets_mensuales (
 
 CREATE INDEX IF NOT EXISTS idx_tickets_prov_juego_fecha
     ON betix.tickets_mensuales (provincia_id, juego_id, fecha);
+
+-- ── Asignación juegos↔provincias (muchos-a-muchos) ───────────────────────────
+-- Registra explícitamente qué juegos están habilitados en cada provincia.
+
+CREATE TABLE IF NOT EXISTS betix.provincias_juegos (
+    provincia_id INTEGER NOT NULL REFERENCES betix.provincias(id),
+    juego_id     INTEGER NOT NULL REFERENCES betix.juegos(id),
+
+    CONSTRAINT pk_provincias_juegos PRIMARY KEY (provincia_id, juego_id)
+);
