@@ -135,6 +135,20 @@ Cambio en README.md              → ningún job corre
 
 ---
 
+## Sub-Agents (Delegación por área)
+
+Ante cualquier tarea de implementación, delegar en el sub-agente correspondiente según el área afectada. Los agentes están definidos en `.claude/agents/`:
+
+| Agente | Archivo | Delegar cuando el cambio toca… |
+|--------|---------|-------------------------------|
+| **microservices** | `microservices.md` | `core/` (Python/Flask), `src/` (Node.js proxy), `tests/`, `features/` |
+| **infra** | `infra.md` | `docker-compose.yml`, `k8s/`, `terraform/`, `.github/workflows/`, `db/`, `frontend/nginx.conf`, `Dockerfile` |
+| **frontend** | `frontend.md` | `frontend/` (nginx config), `src/public/` (HTML/CSS/JS/D3.js) |
+
+**Regla:** Si una tarea toca múltiples áreas, delegar en cada agente por separado en paralelo cuando sea posible, o secuencialmente cuando haya dependencias entre los cambios.
+
+---
+
 ## Skills (Common Workflows)
 
 Reusable step-by-step playbooks in `.claude/skills/`:
