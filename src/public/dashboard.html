@@ -615,6 +615,10 @@
           <select id="sel-proy-prov"></select>
         </div>
         <div class="filter-group">
+          <label for="sel-proy-juego">Juego</label>
+          <select id="sel-proy-juego"></select>
+        </div>
+        <div class="filter-group">
           <label for="sel-proy-meses">Meses a futuro</label>
           <select id="sel-proy-meses">
             <option value="1">1 mes</option>
@@ -1209,7 +1213,7 @@
 
   /* ── Proyecciones ──────────────────────────────────────────────────── */
   async function renderProyecciones() {
-    const juego   = getJuego();
+    const juego   = document.getElementById('sel-proy-juego').value;
     const metrica = getMetrica();
     const prov    = document.getElementById('sel-proy-prov').value;
     const meses   = document.getElementById('sel-proy-meses').value;
@@ -1222,12 +1226,6 @@
     svg.attr('height', null);
     legend.innerHTML = '';
     tbody.innerHTML  = '';
-
-    if (juego === 'Todos') {
-      msgEl.textContent = 'Seleccioná un juego específico para ver proyecciones.';
-      msgEl.style.display = 'block';
-      return;
-    }
     msgEl.style.display = 'none';
 
     // Spinner
@@ -1454,6 +1452,14 @@
         selProvProy.appendChild(opt);
       }
 
+      // Populate juego dropdown for proyecciones tab (excludes "Todos")
+      const selJuegoProy = document.getElementById('sel-proy-juego');
+      for (const g of games) {
+        const opt = document.createElement('option');
+        opt.value = opt.textContent = g;
+        selJuegoProy.appendChild(opt);
+      }
+
       document.getElementById('map-loader').style.display = 'none';
       updateKPIs();
       renderMap();
@@ -1514,6 +1520,10 @@
   });
 
   document.getElementById('sel-proy-prov').addEventListener('change', () => {
+    if (document.querySelector('.tab-panel.active').id === 'tab-proyectado') renderProyecciones();
+  });
+
+  document.getElementById('sel-proy-juego').addEventListener('change', () => {
     if (document.querySelector('.tab-panel.active').id === 'tab-proyectado') renderProyecciones();
   });
 

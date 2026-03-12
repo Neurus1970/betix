@@ -117,7 +117,7 @@ La conexión a la base de datos se configura con `BETIX_DB_URL` (DSN estándar P
 |-----------|------|---------|-------------|
 | `provincia` | string | primera (alfabético) | Nombre de la provincia |
 | `juego` | string | primero (alfabético) | `Lotería`, `Quiniela` o `Raspadita` |
-| `meses` | number | `1` | Meses a proyectar (1–4) |
+| `meses` | number | `1` | Meses a proyectar (1–6) |
 
 ---
 
