@@ -1,5 +1,9 @@
 'use strict';
 
+// Desactivar Redis en tests — evita conexiones reales a localhost:6379
+// (debe ejecutarse antes de que world.js haga require('../../src/app'))
+process.env.REDIS_URL = '';
+
 const { Before, After, BeforeAll } = require('@cucumber/cucumber');
 const nock = require('nock');
 
