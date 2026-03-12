@@ -1,4 +1,5 @@
 import os
+from datetime import datetime
 from flask import Flask, jsonify, request
 from .services.geodata_service import get_geodata
 from .services.proyecciones_service import calcular_proyecciones, get_provincias, get_juegos
@@ -7,13 +8,31 @@ from .services.health_service import check_data_access
 app = Flask(__name__)
 
 
-@app.get("/health")
+@app.get("/healthz")
 def health():
     try:
         check_data_access()
-        return jsonify({"status": "healthy"})
+        return jsonify({
+            "status": "healthy",
+            "component": "betix-core",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "dependencies": {
+                "postgresql": {"status": "healthy"},
+            },
+        })
     except RuntimeError as e:
-        return jsonify({"status": "unhealthy", "message": str(e)}), 500
+        pg_dep = {"status": "unhealthy", "error": str(e)}
+        pgcode = getattr(e, "pgcode", None)
+        if pgcode:
+            pg_dep["pgcode"] = pgcode
+        return jsonify({
+            "status": "unhealthy",
+            "component": "betix-core",
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+            "dependencies": {
+                "postgresql": pg_dep,
+            },
+        }), 503
 
 
 @app.get("/geodata")
