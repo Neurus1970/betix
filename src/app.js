@@ -23,6 +23,10 @@ app.get('/dashboard', (_req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'))
 );
 
+app.get('/backoffice', (_req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'backoffice.html'))
+);
+
 // eslint-disable-next-line no-unused-vars
 app.use((err, _req, res, _next) => {
   logger.error(`Unhandled error: ${err.message}`);

@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Betix · Backoffice</title>
+  <style>
+    /* ── Design tokens ─────────────────────────────────────────────────── */
+    :root {
+      --bg:            #0d1117;
+      --surface:       #161b22;
+      --surface-hover: #1c2128;
+      --border:        #21262d;
+      --text:          #c9d1d9;
+      --muted:         #8b949e;
+      --accent:        #56d364;
+      --accent-blue:   #388bfd;
+      --accent-orange: #e3b341;
+      --accent-red:    #f85149;
+      --accent-purple: #a371f7;
+      --accent-cyan:   #39d4d8;
+      --radius-sm: 8px;
+      --radius-md: 12px;
+      --radius-lg: 16px;
+    }
+
+    /* ── Reset ─────────────────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 20px 16px 48px;
+    }
+
+    /* ── Header ────────────────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .brand { display: flex; align-items: center; gap: 10px; }
+
+    .brand-dot {
+      width: 10px; height: 10px;
+      border-radius: 50%;
+      background: var(--accent-blue);
+      box-shadow: 0 0 8px var(--accent-blue);
+    }
+
+    h1 { font-size: 1.4rem; font-weight: 700; color: #f0f6fc; }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .nav-link {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.875rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 7px 14px;
+      transition: border-color .2s, color .2s;
+    }
+    .nav-link:hover { border-color: var(--accent-blue); color: var(--accent-blue); }
+
+    /* ── Filters ────────────────────────────────────────────────────────── */
+    .filter-group { display: flex; flex-direction: column; gap: 4px; }
+
+    .filter-group label {
+      font-size: 0.7rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    select {
+      background: var(--surface);
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 7px 12px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      outline: none;
+      transition: border-color .2s;
+      min-width: 160px;
+    }
+    select:hover, select:focus { border-color: var(--accent-blue); }
+
+    .search-input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      padding: 7px 12px;
+      font-size: 0.875rem;
+      outline: none;
+      transition: border-color .2s;
+      width: 200px;
+    }
+    .search-input:focus { border-color: var(--accent-blue); }
+    .search-input::placeholder { color: var(--muted); }
+
+    /* ── Tabs ──────────────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      color: var(--muted);
+      padding: 10px 18px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: color .2s, border-color .2s;
+      margin-bottom: -1px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tab-btn:hover { color: var(--text); }
+    .tab-btn.active {
+      color: var(--accent-blue);
+      border-bottom-color: var(--accent-blue);
+    }
+
+    /* ── Tab panels ────────────────────────────────────────────────────── */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* ── Chart box (province cards) ────────────────────────────────────── */
+    .chart-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .chart-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .chart-title {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── Kanban grid ────────────────────────────────────────────────────── */
+    .kanban-filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+    }
+
+    .province-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .province-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .province-card.hidden { display: none; }
+
+    .province-body {
+      padding: 14px 18px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* ── Chips ──────────────────────────────────────────────────────────── */
+    .chips-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      min-height: 28px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.78rem;
+      font-weight: 500;
+      padding: 4px 10px 4px 10px;
+      border-radius: 20px;
+      border: 1px solid transparent;
+      opacity: 1;
+      transition: opacity .3s ease;
+    }
+    .chip.fade-out { opacity: 0; }
+    .chip.fade-in { animation: fadeIn .3s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: scale(.85); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    .chip-remove {
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: inherit;
+      opacity: .6;
+      font-size: 1rem;
+      line-height: 1;
+      padding: 0;
+      display: flex;
+      align-items: center;
+    }
+    .chip-remove:hover { opacity: 1; }
+
+    .chip-empty {
+      font-size: 0.78rem;
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    /* ── Color scheme for juegos ────────────────────────────────────────── */
+    .chip-blue   { background: rgba(56,139,253,.18);  color: var(--accent-blue);   border-color: rgba(56,139,253,.35); }
+    .chip-green  { background: rgba(86,211,100,.15);  color: var(--accent);        border-color: rgba(86,211,100,.3); }
+    .chip-orange { background: rgba(227,179,65,.15);  color: var(--accent-orange); border-color: rgba(227,179,65,.3); }
+    .chip-purple { background: rgba(163,113,247,.15); color: var(--accent-purple); border-color: rgba(163,113,247,.3); }
+    .chip-cyan   { background: rgba(57,212,216,.15);  color: var(--accent-cyan);   border-color: rgba(57,212,216,.3); }
+    .chip-red    { background: rgba(248,81,73,.15);   color: var(--accent-red);    border-color: rgba(248,81,73,.3); }
+
+    /* ── Add-game row ───────────────────────────────────────────────────── */
+    .add-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .add-row select {
+      flex: 1;
+      min-width: 0;
+      font-size: 0.8rem;
+      padding: 6px 10px;
+    }
+
+    .btn-add {
+      background: transparent;
+      border: 1px solid var(--accent-blue);
+      color: var(--accent-blue);
+      border-radius: var(--radius-sm);
+      padding: 6px 12px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background .2s, color .2s;
+    }
+    .btn-add:hover { background: var(--accent-blue); color: var(--bg); }
+    .btn-add:disabled {
+      opacity: .4;
+      cursor: not-allowed;
+      background: transparent;
+      color: var(--accent-blue);
+    }
+
+    /* ── Matrix table (tab 2) ───────────────────────────────────────────── */
+    .table-wrapper { overflow-x: auto; }
+
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .matrix-table thead th {
+      padding: 10px 16px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      border-bottom: 1px solid var(--border);
+      white-space: nowrap;
+      background: var(--surface);
+    }
+
+    .matrix-table thead th:first-child {
+      text-align: left;
+      position: sticky;
+      left: 0;
+      z-index: 2;
+    }
+
+    .matrix-table tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background .15s;
+    }
+    .matrix-table tbody tr:hover { background: var(--surface-hover); }
+
+    .matrix-table td {
+      padding: 9px 16px;
+      text-align: center;
+      vertical-align: middle;
+    }
+
+    .matrix-table td:first-child {
+      text-align: left;
+      font-size: 0.85rem;
+      white-space: nowrap;
+      position: sticky;
+      left: 0;
+      background: var(--surface);
+      z-index: 1;
+    }
+    .matrix-table tbody tr:hover td:first-child { background: var(--surface-hover); }
+
+    .matrix-table input[type='checkbox'] {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    /* ── Toast notifications ────────────────────────────────────────────── */
+    #toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      z-index: 1000;
+      pointer-events: none;
+    }
+
+    .toast {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      padding: 10px 16px;
+      font-size: 0.82rem;
+      color: var(--text);
+      opacity: 1;
+      transition: opacity .3s ease;
+      pointer-events: none;
+      max-width: 280px;
+    }
+    .toast.error { border-color: var(--accent-red); color: var(--accent-red); }
+    .toast.success { border-color: var(--accent); color: var(--accent); }
+    .toast.fade-out { opacity: 0; }
+
+    /* ── Global loading / error ─────────────────────────────────────────── */
+    #app-loader {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 80px 20px;
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .spinner {
+      width: 32px; height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent-blue);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    #app-error {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      padding: 80px 20px;
+      text-align: center;
+    }
+
+    #app-error p {
+      color: var(--accent-red);
+      font-size: 0.9rem;
+    }
+
+    .btn-retry {
+      background: transparent;
+      border: 1px solid var(--accent-blue);
+      color: var(--accent-blue);
+      border-radius: var(--radius-sm);
+      padding: 8px 20px;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: background .2s, color .2s;
+    }
+    .btn-retry:hover { background: var(--accent-blue); color: var(--bg); }
+
+    #app-content { display: none; }
+
+    /* ── Responsive ─────────────────────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .province-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 1.1rem; }
+      .province-grid { grid-template-columns: 1fr; }
+      .header-right { width: 100%; }
+      .kanban-filters { flex-direction: column; align-items: stretch; }
+      .search-input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
+  <header>
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <h1>Betix · Backoffice</h1>
+    </div>
+    <div class="header-right">
+      <a href="/dashboard" class="nav-link">← Dashboard</a>
+    </div>
+  </header>
+
+  <!-- ── Global loader ──────────────────────────────────────────────────── -->
+  <div id="app-loader">
+    <div class="spinner"></div>
+    <span>Cargando...</span>
+  </div>
+
+  <!-- ── Global error ───────────────────────────────────────────────────── -->
+  <div id="app-error">
+    <p id="app-error-msg">Error al cargar los datos.</p>
+    <button class="btn-retry" id="btn-retry">Reintentar</button>
+  </div>
+
+  <!-- ── Main content ───────────────────────────────────────────────────── -->
+  <div id="app-content">
+    <!-- Tabs -->
+    <div class="tabs" role="tablist">
+      <button class="tab-btn active" id="tab-visual-btn" role="tab" aria-selected="true" aria-controls="tab-visual" data-tab="visual">
+        Visual
+      </button>
+      <button class="tab-btn" id="tab-lista-btn" role="tab" aria-selected="false" aria-controls="tab-lista" data-tab="lista">
+        Lista
+      </button>
+    </div>
+
+    <!-- Tab 1: Visual (kanban) -->
+    <div class="tab-panel active" id="tab-visual" role="tabpanel" aria-labelledby="tab-visual-btn">
+      <div class="kanban-filters">
+        <div class="filter-group">
+          <label for="filter-provincia">Filtrar provincia</label>
+          <input
+            type="text"
+            id="filter-provincia"
+            class="search-input"
+            placeholder="Buscar provincia..."
+            autocomplete="off"
+          />
+        </div>
+        <div class="filter-group">
+          <label for="filter-juego">Filtrar por juego</label>
+          <select id="filter-juego">
+            <option value="">Todos los juegos</option>
+          </select>
+        </div>
+      </div>
+      <div class="province-grid" id="province-grid"></div>
+    </div>
+
+    <!-- Tab 2: Lista (matrix) -->
+    <div class="tab-panel" id="tab-lista" role="tabpanel" aria-labelledby="tab-lista-btn">
+      <div class="chart-box">
+        <div class="chart-header">
+          <span class="chart-title">Asignaciones</span>
+        </div>
+        <div class="table-wrapper">
+          <table class="matrix-table" id="matrix-table">
+            <thead id="matrix-thead"></thead>
+            <tbody id="matrix-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Toast container ────────────────────────────────────────────────── -->
+  <div id="toast-container" aria-live="polite"></div>
+
+  <script>
+    'use strict';
+
+    /* ── State ──────────────────────────────────────────────────────────── */
+    var assignments = new Set();
+    var provinces   = []; // [{id, nombre}] sorted alphabetically
+    var juegos      = []; // [{id, nombre}] sorted alphabetically
+
+    /* ── Helpers ────────────────────────────────────────────────────────── */
+    var JUEGO_COLORS = ['blue', 'green', 'orange', 'purple', 'cyan', 'red'];
+
+    function juegoColor(juegoId) {
+      var idx = juegos.findIndex(function(j) { return j.id === juegoId; });
+      return JUEGO_COLORS[idx % JUEGO_COLORS.length];
+    }
+
+    function assignKey(pId, jId) {
+      return pId + '-' + jId;
+    }
+
+    function showToast(msg, type) {
+      var container = document.getElementById('toast-container');
+      var el = document.createElement('div');
+      el.className = 'toast ' + (type || '');
+      el.textContent = msg;
+      container.appendChild(el);
+      setTimeout(function() {
+        el.classList.add('fade-out');
+        setTimeout(function() {
+          if (el.parentNode) { el.parentNode.removeChild(el); }
+        }, 350);
+      }, 3000);
+    }
+
+    /* ── Data loading ───────────────────────────────────────────────────── */
+    function loadData() {
+      document.getElementById('app-loader').style.display = 'flex';
+      document.getElementById('app-error').style.display  = 'none';
+      document.getElementById('app-content').style.display = 'none';
+
+      fetch('/api/provincias_juegos')
+        .then(function(res) {
+          if (!res.ok) { throw new Error('HTTP ' + res.status); }
+          return res.json();
+        })
+        .then(function(body) {
+          var data = body.data || [];
+          buildState(data);
+          renderAll();
+          document.getElementById('app-loader').style.display  = 'none';
+          document.getElementById('app-content').style.display = 'block';
+        })
+        .catch(function(err) {
+          document.getElementById('app-loader').style.display  = 'none';
+          document.getElementById('app-error-msg').textContent = 'Error al cargar los datos: ' + err.message;
+          document.getElementById('app-error').style.display   = 'flex';
+        });
+    }
+
+    function buildState(data) {
+      assignments.clear();
+      var provMap  = {};
+      var juegoMap = {};
+
+      data.forEach(function(row) {
+        assignments.add(assignKey(row.provincia_id, row.juego_id));
+        provMap[row.provincia_id]  = row.provincia_nombre;
+        juegoMap[row.juego_id]     = row.juego_nombre;
+      });
+
+      provinces = Object.keys(provMap).map(function(id) {
+        return { id: Number(id), nombre: provMap[id] };
+      }).sort(function(a, b) { return a.nombre.localeCompare(b.nombre, 'es'); });
+
+      juegos = Object.keys(juegoMap).map(function(id) {
+        return { id: Number(id), nombre: juegoMap[id] };
+      }).sort(function(a, b) { return a.nombre.localeCompare(b.nombre, 'es'); });
+    }
+
+    /* ── Render all ─────────────────────────────────────────────────────── */
+    function renderAll() {
+      renderFilterJuegoSelect();
+      renderKanban();
+      renderMatrix();
+    }
+
+    /* ── Filter juego select ────────────────────────────────────────────── */
+    function renderFilterJuegoSelect() {
+      var sel = document.getElementById('filter-juego');
+      var current = sel.value;
+      sel.innerHTML = '<option value="">Todos los juegos</option>';
+      juegos.forEach(function(j) {
+        var opt = document.createElement('option');
+        opt.value = j.id;
+        opt.textContent = j.nombre;
+        sel.appendChild(opt);
+      });
+      if (current) { sel.value = current; }
+    }
+
+    /* ── Kanban ─────────────────────────────────────────────────────────── */
+    function renderKanban() {
+      var grid = document.getElementById('province-grid');
+      grid.innerHTML = '';
+
+      provinces.forEach(function(prov) {
+        var card = buildProvinceCard(prov);
+        grid.appendChild(card);
+      });
+
+      applyKanbanFilters();
+    }
+
+    function buildProvinceCard(prov) {
+      var card = document.createElement('div');
+      card.className = 'province-card chart-box';
+      card.dataset.provinciaId = prov.id;
+
+      var header = document.createElement('div');
+      header.className = 'chart-header';
+      var title = document.createElement('span');
+      title.className = 'chart-title';
+      title.textContent = prov.nombre;
+      header.appendChild(title);
+      card.appendChild(header);
+
+      var body = document.createElement('div');
+      body.className = 'province-body';
+
+      var chipsRow = document.createElement('div');
+      chipsRow.className = 'chips-row';
+      chipsRow.id = 'chips-' + prov.id;
+      renderChips(chipsRow, prov.id);
+      body.appendChild(chipsRow);
+
+      var addRow = document.createElement('div');
+      addRow.className = 'add-row';
+
+      var addSel = document.createElement('select');
+      addSel.id = 'add-sel-' + prov.id;
+      addSel.setAttribute('aria-label', 'Agregar juego a ' + prov.nombre);
+      populateAddSelect(addSel, prov.id);
+      addRow.appendChild(addSel);
+
+      var addBtn = document.createElement('button');
+      addBtn.className = 'btn-add';
+      addBtn.textContent = '+ Asignar';
+      addBtn.disabled = addSel.options.length === 0;
+      addBtn.setAttribute('aria-label', 'Asignar juego seleccionado a ' + prov.nombre);
+      addBtn.addEventListener('click', function() {
+        handleAddJuego(prov.id, addSel, addBtn);
+      });
+      addRow.appendChild(addBtn);
+
+      body.appendChild(addRow);
+      card.appendChild(body);
+
+      return card;
+    }
+
+    function populateAddSelect(sel, provId) {
+      sel.innerHTML = '';
+      var available = juegos.filter(function(j) {
+        return !assignments.has(assignKey(provId, j.id));
+      });
+      available.forEach(function(j) {
+        var opt = document.createElement('option');
+        opt.value = j.id;
+        opt.textContent = j.nombre;
+        sel.appendChild(opt);
+      });
+      if (available.length === 0) {
+        var opt = document.createElement('option');
+        opt.textContent = 'Sin juegos disponibles';
+        opt.disabled = true;
+        sel.appendChild(opt);
+      }
+    }
+
+    function renderChips(container, provId) {
+      container.innerHTML = '';
+      var assigned = juegos.filter(function(j) {
+        return assignments.has(assignKey(provId, j.id));
+      });
+      if (assigned.length === 0) {
+        var empty = document.createElement('span');
+        empty.className = 'chip-empty';
+        empty.textContent = 'Sin juegos asignados';
+        container.appendChild(empty);
+        return;
+      }
+      assigned.forEach(function(j) {
+        container.appendChild(buildChip(provId, j));
+      });
+    }
+
+    function buildChip(provId, juego) {
+      var chip = document.createElement('span');
+      chip.className = 'chip chip-' + juegoColor(juego.id);
+      chip.dataset.juegoId = juego.id;
+
+      var label = document.createTextNode(juego.nombre);
+      chip.appendChild(label);
+
+      var removeBtn = document.createElement('button');
+      removeBtn.className = 'chip-remove';
+      removeBtn.innerHTML = '&times;';
+      removeBtn.setAttribute('aria-label', 'Eliminar ' + juego.nombre + ' de la provincia');
+      removeBtn.addEventListener('click', function() {
+        handleRemoveJuego(provId, juego.id, chip);
+      });
+      chip.appendChild(removeBtn);
+
+      return chip;
+    }
+
+    function handleAddJuego(provId, addSel, addBtn) {
+      var juegoId = Number(addSel.value);
+      if (!juegoId) { return; }
+
+      addBtn.disabled = true;
+
+      fetch('/api/provincias_juegos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provincia_id: provId, juego_id: juegoId })
+      })
+        .then(function(res) {
+          if (res.status === 201) {
+            assignments.add(assignKey(provId, juegoId));
+            refreshCardUI(provId);
+            refreshMatrixCell(provId, juegoId, true);
+            showToast('Juego asignado correctamente.', 'success');
+          } else if (res.status === 409) {
+            assignments.add(assignKey(provId, juegoId));
+            refreshCardUI(provId);
+            showBadgeTemporal(provId, 'ya existe');
+          } else {
+            showToast('Error al guardar (' + res.status + ').', 'error');
+            addBtn.disabled = false;
+          }
+        })
+        .catch(function() {
+          showToast('Error al guardar.', 'error');
+          addBtn.disabled = false;
+        });
+    }
+
+    function handleRemoveJuego(provId, juegoId, chipEl) {
+      chipEl.classList.add('fade-out');
+
+      fetch('/api/provincias_juegos/' + provId + '/' + juegoId, {
+        method: 'DELETE'
+      })
+        .then(function(res) {
+          if (res.status === 204) {
+            assignments.delete(assignKey(provId, juegoId));
+            setTimeout(function() {
+              refreshCardUI(provId);
+            }, 300);
+            refreshMatrixCell(provId, juegoId, false);
+          } else if (res.status === 404) {
+            assignments.delete(assignKey(provId, juegoId));
+            setTimeout(function() {
+              refreshCardUI(provId);
+            }, 300);
+            refreshMatrixCell(provId, juegoId, false);
+          } else {
+            chipEl.classList.remove('fade-out');
+            showToast('Error al eliminar (' + res.status + ').', 'error');
+          }
+        })
+        .catch(function() {
+          chipEl.classList.remove('fade-out');
+          showToast('Error al eliminar.', 'error');
+        });
+    }
+
+    function refreshCardUI(provId) {
+      var chipsRow = document.getElementById('chips-' + provId);
+      if (chipsRow) { renderChips(chipsRow, provId); }
+
+      var addSel = document.getElementById('add-sel-' + provId);
+      if (addSel) {
+        populateAddSelect(addSel, provId);
+        var addBtn = addSel.nextElementSibling;
+        if (addBtn) {
+          addBtn.disabled = addSel.options.length === 0 ||
+            (addSel.options.length === 1 && addSel.options[0].disabled);
+        }
+      }
+    }
+
+    function showBadgeTemporal(provId, msg) {
+      var chipsRow = document.getElementById('chips-' + provId);
+      if (!chipsRow) { return; }
+      var badge = document.createElement('span');
+      badge.className = 'chip chip-orange';
+      badge.textContent = msg;
+      chipsRow.appendChild(badge);
+      setTimeout(function() {
+        badge.classList.add('fade-out');
+        setTimeout(function() {
+          if (badge.parentNode) { badge.parentNode.removeChild(badge); }
+        }, 350);
+      }, 2000);
+    }
+
+    /* ── Kanban filters ─────────────────────────────────────────────────── */
+    function applyKanbanFilters() {
+      var textFilter  = document.getElementById('filter-provincia').value.toLowerCase().trim();
+      var juegoFilter = document.getElementById('filter-juego').value;
+
+      var cards = document.querySelectorAll('#province-grid .province-card');
+      cards.forEach(function(card) {
+        var provId   = Number(card.dataset.provinciaId);
+        var prov     = provinces.find(function(p) { return p.id === provId; });
+        var nameMatch = !textFilter || (prov && prov.nombre.toLowerCase().includes(textFilter));
+        var juegoMatch = !juegoFilter || assignments.has(assignKey(provId, Number(juegoFilter)));
+
+        if (nameMatch && juegoMatch) {
+          card.classList.remove('hidden');
+        } else {
+          card.classList.add('hidden');
+        }
+      });
+    }
+
+    /* ── Matrix ─────────────────────────────────────────────────────────── */
+    function renderMatrix() {
+      var thead = document.getElementById('matrix-thead');
+      var tbody = document.getElementById('matrix-tbody');
+      thead.innerHTML = '';
+      tbody.innerHTML = '';
+
+      // Header row
+      var headerRow = document.createElement('tr');
+      var thProv = document.createElement('th');
+      thProv.textContent = 'Provincia';
+      headerRow.appendChild(thProv);
+
+      juegos.forEach(function(j) {
+        var th = document.createElement('th');
+        th.textContent = j.nombre;
+        headerRow.appendChild(th);
+      });
+      thead.appendChild(headerRow);
+
+      // Body rows
+      provinces.forEach(function(prov) {
+        var tr = document.createElement('tr');
+
+        var tdName = document.createElement('td');
+        tdName.textContent = prov.nombre;
+        tr.appendChild(tdName);
+
+        juegos.forEach(function(j) {
+          var td = document.createElement('td');
+          var key = assignKey(prov.id, j.id);
+          var cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.checked = assignments.has(key);
+          cb.id = 'cb-' + prov.id + '-' + j.id;
+          cb.setAttribute('aria-label', prov.nombre + ' — ' + j.nombre);
+          cb.addEventListener('change', function() {
+            handleCheckboxChange(prov.id, j.id, cb);
+          });
+          td.appendChild(cb);
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+    }
+
+    function handleCheckboxChange(provId, juegoId, cbEl) {
+      var checked = cbEl.checked;
+      cbEl.disabled = true;
+
+      if (checked) {
+        fetch('/api/provincias_juegos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ provincia_id: provId, juego_id: juegoId })
+        })
+          .then(function(res) {
+            cbEl.disabled = false;
+            if (res.status === 201 || res.status === 409) {
+              assignments.add(assignKey(provId, juegoId));
+              cbEl.checked = true;
+              refreshCardUI(provId);
+            } else {
+              cbEl.checked = false;
+              showToast('Error al guardar (' + res.status + ').', 'error');
+            }
+          })
+          .catch(function() {
+            cbEl.disabled = false;
+            cbEl.checked = false;
+            showToast('Error al guardar.', 'error');
+          });
+      } else {
+        fetch('/api/provincias_juegos/' + provId + '/' + juegoId, {
+          method: 'DELETE'
+        })
+          .then(function(res) {
+            cbEl.disabled = false;
+            if (res.status === 204 || res.status === 404) {
+              assignments.delete(assignKey(provId, juegoId));
+              cbEl.checked = false;
+              refreshCardUI(provId);
+            } else {
+              cbEl.checked = true;
+              showToast('Error al eliminar (' + res.status + ').', 'error');
+            }
+          })
+          .catch(function() {
+            cbEl.disabled = false;
+            cbEl.checked = true;
+            showToast('Error al eliminar.', 'error');
+          });
+      }
+    }
+
+    function refreshMatrixCell(provId, juegoId, checked) {
+      var cb = document.getElementById('cb-' + provId + '-' + juegoId);
+      if (cb) { cb.checked = checked; }
+    }
+
+    /* ── Tab switching ──────────────────────────────────────────────────── */
+    document.querySelectorAll('.tab-btn').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var target = btn.dataset.tab;
+
+        document.querySelectorAll('.tab-btn').forEach(function(b) {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        });
+        document.querySelectorAll('.tab-panel').forEach(function(p) {
+          p.classList.remove('active');
+        });
+
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        document.getElementById('tab-' + target).classList.add('active');
+
+        // Re-render matrix on switch to keep it in sync
+        if (target === 'lista') { renderMatrix(); }
+        if (target === 'visual') { renderKanban(); }
+      });
+    });
+
+    /* ── Filter listeners ───────────────────────────────────────────────── */
+    document.getElementById('filter-provincia').addEventListener('input', applyKanbanFilters);
+    document.getElementById('filter-juego').addEventListener('change', applyKanbanFilters);
+
+    /* ── Retry button ───────────────────────────────────────────────────── */
+    document.getElementById('btn-retry').addEventListener('click', loadData);
+
+    /* ── Bootstrap ──────────────────────────────────────────────────────── */
+    loadData();
+  </script>
+</body>
+</html>

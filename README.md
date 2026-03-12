@@ -136,6 +136,7 @@ La conexión a la base de datos se configura con `BETIX_DB_URL` (DSN estándar P
 | Ruta | Descripción |
 |------|-------------|
 | `/dashboard` | Dashboard principal con 5 tabs: Mapa & Torta, Sunburst, Sankey, Tabla y Proyecciones. KPIs globales. Teclas `1`–`5` para navegar entre tabs. |
+| `/backoffice` | Gestión de asignaciones juego↔provincia. Tab Visual (tarjetas kanban por provincia con chips de juegos) y Tab Lista (matriz de checkboxes provincia × juego). Cambios en tiempo real via API. |
 
 ---
 
@@ -202,8 +203,8 @@ npm run lint
 
 | Suite | Herramienta | Tests |
 |---|---|---|
-| Unit / Integration (Node.js) | Jest + Supertest + nock | 56 |
-| Functional / BDD | Cucumber | 33 escenarios / 80 steps |
+| Unit / Integration (Node.js) | Jest + Supertest + nock | 62 |
+| Functional / BDD | Cucumber | 26 escenarios / 70 steps |
 | Unit (Python core) | pytest | 27+ |
 
 ---
