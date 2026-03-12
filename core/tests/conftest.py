@@ -22,9 +22,13 @@ def setup_test_db():
     """Crea el esquema betix y carga los seeds antes de todos los tests."""
     os.environ["BETIX_DB_URL"] = _TEST_DB_URL
 
+    # Reset any stale pool so it reconnects with the correct URL
+    from core.db import close_pool
+    close_pool()
+
     with psycopg.connect(_TEST_DB_URL) as conn:
         # Migraciones (idempotente — usa IF NOT EXISTS)
-        with open(os.path.join(_MIGRATIONS_DIR, "001_init.sql")) as f:
+        with open(os.path.join(_MIGRATIONS_DIR, "001_init.sql"), encoding="utf-8") as f:
             conn.execute(f.read())
 
         # Truncar y recargar seeds
@@ -33,21 +37,21 @@ def setup_test_db():
             "RESTART IDENTITY CASCADE"
         )
 
-        with open(os.path.join(_SEEDS_DIR, "_provincias.csv")) as f:
+        with open(os.path.join(_SEEDS_DIR, "_provincias.csv"), encoding="utf-8") as f:
             with conn.cursor() as cur:
                 with cur.copy(
                     "COPY betix.provincias(nombre, lat, lng) FROM STDIN CSV HEADER"
                 ) as copy:
                     copy.write(f.read())
 
-        with open(os.path.join(_SEEDS_DIR, "_juegos.csv")) as f:
+        with open(os.path.join(_SEEDS_DIR, "_juegos.csv"), encoding="utf-8") as f:
             with conn.cursor() as cur:
                 with cur.copy(
                     "COPY betix.juegos(nombre) FROM STDIN CSV HEADER"
                 ) as copy:
                     copy.write(f.read())
 
-        with open(os.path.join(_SEEDS_DIR, "_tickets_mensuales.csv")) as f:
+        with open(os.path.join(_SEEDS_DIR, "_tickets_mensuales.csv"), encoding="utf-8") as f:
             csv_content = f.read()
 
         with conn.cursor() as cur:
