@@ -3,8 +3,8 @@
     "core": {
       "release-type": "simple",
       "component": "betix-core",
-      "changelog-path": "core/CHANGELOG.md",
-      "version-file": "core/VERSION",
+      "changelog-path": "CHANGELOG.md",
+      "version-file": "VERSION",
       "include-component-in-tag": true,
       "tag-separator": "-",
       "include-v-in-tag": true
@@ -12,8 +12,8 @@
     "src": {
       "release-type": "simple",
       "component": "betix-api",
-      "changelog-path": "src/CHANGELOG.md",
-      "version-file": "src/VERSION",
+      "changelog-path": "CHANGELOG.md",
+      "version-file": "VERSION",
       "include-component-in-tag": true,
       "tag-separator": "-",
       "include-v-in-tag": true
@@ -21,8 +21,8 @@
     "frontend": {
       "release-type": "simple",
       "component": "betix-frontend",
-      "changelog-path": "frontend/CHANGELOG.md",
-      "version-file": "frontend/VERSION",
+      "changelog-path": "CHANGELOG.md",
+      "version-file": "VERSION",
       "include-component-in-tag": true,
       "tag-separator": "-",
       "include-v-in-tag": true
