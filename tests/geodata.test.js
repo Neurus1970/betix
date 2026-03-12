@@ -1,5 +1,8 @@
 'use strict';
 
+// Deshabilitar Redis antes de cargar app — evita cliente ioredis real por .env.dev
+process.env.REDIS_URL = '';
+
 const request = require('supertest');
 const nock    = require('nock');
 const app     = require('../src/app');

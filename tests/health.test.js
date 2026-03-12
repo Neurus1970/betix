@@ -10,20 +10,20 @@ afterEach(() => nock.cleanAll());
 
 describe('GET /healthz', () => {
   it('debe retornar status healthy cuando el core responde ok', async () => {
-    nock(CORE_URL).get('/health').reply(200, { status: 'healthy' });
+    nock(CORE_URL).get('/healthz').reply(200, { status: 'healthy' });
     const res = await request(app).get('/healthz');
     expect(res.statusCode).toBe(200);
     expect(res.body.status).toBe('healthy');
   });
 
   it('debe retornar 500 si el core reporta unhealthy', async () => {
-    nock(CORE_URL).get('/health').reply(500, { status: 'unhealthy', message: 'Datos corruptos' });
+    nock(CORE_URL).get('/healthz').reply(500, { status: 'unhealthy', message: 'Datos corruptos' });
     const res = await request(app).get('/healthz');
     expect(res.statusCode).toBe(500);
   });
 
   it('debe retornar 500 si el core no está disponible', async () => {
-    nock(CORE_URL).get('/health').reply(503, { status: 'unavailable' });
+    nock(CORE_URL).get('/healthz').reply(503, { status: 'unavailable' });
     const res = await request(app).get('/healthz');
     expect(res.statusCode).toBe(503);
   });
