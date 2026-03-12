@@ -9,6 +9,28 @@ Plataforma de estadísticas de tickets de lotería por provincia y juego, con da
 
 ---
 
+## Onboarding a la plataforma
+
+Este repositorio es el **proyecto de referencia** de nuestra plataforma corporativa de desarrollo. Antes de sumarte a un proyecto productivo, el recorrido recomendado es practicar el ciclo completo aquí:
+
+```
+Ticket → Branch → Código → Tests → PR → CI → Review → Merge → Release
+```
+
+1. **Ticket** — Tomás un ticket del sprint activo en Jira. El ID del ticket (`BETIX-XX`) va en el nombre de tu rama.
+2. **Branch** — Creás una rama desde `develop` con el prefijo correcto (`feature/`, `fix/`, `refactor/`). Esto mueve el ticket a *In Progress* automáticamente.
+3. **Código** — Desarrollás el cambio siguiendo las convenciones del proyecto (ver [CLAUDE.md](CLAUDE.md)).
+4. **Tests** — Escribís tests que cubran el comportamiento nuevo. El umbral mínimo de cobertura se valida en CI.
+5. **PR** — Abrís un Pull Request contra `develop`. La IA genera una revisión automatizada; un humano aprueba.
+6. **CI** — GitHub Actions ejecuta lint, tests y análisis de SonarCloud. Todo debe estar en verde.
+7. **Review** — El revisor humano aprueba o solicita cambios. Solo se mergea con aprobación + CI verde.
+8. **Merge** — Al mergear, el ticket pasa a *Done* automáticamente en Jira.
+9. **Release** — Al acumular cambios en `main`, Release Please genera el tag de versión y el CHANGELOG de forma automática.
+
+Para una descripción exhaustiva de cada etapa y las herramientas que la soportan → [docs/SDLC.md](docs/SDLC.md)
+
+---
+
 ## Inicio rápido
 
 Guía para tener el proyecto corriendo en local y empezar a colaborar.
@@ -74,6 +96,10 @@ Los tests de Node.js **no requieren que el servidor esté corriendo** — usan `
 | `core/` | Python 3.12 + Flask | 5000 | Toda la lógica de negocio (geodata, proyecciones SMA, health) |
 | `src/` (api) | Node.js 18 + Express | 3000 | Thin HTTP proxy hacia core |
 | `frontend/` | nginx | 80 | Sirve archivos estáticos (HTML + D3.js) |
+| PostgreSQL | postgres:16-alpine | 5432 | Base de datos principal — schema `betix` (provincias, juegos, tickets_mensuales) |
+| Redis | redis:7-alpine | 6379 | Caché de respuestas del core (TTL configurable) |
+
+La conexión a la base de datos se configura con `BETIX_DB_URL` (DSN estándar PostgreSQL). Ver [docs/database.md](docs/database.md) para el modelo de datos, los seeds y el script de carga.
 
 ---
 
@@ -91,7 +117,7 @@ Los tests de Node.js **no requieren que el servidor esté corriendo** — usan `
 |-----------|------|---------|-------------|
 | `provincia` | string | primera (alfabético) | Nombre de la provincia |
 | `juego` | string | primero (alfabético) | `Lotería`, `Quiniela` o `Raspadita` |
-| `meses` | number | `1` | Meses a proyectar (1–4) |
+| `meses` | number | `1` | Meses a proyectar (1–6) |
 
 ---
 
@@ -99,9 +125,7 @@ Los tests de Node.js **no requieren que el servidor esté corriendo** — usan `
 
 | Ruta | Descripción |
 |------|-------------|
-| `/dashboard-interactivo` | Mapa coroplético + gráfico de torta con D3.js. Filtros por juego y métrica. |
-| `/dashboard` | Dashboard avanzado: Mapa, Sankey, Sunburst y Tabla. KPIs globales. |
-| `/proyectado` | Proyecciones por provincia y juego. Gráfico de líneas con banda de confianza ±SD. |
+| `/dashboard` | Dashboard principal con 5 tabs: Mapa & Torta, Sunburst, Sankey, Tabla y Proyecciones. KPIs globales. Teclas `1`–`5` para navegar entre tabs. |
 
 ---
 
@@ -228,7 +252,6 @@ Cada Pull Request hacia `main` ejecuta automáticamente (jobs en paralelo):
 
 | Job | Descripción |
 |---|---|
-| `diagrams` | Genera PNGs de arquitectura con diagrams-mingrammer + Graphviz |
 | `test-core` | pytest con cobertura para el microservicio Python Flask |
 | `lint-and-test` | ESLint + Jest (cobertura) + Cucumber BDD |
 
@@ -240,22 +263,49 @@ Al crear un branch con código de ticket (ej. `feature/BETIX-7-...`) el ticket J
 
 La infraestructura de Betix en AWS está definida completamente como código con **Terraform** (`terraform/`), siguiendo el principio de Infrastructure as Code: cualquier cambio en la infraestructura pasa por revisión de código y queda versionado en git.
 
-Los diagramas a continuación se generan automáticamente desde código Python usando [diagrams-mingrammer](https://diagrams.mingrammer.com/), una librería que convierte código en PNGs de arquitectura sin herramientas de diseño. Las fuentes viven en [`docs/diagrams/`](docs/diagrams/) y se actualizan en cada PR que toca ese directorio mediante el workflow `ci-diagrams.yml`. Para regenerarlos en local: `make diagrams`.
+Los diagramas están expresados en **Mermaid** y versionados junto al código: se renderizan automáticamente en GitHub sin herramientas externas.
+
+→ [docs/diagrams/infrastructure.md](docs/diagrams/infrastructure.md)
 
 ### Local — docker-compose
 
-Representa los tres contenedores corriendo en la máquina del developer: **nginx** sirve los estáticos y proxea `/api/*` hacia el **API Node.js**, que a su vez delega toda la lógica hacia el **core Flask**. Los puertos expuestos son :8080, :3000 y :5001.
+Representa los contenedores corriendo en la máquina del developer: **nginx** sirve los estáticos y proxea `/api/*` hacia el **API Node.js**, que delega la lógica al **core Flask**. Redis actúa como caché entre el proxy y el core. PostgreSQL persiste los datos del schema `betix`.
 
-![Betix Arquitectura Local](docs/diagrams/betix_local.png)
+```mermaid
+flowchart LR
+    Browser["Browser\n:8080"]
+
+    subgraph dc["docker-compose"]
+        subgraph fe["frontend  :80"]
+            nginx["nginx\n(estáticos)"]
+        end
+        subgraph api["api  :3000"]
+            nodejs["Node.js\n(thin proxy)"]
+        end
+        subgraph cache["redis  :6379"]
+            redis["Redis\n(caché TTL 60s)"]
+        end
+        subgraph core["core  :5000"]
+            flask["Flask\n(lógica de negocio)"]
+        end
+        subgraph db["db  :5432"]
+            pg["PostgreSQL 16\n(betix schema)"]
+        end
+    end
+
+    Browser -->|"HTTP :8080"| nginx
+    nginx -->|"/api/*  proxy_pass"| nodejs
+    nodejs -. "cache get/set" .-> redis
+    nodejs -->|"HTTP :5000 (cache miss)"| flask
+    flask -->|"SQL queries"| pg
+```
 
 ### Kubernetes — minikube
 
-Muestra el mismo stack desplegado en un cluster Kubernetes local. Un **Ingress** enruta el tráfico por path hacia los tres **Services**, cada uno respaldado por un **Deployment** independiente dentro del namespace `betix`. Este diagrama es fiel a los manifests de `k8s/`.
+Muestra el mismo stack desplegado en un cluster Kubernetes local. Un **Ingress** enruta el tráfico por path hacia los **Services**, cada uno respaldado por un **Deployment** independiente dentro del namespace `betix`. Este diagrama es fiel a los manifests de `k8s/`.
 
-![Betix Kubernetes](docs/diagrams/betix_k8s.png)
+### AWS — EKS + ECR + RDS + VPC
 
-### AWS — EKS + ECR + VPC
+Representa el despliegue productivo en AWS: una **VPC** con subnets públicas (ALB + NAT Gateway) y privadas (EKS + RDS). Las imágenes se almacenan en tres repositorios **ECR** independientes (`betix-core`, `betix-api`, `betix-frontend`), uno por servicio, con política de retención de las últimas 10 versiones.
 
-Representa el despliegue productivo en AWS: una **VPC** con subnets públicas (ALB + NAT Gateway) y privadas (EKS cluster), donde corre el node group con los tres microservicios. Las imágenes se almacenan en tres repositorios **ECR** independientes (`betix-core`, `betix-api`, `betix-frontend`), uno por servicio, con política de retención de las últimas 10 versiones.
-
-![Betix AWS](docs/diagrams/betix_aws.png)
+→ [Ver diagramas completos](docs/diagrams/infrastructure.md)

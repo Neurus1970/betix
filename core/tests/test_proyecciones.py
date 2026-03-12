@@ -81,7 +81,7 @@ def test_raises_on_insufficient_data():
         calcular_proyecciones(provincia="Inexistente", juego="Quiniela", k=1)
 
 
-# ── API endpoint ──────────────────────────────────────────────────────────────
+# ── API endpoint — all-data mode (sin filtros) ────────────────────────────────
 
 def test_proyectado_api_200(client):
     res = client.get("/proyectado")
@@ -89,8 +89,32 @@ def test_proyectado_api_200(client):
     assert res.get_json()["status"] == "ok"
 
 
-def test_proyectado_api_default_structure(client):
+def test_proyectado_api_todos_estructura(client):
     data = client.get("/proyectado").get_json()["data"]
+    assert "todos" in data
+    assert "provincias" in data
+    assert "juegos" in data
+
+
+def test_proyectado_api_todos_tiene_todas_las_combinaciones(client):
+    data = client.get("/proyectado").get_json()["data"]
+    assert len(data["todos"]) == 30  # 10 provincias × 3 juegos
+
+
+def test_proyectado_api_todos_entry_structure(client):
+    data = client.get("/proyectado").get_json()["data"]
+    entry = data["todos"][0]
+    assert "provincia" in entry
+    assert "juego" in entry
+    assert "historico" in entry
+    assert "proyectado" in entry
+    assert len(entry["proyectado"]) == 6  # siempre 6 meses en all-data mode
+
+
+# ── API endpoint — filtered mode (con provincia + juego) ─────────────────────
+
+def test_proyectado_api_filtered_structure(client):
+    data = client.get("/proyectado?provincia=Catamarca&juego=Lotería").get_json()["data"]
     assert "historico" in data
     assert "proyectado" in data
     assert "provincias" in data
@@ -98,18 +122,18 @@ def test_proyectado_api_default_structure(client):
 
 
 def test_proyectado_api_default_1_month(client):
-    data = client.get("/proyectado").get_json()["data"]
+    data = client.get("/proyectado?provincia=Catamarca&juego=Lotería").get_json()["data"]
     assert len(data["proyectado"]) == 1
 
 
 def test_proyectado_api_4_months(client):
-    data = client.get("/proyectado?meses=4").get_json()["data"]
+    data = client.get("/proyectado?provincia=Catamarca&juego=Lotería&meses=4").get_json()["data"]
     assert len(data["proyectado"]) == 4
 
 
 def test_proyectado_api_clamps_meses(client):
-    data = client.get("/proyectado?meses=10").get_json()["data"]
-    assert len(data["proyectado"]) == 4
+    data = client.get("/proyectado?provincia=Catamarca&juego=Lotería&meses=10").get_json()["data"]
+    assert len(data["proyectado"]) == 6
 
 
 def test_proyectado_api_filter_provincia(client):

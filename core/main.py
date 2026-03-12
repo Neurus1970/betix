@@ -26,9 +26,33 @@ def proyectado():
     provincias = get_provincias()
     juegos     = get_juegos()
 
-    provincia = request.args.get("provincia") or provincias[0]
-    juego     = request.args.get("juego")     or juegos[0]
-    k         = min(4, max(1, int(request.args.get("meses", 1) or 1)))
+    provincia_param = request.args.get("provincia")
+    juego_param     = request.args.get("juego")
+
+    # All-data mode: sin filtros → devuelve todas las combinaciones provincia/juego.
+    # El primer llamado (cache MISS) usa este modo; Node.js filtra en memoria en HIT.
+    if not provincia_param and not juego_param:
+        todos = []
+        for prov in provincias:
+            for juego in juegos:
+                try:
+                    result = calcular_proyecciones(provincia=prov, juego=juego, k=6)
+                    todos.append({"provincia": prov, "juego": juego, **result})
+                except ValueError:
+                    pass
+        return jsonify({
+            "status": "ok",
+            "data": {
+                "todos":      todos,
+                "provincias": provincias,
+                "juegos":     juegos,
+            },
+        })
+
+    # Filtered mode: con provincia y/o juego → respuesta individual (retrocompatible)
+    provincia = provincia_param or provincias[0]
+    juego     = juego_param     or juegos[0]
+    k         = min(6, max(1, int(request.args.get("meses", 1) or 1)))
 
     try:
         result = calcular_proyecciones(provincia=provincia, juego=juego, k=k)

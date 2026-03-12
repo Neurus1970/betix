@@ -121,17 +121,34 @@ El `Makefile` lee ese archivo automáticamente en los targets `build-*` y `push-
 
 ### CI — Path Filters
 
-Tres workflows independientes en `.github/workflows/`. Cada job solo corre si sus paths cambiaron:
+Dos workflows independientes en `.github/workflows/`. Cada job solo corre si sus paths cambiaron:
 
 ```
-Cambio en core/                  → ci-core.yml     (pytest)
-Cambio en src/ tests/ features/  → ci-api.yml      (Jest + Cucumber)
-Cambio en docs/diagrams/         → ci-diagrams.yml (regenera PNGs)
-Cambio en terraform/ k8s/ docker-compose.yml → ci-diagrams.yml
+Cambio en core/                  → ci-core.yml  (pytest)
+Cambio en src/ tests/ features/  → ci-api.yml   (Jest + Cucumber)
 Cambio en README.md              → ningún job corre
 ```
 
+> Los diagramas de arquitectura están en Mermaid (docs/diagrams/, docs/ArquitecturaC4.md) y se renderizan automáticamente en GitHub sin CI adicional.
+
 > Si un job no corre porque sus paths no cambiaron, GitHub lo considera automáticamente pasado — no bloquea branch protection rules.
+
+---
+
+## Sub-Agents (Delegación por área)
+
+Ante cualquier tarea de implementación, delegar en el sub-agente correspondiente según el área afectada. Los agentes están definidos en `.claude/agents/`:
+
+| Agente | Archivo | Delegar cuando el cambio toca… |
+|--------|---------|-------------------------------|
+| **microservices** | `microservices.md` | `core/` (Python/Flask), `src/` (Node.js proxy) — solo lógica de producción |
+| **testing** | `testing.md` | `tests/`, `features/`, `core/tests/` — CUALQUIER tarea de tests (escribir, corregir, actualizar mocks/nocks) |
+| **infra** | `infra.md` | `docker-compose.yml`, `k8s/`, `terraform/`, `.github/workflows/`, `db/`, `frontend/nginx.conf`, `Dockerfile` |
+| **frontend** | `frontend.md` | `frontend/` (nginx config), `src/public/` (HTML/CSS/JS/D3.js) |
+
+**Regla:** Si una tarea toca múltiples áreas, delegar en cada agente por separado en paralelo cuando sea posible, o secuencialmente cuando haya dependencias entre los cambios.
+
+**Regla de testing:** Toda tarea que involucre escribir, modificar, corregir o ejecutar tests (Jest, Cucumber, pytest) debe delegarse al agente **testing**, incluso si el cambio de producción fue hecho por otro agente.
 
 ---
 

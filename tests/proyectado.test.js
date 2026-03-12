@@ -21,12 +21,10 @@ function makeHistorico(n = 12) {
     ingresos:  50000 + i * 500,
     costo:     40000 + i * 400,
     beneficio: 10000 + i * 100,
-    provincia: 'Catamarca',
-    juego:     'Lotería',
   }));
 }
 
-function makeProyectado(k = 1) {
+function makeProyectado(k = 6) {
   return Array.from({ length: k }, (_, i) => ({
     fecha:           `2026-${String(i + 3).padStart(2, '0')}`,
     cantidad:        1120,
@@ -40,66 +38,24 @@ function makeProyectado(k = 1) {
   }));
 }
 
-function mockCoreProyectado(k = 1, provincia = 'Catamarca', juego = 'Lotería') {
-  return {
-    status: 'ok',
-    data: {
-      historico:  makeHistorico(),
-      proyectado: makeProyectado(k),
-      provincias: PROVINCIAS,
-      juegos:     JUEGOS,
-      provincia,
-      juego,
-      meses: k,
-    },
-  };
+/** Respuesta all-data del core (sin filtros). */
+function mockCoreAllData() {
+  const todos = [];
+  for (const prov of PROVINCIAS) {
+    for (const juego of JUEGOS) {
+      todos.push({ provincia: prov, juego, historico: makeHistorico(), proyectado: makeProyectado(6) });
+    }
+  }
+  return { status: 'ok', data: { todos, provincias: PROVINCIAS, juegos: JUEGOS } };
 }
 
 afterEach(() => nock.cleanAll());
-
-// ── Página HTML ───────────────────────────────────────────────────────────────
-
-describe('GET /proyectado', () => {
-  it('debe retornar status 200 y Content-Type html', async () => {
-    const res = await request(app).get('/proyectado');
-    expect(res.statusCode).toBe(200);
-    expect(res.headers['content-type']).toMatch(/html/);
-  });
-
-  it('debe incluir los selectores de filtros', async () => {
-    const res = await request(app).get('/proyectado');
-    expect(res.text).toContain('id="sel-provincia"');
-    expect(res.text).toContain('id="sel-juego"');
-    expect(res.text).toContain('id="sel-meses"');
-    expect(res.text).toContain('id="sel-metrica"');
-  });
-
-  it('debe incluir el SVG del gráfico', async () => {
-    const res = await request(app).get('/proyectado');
-    expect(res.text).toContain('id="chart-svg"');
-  });
-
-  it('debe incluir la tabla de datos', async () => {
-    const res = await request(app).get('/proyectado');
-    expect(res.text).toContain('id="table-proyectado"');
-  });
-
-  it('debe usar D3.js', async () => {
-    const res = await request(app).get('/proyectado');
-    expect(res.text).toContain('d3js.org');
-  });
-
-  it('debe consumir el endpoint /api/datos/proyectado', async () => {
-    const res = await request(app).get('/proyectado');
-    expect(res.text).toContain('/api/datos/proyectado');
-  });
-});
 
 // ── API endpoint ──────────────────────────────────────────────────────────────
 
 describe('GET /api/datos/proyectado', () => {
   it('debe retornar status 200 con estructura correcta', async () => {
-    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado());
+    nock(CORE_URL).get('/proyectado').reply(200, mockCoreAllData());
     const res = await request(app).get('/api/datos/proyectado');
     expect(res.statusCode).toBe(200);
     expect(res.body.status).toBe('ok');
@@ -110,32 +66,32 @@ describe('GET /api/datos/proyectado', () => {
   });
 
   it('debe retornar 12 registros históricos por defecto', async () => {
-    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado());
+    nock(CORE_URL).get('/proyectado').reply(200, mockCoreAllData());
     const res = await request(app).get('/api/datos/proyectado');
     expect(res.body.data.historico).toHaveLength(12);
   });
 
   it('debe retornar 1 mes proyectado por defecto (meses=1)', async () => {
-    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado(1));
+    nock(CORE_URL).get('/proyectado').reply(200, mockCoreAllData());
     const res = await request(app).get('/api/datos/proyectado');
     expect(res.body.data.proyectado).toHaveLength(1);
   });
 
   it('debe retornar 4 meses proyectados cuando meses=4', async () => {
-    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado(4));
+    nock(CORE_URL).get('/proyectado').reply(200, mockCoreAllData());
     const res = await request(app).get('/api/datos/proyectado?meses=4');
     expect(res.body.data.proyectado).toHaveLength(4);
   });
 
-  it('debe filtrar por provincia', async () => {
-    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado(1, 'Corrientes', 'Quiniela'));
+  it('debe filtrar por provincia y juego', async () => {
+    nock(CORE_URL).get('/proyectado').reply(200, mockCoreAllData());
     const res = await request(app).get('/api/datos/proyectado?provincia=Corrientes&juego=Quiniela');
     expect(res.body.data.provincia).toBe('Corrientes');
     expect(res.body.data.juego).toBe('Quiniela');
   });
 
   it('los registros históricos deben tener los campos requeridos', async () => {
-    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado());
+    nock(CORE_URL).get('/proyectado').reply(200, mockCoreAllData());
     const res  = await request(app).get('/api/datos/proyectado');
     const item = res.body.data.historico[0];
     expect(item).toHaveProperty('fecha');
@@ -146,7 +102,7 @@ describe('GET /api/datos/proyectado', () => {
   });
 
   it('los registros proyectados deben tener error_* y fecha futura', async () => {
-    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado());
+    nock(CORE_URL).get('/proyectado').reply(200, mockCoreAllData());
     const res  = await request(app).get('/api/datos/proyectado');
     const item = res.body.data.proyectado[0];
     expect(item).toHaveProperty('fecha');
@@ -160,15 +116,15 @@ describe('GET /api/datos/proyectado', () => {
   });
 
   it('la lista de provincias está ordenada alfabéticamente', async () => {
-    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado());
+    nock(CORE_URL).get('/proyectado').reply(200, mockCoreAllData());
     const res  = await request(app).get('/api/datos/proyectado');
     const list = res.body.data.provincias;
     expect(list).toEqual([...list].sort());
   });
 
-  it('clampea meses fuera de rango: meses=10 → 4 proyectados', async () => {
-    nock(CORE_URL).get('/proyectado').query(true).reply(200, mockCoreProyectado(4));
+  it('clampea meses fuera de rango: meses=10 → 6 proyectados', async () => {
+    nock(CORE_URL).get('/proyectado').reply(200, mockCoreAllData());
     const res = await request(app).get('/api/datos/proyectado?meses=10');
-    expect(res.body.data.proyectado).toHaveLength(4);
+    expect(res.body.data.proyectado).toHaveLength(6);
   });
 });

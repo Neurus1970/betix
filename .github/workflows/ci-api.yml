@@ -41,9 +41,13 @@ jobs:
 
       - name: Ejecutar tests con cobertura
         run: npm run test:ci
+        env:
+          REDIS_URL: ''
 
       - name: Ejecutar tests funcionales (Cucumber)
         run: npm run test:functional:ci
+        env:
+          REDIS_URL: ''
         continue-on-error: false
 
       - name: Publicar resultados de tests

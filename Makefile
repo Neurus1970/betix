@@ -3,6 +3,10 @@
 # Uso: make <target>   |   make help
 # ──────────────────────────────────────────────────────────────────────────────
 
+# Carga .env.dev si existe (variables de entorno para desarrollo local)
+-include .env.dev
+export
+
 # Versiones de cada servicio (leídas desde los archivos VERSION)
 VERSION_CORE     := $(shell cat core/VERSION | tr -d '[:space:]')
 VERSION_API      := $(shell cat src/VERSION | tr -d '[:space:]')
@@ -21,7 +25,7 @@ IMAGE_FRONTEND := betix-frontend
         push push-core push-api push-frontend \
         k8s-apply k8s-status k8s-delete \
         version bump-core bump-api bump-frontend \
-        diagrams lint
+        lint
 
 # ─── Help ─────────────────────────────────────────────────────────────────────
 help:
@@ -38,9 +42,6 @@ help:
 	@echo "    make test-core        pytest del microservicio Python"
 	@echo "    make test-api         Jest + Cucumber del API Node.js"
 	@echo "    make lint             ESLint sobre el código Node.js"
-	@echo ""
-	@echo "  Diagramas"
-	@echo "    make diagrams         Regenera todos los PNGs de arquitectura"
 	@echo ""
 	@echo "  Build de imágenes Docker"
 	@echo "    make build            Build de las 3 imágenes con su versión"
@@ -81,21 +82,15 @@ logs:
 test: test-core test-api
 
 test-core:
-	python3 -m pytest core/tests/ -v
+	docker-compose up -d db
+	@echo "Esperando PostgreSQL..."; until docker-compose exec -T db pg_isready -U betix -d betix -q 2>/dev/null; do sleep 1; done
+	python3 -m pytest core/tests/ -v; EXIT=$$?; docker-compose stop db; exit $$EXIT
 
 test-api:
-	npm test
+	REDIS_URL= npm test
 
 lint:
 	npm run lint
-
-# ─── Diagramas ────────────────────────────────────────────────────────────────
-diagrams:
-	pip install -q -r docs/diagrams/requirements.txt
-	python3 docs/diagrams/architecture_local.py
-	python3 docs/diagrams/architecture_k8s.py
-	python3 docs/diagrams/architecture_aws.py
-	@echo "Diagramas generados en docs/diagrams/*.png"
 
 # ─── Build ────────────────────────────────────────────────────────────────────
 build: build-core build-api build-frontend

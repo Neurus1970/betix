@@ -1,33 +1,48 @@
-from ..data.mock_data import TICKETS
-
-PROVINCE_COORDS = {
-    "Salta":               {"lat": -24.7859, "lng": -65.4117},
-    "Santiago del Estero": {"lat": -27.7951, "lng": -64.2615},
-    "Neuquén":             {"lat": -38.9516, "lng": -68.0591},
-    "La Pampa":            {"lat": -36.6148, "lng": -64.2839},
-    "Santa Cruz":          {"lat": -51.6230, "lng": -69.2168},
-    "La Rioja":            {"lat": -29.4131, "lng": -66.8558},
-    "Catamarca":           {"lat": -28.4696, "lng": -65.7852},
-    "Tierra del Fuego":    {"lat": -54.8019, "lng": -68.3030},
-    "Corrientes":          {"lat": -27.4806, "lng": -58.8341},
-    "Río Negro":           {"lat": -40.8135, "lng": -63.0000},
-}
+from psycopg.rows import dict_row
+from ..db import get_connection
 
 
 def get_geodata() -> dict:
+    with get_connection() as conn:
+        with conn.cursor(row_factory=dict_row) as cur:
+            cur.execute("""
+                SELECT
+                    p.nombre                   AS provincia,
+                    p.lat,
+                    p.lng,
+                    j.nombre                   AS juego,
+                    SUM(t.cantidad)            AS cantidad,
+                    SUM(t.ingresos)            AS ingresos,
+                    SUM(t.costo)               AS costo,
+                    SUM(t.ingresos - t.costo)  AS beneficio
+                FROM betix.tickets_mensuales t
+                JOIN betix.provincias p ON p.id = t.provincia_id
+                JOIN betix.juegos     j ON j.id = t.juego_id
+                GROUP BY p.nombre, p.lat, p.lng, j.nombre
+                ORDER BY p.nombre, j.nombre
+            """)
+            rows = cur.fetchall()
+
     by_prov: dict = {}
-    for t in TICKETS:
-        p = t["provincia"]
-        if p not in by_prov:
-            by_prov[p] = {"cantidad": 0, "importe": 0, "costo": 0, "games": []}
-        by_prov[p]["cantidad"] += t["cantidad"]
-        by_prov[p]["importe"]  += t["ingresos"]
-        by_prov[p]["costo"]    += t["costo"]
-        by_prov[p]["games"].append({
-            "juego":     t["juego"],
-            "cantidad":  t["cantidad"],
-            "importe":   t["ingresos"],
-            "beneficio": t["ingresos"] - t["costo"],
+    for r in rows:
+        prov = r["provincia"]
+        if prov not in by_prov:
+            by_prov[prov] = {
+                "lat":      float(r["lat"]),
+                "lng":      float(r["lng"]),
+                "cantidad": 0,
+                "importe":  0,
+                "costo":    0,
+                "games":    [],
+            }
+        by_prov[prov]["cantidad"] += r["cantidad"]
+        by_prov[prov]["importe"]  += int(r["ingresos"])
+        by_prov[prov]["costo"]    += int(r["costo"])
+        by_prov[prov]["games"].append({
+            "juego":     r["juego"],
+            "cantidad":  r["cantidad"],
+            "importe":   int(r["ingresos"]),
+            "beneficio": int(r["beneficio"]),
         })
 
     global_cantidad  = 0
@@ -36,19 +51,17 @@ def get_geodata() -> dict:
     provinces = []
 
     for prov, d in by_prov.items():
-        if prov not in PROVINCE_COORDS:
-            continue
         beneficio = d["importe"] - d["costo"]
         global_cantidad  += d["cantidad"]
         global_importe   += d["importe"]
         global_beneficio += beneficio
         provinces.append({
             "provincia": prov,
-            "lat": PROVINCE_COORDS[prov]["lat"],
-            "lng": PROVINCE_COORDS[prov]["lng"],
+            "lat":       d["lat"],
+            "lng":       d["lng"],
             "totals": {
-                "cantidad": d["cantidad"],
-                "importe":  d["importe"],
+                "cantidad":  d["cantidad"],
+                "importe":   d["importe"],
                 "beneficio": beneficio,
             },
             "games": d["games"],

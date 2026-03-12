@@ -7,6 +7,7 @@ on:
     branches: [main, develop]
     paths:                       # en push sí filtramos para evitar doble ejecución
       - 'core/**'
+      - 'db/**'
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
@@ -15,6 +16,21 @@ jobs:
   test-core:
     name: Python Core Tests
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB:       betix
+          POSTGRES_USER:     betix
+          POSTGRES_PASSWORD: betix
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U betix -d betix"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
 
     steps:
       - name: Checkout código
@@ -29,6 +45,8 @@ jobs:
         run: pip install -r core/requirements.txt
 
       - name: Ejecutar tests Python con cobertura
+        env:
+          BETIX_DB_URL: postgresql://betix:betix@localhost:5432/betix
         run: python3 -m pytest core/tests/ --cov=core --cov-report=xml:coverage-core.xml --cov-report=term-missing
 
       - name: Publicar cobertura Python

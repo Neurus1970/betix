@@ -85,7 +85,9 @@ describe('cacheMiddleware — con Redis habilitado', () => {
   it('La clave de caché ordena los query params alfabéticamente', async () => {
     cache.get.mockResolvedValue(null);
 
-    const req  = mockReq('/api/datos/proyectado', { meses: '3', provincia: 'Salta', juego: 'Quiniela' });
+    // Probamos el comportamiento del middleware con una ruta genérica.
+    // (proyectado gestiona su propia caché en el controller, no usa este middleware.)
+    const req  = mockReq('/api/datos/geodata', { meses: '3', provincia: 'Salta', juego: 'Quiniela' });
     const res  = mockRes();
     const next = jest.fn();
 
@@ -93,7 +95,7 @@ describe('cacheMiddleware — con Redis habilitado', () => {
     await new Promise(resolve => setImmediate(resolve));
 
     expect(cache.get).toHaveBeenCalledWith(
-      'betix:/api/datos/proyectado:juego=Quiniela&meses=3&provincia=Salta'
+      'betix:/api/datos/geodata:juego=Quiniela&meses=3&provincia=Salta'
     );
   });
 
