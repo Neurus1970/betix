@@ -38,6 +38,15 @@ async function set(key, value, ttl) {
   }
 }
 
+async function del(...keys) {
+  if (!client) return;
+  try {
+    await client.del(...keys);
+  } catch (err) {
+    logger.error(`Cache del error [${keys.join(', ')}]: ${err.message}`);
+  }
+}
+
 const isEnabled = !!REDIS_URL;
 
 async function ping() {
@@ -51,4 +60,4 @@ async function ping() {
   }
 }
 
-module.exports = { get, set, isEnabled, ping };
+module.exports = { get, set, del, isEnabled, ping };
