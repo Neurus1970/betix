@@ -7,13 +7,13 @@ from .services.health_service import check_data_access
 app = Flask(__name__)
 
 
-@app.get("/health")
-def health():
+@app.get("/healthz")
+def healthz():
     try:
         check_data_access()
-        return jsonify({"status": "healthy"})
-    except RuntimeError as e:
-        return jsonify({"status": "unhealthy", "message": str(e)}), 500
+        return jsonify({"status": "healthy", "db": "ok"})
+    except Exception as e:
+        return jsonify({"status": "unhealthy", "db": "error", "detail": str(e)}), 503
 
 
 @app.get("/geodata")

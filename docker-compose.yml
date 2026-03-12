@@ -52,8 +52,9 @@ services:
       db-seed:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
-      interval: 10s
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/healthz')"]
+      interval: 60s
+      start_interval: 5s
       timeout: 5s
       retries: 3
 
