@@ -54,11 +54,17 @@ describe('cacheMiddleware — sin Redis (modo pass-through)', () => {
     expect(res.status).toBe(502);
   });
 
-  it('pasa query params al core en modo pass-through', async () => {
-    nock(CORE_URL)
-      .get('/proyectado')
-      .query({ provincia: 'Salta', juego: 'Quiniela', meses: '2' })
-      .reply(200, { status: 'ok', data: {} });
+  it('proyectado llama al core sin filtros para obtener el dataset completo', async () => {
+    // El controller llama al core SIN query params (all-data mode); los filtros
+    // se aplican en memoria después. Nock sin .query() solo coincide sin params.
+    nock(CORE_URL).get('/proyectado').reply(200, {
+      status: 'ok',
+      data: {
+        todos: [{ provincia: 'Salta', juego: 'Quiniela', historico: [], proyectado: [] }],
+        provincias: ['Salta'],
+        juegos: ['Quiniela'],
+      },
+    });
     const res = await request(app).get('/api/datos/proyectado?provincia=Salta&juego=Quiniela&meses=2');
     expect(res.status).toBe(200);
   });

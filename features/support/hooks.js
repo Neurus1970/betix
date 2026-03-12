@@ -28,9 +28,22 @@ function makeHistorico() {
     ingresos:  50000 + i * 500,
     costo:     40000 + i * 400,
     beneficio: 10000 + i * 100,
-    provincia: 'Catamarca',
-    juego:     'Lotería',
   }));
+}
+
+function buildAllData() {
+  const todos = [];
+  for (const prov of PROVINCIAS) {
+    for (const juego of JUEGOS) {
+      todos.push({
+        provincia: prov,
+        juego,
+        historico:  makeHistorico(),
+        proyectado: makeProyectado(6),
+      });
+    }
+  }
+  return { todos, provincias: PROVINCIAS, juegos: JUEGOS };
 }
 
 function makeProyectado(k) {
@@ -65,22 +78,10 @@ Before(function () {
     },
   }).persist();
 
-  // Proyectado — dynamic response based on meses query param
-  nock(CORE_URL).get('/proyectado').query(true).reply(function (uri) {
-    const params  = new URLSearchParams(uri.split('?')[1] || '');
-    const k       = Math.min(4, Math.max(1, parseInt(params.get('meses') || '1', 10)));
-    return [200, {
-      status: 'ok',
-      data: {
-        historico:  makeHistorico(),
-        proyectado: makeProyectado(k),
-        provincias: PROVINCIAS,
-        juegos:     JUEGOS,
-        provincia:  params.get('provincia') || 'Catamarca',
-        juego:      params.get('juego')     || 'Lotería',
-        meses:      k,
-      },
-    }];
+  // Proyectado — formato all-data (el controller llama sin filtros, filtra en memoria)
+  nock(CORE_URL).get('/proyectado').reply(200, {
+    status: 'ok',
+    data: buildAllData(),
   }).persist();
 });
 
