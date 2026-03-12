@@ -7,7 +7,7 @@ const { REDIS_URL } = require('./config');
 let client = null;
 
 if (REDIS_URL) {
-  client = new Redis(REDIS_URL, { lazyConnect: true, enableReadyCheck: true });
+  client = new Redis(REDIS_URL, { lazyConnect: true, enableReadyCheck: true, enableOfflineQueue: false });
 
   client.on('connect',  () => logger.info('Redis conectado'));
   client.on('error',    (err) => logger.error(`Redis error: ${err.message}`));
@@ -40,4 +40,15 @@ async function set(key, value, ttl) {
 
 const isEnabled = !!REDIS_URL;
 
-module.exports = { get, set, isEnabled };
+async function ping() {
+  if (!client) return { status: 'disabled' };
+  if (client.status !== 'ready') return { status: 'unhealthy', error: `Redis not ready (status: ${client.status})` };
+  try {
+    await client.ping();
+    return { status: 'healthy' };
+  } catch (err) {
+    return { status: 'unhealthy', error: err.message };
+  }
+}
+
+module.exports = { get, set, isEnabled, ping };

@@ -17,7 +17,7 @@ SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 MIGRATIONS_DIR="${SCRIPT_DIR}/migrations"
 SEEDS_DIR="${SCRIPT_DIR}/seeds"
 
-if [[ -z "${BETIX_DB_URL:-}" ]]; then
+if [ -z "${BETIX_DB_URL:-}" ]; then
     echo "ERROR: la variable BETIX_DB_URL no está definida." >&2
     echo "Uso: BETIX_DB_URL=postgresql://user:pass@host:port/db $0" >&2
     exit 1
