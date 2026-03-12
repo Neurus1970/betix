@@ -91,13 +91,15 @@ Los tests de Node.js **no requieren que el servidor esté corriendo** — usan `
 
 ## Componentes
 
-| Componente | Tecnología | Puerto | Responsabilidad |
-|---|---|---|---|
-| `core/` | Python 3.12 + Flask | 5000 | Toda la lógica de negocio (geodata, proyecciones SMA, health) |
-| `src/` (api) | Node.js 18 + Express | 3000 | Thin HTTP proxy hacia core |
-| `frontend/` | nginx | 80 | Sirve archivos estáticos (HTML + D3.js) |
-| PostgreSQL | postgres:16-alpine | 5432 | Base de datos principal — schema `betix` (provincias, juegos, tickets_mensuales) |
-| Redis | redis:7-alpine | 6379 | Caché de respuestas del core (TTL configurable) |
+| Componente | Tecnología | Puerto interno | Puerto host (docker-compose) | Responsabilidad |
+|---|---|---|---|---|
+| `core/` | Python 3.12 + Flask | 5000 | 5001 | Toda la lógica de negocio (geodata, proyecciones SMA, health) |
+| `src/` (api) | Node.js 18 + Express | 3000 | 3000 | Thin HTTP proxy hacia core |
+| `frontend/` | nginx | 80 | 8080 | Sirve archivos estáticos (HTML + D3.js) |
+| PostgreSQL | postgres:16-alpine | 5432 | 5432 | Base de datos principal — schema `betix` (provincias, juegos, tickets_mensuales) |
+| Redis | redis:7-alpine | 6379 | 6379 | Caché de respuestas del core (TTL configurable) |
+
+> Los puertos "host" son los accesibles desde `localhost` al usar `make up`. Los puertos "internos" son los que se comunican entre contenedores (e.g., `CORE_URL=http://core:5000`).
 
 La conexión a la base de datos se configura con `BETIX_DB_URL` (DSN estándar PostgreSQL). Ver [docs/database.md](docs/database.md) para el modelo de datos, los seeds y el script de carga.
 
@@ -192,9 +194,25 @@ npm run lint
 
 | Suite | Herramienta | Tests |
 |---|---|---|
-| Unit / Integration (Node.js) | Jest + Supertest + nock | 41 |
-| Functional / BDD | Cucumber | 33 escenarios / 80 steps |
-| Unit (Python core) | pytest | 27 |
+| Unit / Integration (Node.js) | Jest + Supertest + nock | 44 |
+| Functional / BDD | Cucumber | 20 escenarios |
+| Unit (Python core) | pytest | 29 |
+
+**Aislamiento de Redis en tests:** Los tests de Node.js no conectan a Redis real. Los tests Jest que necesitan verificar comportamiento de caché mockean el módulo explícitamente:
+
+```javascript
+jest.mock('../src/cache', () => ({
+  get: jest.fn(),
+  set: jest.fn().mockResolvedValue(undefined),
+  isEnabled: true,
+}));
+```
+
+Los tests Cucumber desactivan Redis al inicio de `features/support/hooks.js` (antes de que se cargue la app):
+
+```javascript
+process.env.REDIS_URL = ''; // deshabilita Redis — modo no-op
+```
 
 ---
 
@@ -232,6 +250,35 @@ git push origin feature/BETIX-42-nueva-funcionalidad
 
 ---
 
+## Desarrollo asistido por IA (Claude)
+
+Este repositorio está configurado para trabajar con **Claude Code** (CLI de Anthropic). Las instrucciones del proyecto están en [CLAUDE.md](CLAUDE.md) y los sub-agentes especializados en `.claude/agents/`.
+
+### Sub-agentes disponibles
+
+Cada sub-agente tiene expertise en un área concreta. Al trabajar con Claude Code, delegar la tarea al agente correspondiente:
+
+| Sub-agente | Cuándo usarlo |
+|-----------|--------------|
+| **microservices** | Lógica de producción en `core/` (Python Flask) o `src/` (Node.js proxy) |
+| **testing** | Cualquier tarea de tests — Jest, Cucumber, pytest; escribir, corregir, actualizar mocks |
+| **infra** | `docker-compose.yml`, `k8s/`, `terraform/`, `.github/workflows/`, `Dockerfile` |
+| **frontend** | `frontend/` (nginx config), `src/public/` (HTML/CSS/JS/D3.js) |
+
+> Si una tarea toca múltiples áreas, delegar en cada agente por separado (en paralelo si no hay dependencias entre los cambios).
+
+### Skills (flujos reutilizables)
+
+Los playbooks paso a paso están en `.claude/skills/`:
+
+| Skill | Qué hace |
+|-------|---------|
+| `add-endpoint` | Agregar un endpoint nuevo de punta a punta |
+| `sync-mock-data` | Sincronizar datos mock en ambas copias (JS + Python) |
+| `release` | Bump de versiones, tag y push de release |
+
+---
+
 ## Arquitectura
 
 La arquitectura de Betix está documentada siguiendo el modelo **C4** (Context, Containers, Components, Code), un estándar creado por Simon Brown que organiza la descripción de un sistema en cuatro niveles de zoom progresivo: desde la visión de negocio hasta los detalles internos de cada microservicio. Los diagramas están expresados en Mermaid y versionados junto al código, lo que garantiza que la documentación evoluciona con el sistema.
@@ -240,7 +287,14 @@ La arquitectura de Betix está documentada siguiendo el modelo **C4** (Context, 
 
 ### Caché
 
-Las rutas `/api/datos/*` utilizan **Redis** como capa de caché entre el proxy Node.js y el core Python. Esto evita que el core recalcule estadísticas (agregaciones, proyecciones SMA) en cada petición: el primer request procesa y almacena el resultado; los siguientes lo sirven directamente desde memoria. Si Redis no está disponible, las peticiones pasan al core sin interrupciones (degradación elegante).
+Las rutas `/api/datos/*` utilizan **Redis** como capa de caché entre el proxy Node.js y el core Python. Si Redis no está disponible, las peticiones pasan al core sin interrupciones (degradación elegante).
+
+Hay dos estrategias según la ruta:
+
+| Ruta | Estrategia | Clave |
+|------|-----------|-------|
+| `/api/datos/geodata` | `cacheMiddleware` — wrappea `res.json` | `betix:<path>:<query-params-ordenados>` |
+| `/api/datos/proyectado` | All-data en controller — MISS busca las 30 combinaciones (10 provincias × 3 juegos), HIT filtra en memoria | `betix:proyectado:all` |
 
 → [docs/caching.md](docs/caching.md)
 
@@ -248,14 +302,17 @@ Las rutas `/api/datos/*` utilizan **Redis** como capa de caché entre el proxy N
 
 ## Pipeline CI/CD
 
-Cada Pull Request hacia `main` ejecuta automáticamente (jobs en paralelo):
+Los workflows de GitHub Actions se activan por path filters — solo corren cuando cambian los archivos relevantes:
 
-| Job | Descripción |
-|---|---|
-| `test-core` | pytest con cobertura para el microservicio Python Flask |
-| `lint-and-test` | ESLint + Jest (cobertura) + Cucumber BDD |
+| Workflow | Trigger | Qué hace |
+|---|---|---|
+| `ci-core.yml` | Push/PR a `develop` — cambios en `core/` | pytest con cobertura |
+| `ci-api.yml` | Push/PR a `develop` — cambios en `src/`, `tests/`, `features/` | ESLint + Jest (cobertura) + Cucumber BDD |
+| `ai-pr-review.yml` | PR hacia `main` | Revisión automática con Claude AI + comentario en PR |
+| `release.yml` | Push a `main` | Release Please — bump de versiones + CHANGELOG automático |
+| `jira-close-on-merge.yml` | PR merge/close | Mueve el ticket Jira a Done (merge) o To Do (cierre sin merge) |
 
-Al crear un branch con código de ticket (ej. `feature/BETIX-7-...`) el ticket Jira pasa a **In Progress** automáticamente. Al hacer merge de la PR pasa a **Done**.
+Al crear un branch con ID de ticket (ej. `feature/BETIX-42-...`) el ticket Jira pasa a **In Progress** automáticamente. Al hacer merge de la PR pasa a **Done**.
 
 ---
 
