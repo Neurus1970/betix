@@ -125,9 +125,8 @@ La conexión a la base de datos se configura con `BETIX_DB_URL` (DSN estándar P
 
 | Ruta | Descripción |
 |------|-------------|
-| `/dashboard-interactivo` | Mapa coroplético + gráfico de torta con D3.js. Filtros por juego y métrica. |
-| `/dashboard` | Dashboard avanzado: Mapa, Sankey, Sunburst y Tabla. KPIs globales. |
-| `/proyectado` | Proyecciones por provincia y juego. Gráfico de líneas con banda de confianza ±SD. |
+| `/dashboard` | Dashboard principal con 5 tabs: Mapa & Torta, Sunburst, Sankey, Tabla y Proyecciones. KPIs globales. Teclas `1`–`5` para navegar entre tabs. |
+| `/proyectado` | Vista standalone de proyecciones por provincia y juego. Gráfico de líneas con banda de confianza ±SD. |
 
 ---
 

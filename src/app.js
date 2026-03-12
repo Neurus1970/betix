@@ -21,10 +21,6 @@ app.get('/proyectado', (_req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'proyectado.html'))
 );
 
-app.get('/dashboard-interactivo', (_req, res) =>
-  res.sendFile(path.join(__dirname, 'public', 'dashboard-interactivo.html'))
-);
-
 app.get('/dashboard', (_req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'))
 );
