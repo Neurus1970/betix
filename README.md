@@ -110,6 +110,9 @@ La conexión a la base de datos se configura con `BETIX_DB_URL` (DSN estándar P
 | GET | `/healthz` | Estado del servicio. Devuelve `{"status":"healthy"}` (200) o error (500). |
 | GET | `/api/datos/geodata` | Totales globales + datos georreferenciados por provincia con detalle de juegos. |
 | GET | `/api/datos/proyectado` | Series históricas (12 meses) y proyecciones SMA con bandas de error (±SD). |
+| GET | `/api/provincias_juegos` | Lista de asignaciones juego↔provincia. Filtra con `?provincia_id=` o `?juego_id=`. |
+| POST | `/api/provincias_juegos` | Crea una asignación. Body: `{"provincia_id": int, "juego_id": int}`. Devuelve 201, 409 si ya existe, 400 si inválido. |
+| DELETE | `/api/provincias_juegos/:provincia_id/:juego_id` | Elimina una asignación. Devuelve 204, 404 si no existe. |
 
 **Parámetros de `/api/datos/proyectado`:**
 
@@ -118,6 +121,13 @@ La conexión a la base de datos se configura con `BETIX_DB_URL` (DSN estándar P
 | `provincia` | string | primera (alfabético) | Nombre de la provincia |
 | `juego` | string | primero (alfabético) | `Lotería`, `Quiniela` o `Raspadita` |
 | `meses` | number | `1` | Meses a proyectar (1–6) |
+
+**Parámetros de `GET /api/provincias_juegos`:**
+
+| Parámetro | Tipo | Descripción |
+|-----------|------|-------------|
+| `provincia_id` | number | Filtra los juegos habilitados para esa provincia |
+| `juego_id` | number | Filtra las provincias que tienen ese juego habilitado |
 
 ---
 
@@ -192,9 +202,9 @@ npm run lint
 
 | Suite | Herramienta | Tests |
 |---|---|---|
-| Unit / Integration (Node.js) | Jest + Supertest + nock | 41 |
+| Unit / Integration (Node.js) | Jest + Supertest + nock | 56 |
 | Functional / BDD | Cucumber | 33 escenarios / 80 steps |
-| Unit (Python core) | pytest | 27 |
+| Unit (Python core) | pytest | 27+ |
 
 ---
 
