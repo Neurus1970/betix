@@ -71,7 +71,7 @@ BeforeAll(function () {
 
 Before(function () {
   // Health check
-  nock(CORE_URL).get('/healthz').reply(200, { status: 'healthy', db: 'ok' }).persist();
+  nock(CORE_URL).get('/health').reply(200, { status: 'healthy' }).persist();
 
   // Geodata
   nock(CORE_URL).get('/geodata').reply(200, {
