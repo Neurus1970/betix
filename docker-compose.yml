@@ -11,9 +11,9 @@ services:
       - db_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U betix -d betix"]
-      interval: 5s
-      timeout: 3s
-      retries: 10
+      interval: 60s
+      timeout: 10s
+      retries: 3
 
   db-seed:
     image: postgres:16-alpine
