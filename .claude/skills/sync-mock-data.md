@@ -1,13 +1,14 @@
 # Skill: Modify Mock Data
 
-Mock data lives exclusively in `core/data/` — the single source of truth. The Node.js layer has no local copy; it proxies all data from the Python core.
+Mock data has **two copies** — always edit both. The Node.js layer (`src/data/`) and the Python core (`core/data/`) must stay in sync.
 
 ## Files to Edit
 
 | File | Purpose |
 |------|---------|
-| `core/data/mock_data.py` | Static snapshot — 30 records (10 provinces × 3 games) |
-| `core/data/tickets_por_mes.py` | Time-series — 360 records (10 provinces × 3 games × 12 months) |
+| `core/data/mock_data.py` | Static snapshot — 28 records (10 provinces × 3 games, Raspadita ausente en Neuquén y La Pampa) |
+| `core/data/tickets_por_mes.py` | Time-series — 336 records (28 combos × 12 months) |
+| `src/data/` | Copia JS del mock data — debe mantenerse en sync con `core/data/` |
 
 ## Data Shapes
 
@@ -29,11 +30,14 @@ Salta, Santiago del Estero, Neuquén, La Pampa, Santa Cruz, La Rioja, Catamarca,
 
 **Games (3):** Quiniela, Lotería, Raspadita
 
+**Combinaciones activas (28):** Raspadita NO está asignada a Neuquén ni a La Pampa.
+
 Do not add new provinces or games without updating both files and the coordinate map in `core/services/geodata_service.py`.
 
 ## Checklist
 
 - [ ] Edit `core/data/mock_data.py` (static records)
 - [ ] Edit `core/data/tickets_por_mes.py` (time-series records, same change)
+- [ ] Edit `src/data/` (JS copy — must mirror core/data/)
 - [ ] Verify `beneficio = ingresos - costo` in all modified time-series rows
 - [ ] Run `make test` to confirm both `test-core` and `test-api` pass

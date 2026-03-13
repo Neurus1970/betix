@@ -46,7 +46,7 @@ terraform/         # AWS IaC
 ## Base de datos
 
 - **Engine**: PostgreSQL 16 (imagen postgres:16-alpine)
-- **Schema**: `betix` con tablas `provincias`, `juegos`, `tickets_mensuales`
+- **Schema**: `betix` con tablas `provincias`, `juegos`, `tickets_mensuales`, `provincias_juegos`
 - **Migraciones**: `db/migrations/001_init.sql` — idempotente via `IF NOT EXISTS`
 - **Seeds**: carga via `\copy` (meta-comando psql, solo funciona en modo interactivo/heredoc — NO en `psql -c`)
 - **Credenciales locales**: `betix/betix/betix` (user/pass/db)
@@ -92,4 +92,4 @@ make bump-core v=X.Y.Z   # bump emergencia
 - `load_data.sh` usa `#!/bin/sh` (POSIX) — NO bash. Alpine solo tiene sh.
 - `\copy` solo funciona en psql heredoc, NO en `psql -c "..."`.
 - PRs siempre a `develop`, nunca a `main` (excepto hotfix).
-- Tags de rama: `feature/BETIX-XX-...`, `refactor/BETIX-XX-...`, `hotfix/BETIX-XX-...`.
+- Tags de rama: `feature/BETIX-XX-...`, `fix/BETIX-XX-...`, `refactor/BETIX-XX-...`.

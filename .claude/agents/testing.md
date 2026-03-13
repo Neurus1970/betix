@@ -12,11 +12,17 @@ Betix es una plataforma de estadísticas de lotería para provincias argentinas 
 
 ```
 tests/          # Jest + Supertest — tests unitarios/integración del API Node.js
-├── cache.test.js              # Redis/caché sin Redis (no-op mode)
+├── cache.test.js              # Redis/caché sin Redis (no-op mode, REDIS_URL no seteado)
+├── cacheErrors.test.js        # Ramas de error de cache.js con Redis configurado (ioredis mockeado)
 ├── cacheMiddleware.test.js    # cacheMiddleware con Redis mockeado
 ├── proyectado.test.js         # endpoint /api/datos/proyectado (nock + supertest)
 ├── proyectadoCache.test.js    # estrategia MISS→HIT para proyectado
-└── geodata.test.js            # endpoint /api/datos/geodata
+├── geodata.test.js            # endpoint /api/datos/geodata
+├── provinciasJuegos.test.js   # CRUD /api/provincias_juegos (GET/POST/DELETE)
+├── provinciasJuegosCache.test.js # invalidación de caché tras POST/DELETE exitosos
+├── backoffice.test.js         # página /backoffice (status, HTML, tabs)
+├── dashboard.test.js          # página /dashboard
+└── app.test.js                # error handler global, rutas 404, cabeceras CORS
 
 features/       # Cucumber BDD — escenarios funcionales en español/inglés
 ├── support/
@@ -24,41 +30,47 @@ features/       # Cucumber BDD — escenarios funcionales en español/inglés
 │   └── world.js               # BetixWorld class con request(app)
 ├── step_definitions/
 │   ├── estadisticas.steps.js  # pasos reutilizables genéricos
-│   └── mapa.steps.js          # pasos específicos de mapas
-└── *.feature                  # archivos .feature en Gherkin
+│   ├── mapa.steps.js          # pasos específicos de mapas
+│   └── provinciasJuegos.steps.js # pasos para CRUD provincias_juegos
+└── *.feature                  # archivos .feature en Gherkin (incl. provincias_juegos.feature)
 
 core/tests/     # pytest — tests unitarios/integración del core Python
-└── test_proyecciones.py       # proyecciones SMA + endpoint /proyectado
+├── test_proyecciones.py       # proyecciones SMA + endpoint /proyectado
+└── test_provincias_juegos.py  # CRUD /provincias_juegos (GET/POST/DELETE)
 ```
 
 ## Arquitectura de la aplicación (contexto para los tests)
 
 ```
 core/           # Python 3.12 + Flask (puerto 5000) — toda la lógica de negocio
-├── main.py     # endpoints: /health, /geodata, /proyectado
-├── services/   # geodata_service.py, proyecciones_service.py
-└── data/       # mock_data.py (30 tickets), tickets_por_mes.py (360 registros)
+├── main.py     # endpoints: /health, /geodata, /proyectado, /provincias_juegos
+├── services/   # geodata_service.py, proyecciones_service.py, provincias_juegos_service.py
+└── data/       # mock_data.py (28 tickets), tickets_por_mes.py (336 registros)
+               # (Raspadita eliminado de Neuquén y La Pampa → 28 combos, no 30)
 
 src/            # Node.js 18 + Express (puerto 3000) — thin proxy a core
 ├── app.js      # Express app
-├── cache.js    # Redis connector (ioredis, lazyConnect, REDIS_URL)
+├── cache.js    # Redis connector (ioredis, lazyConnect, REDIS_URL) — expone get/set/del/ping
 ├── config.js   # CORE_URL, CACHE_TTL
 ├── controllers/
 │   ├── geodataController.js
-│   └── proyectadoController.js  # estrategia all-data cache: clave fija betix:proyectado:all
+│   ├── proyectadoController.js        # estrategia all-data cache: clave fija betix:proyectado:all
+│   └── provinciasJuegosController.js  # proxy + invalida caché en POST 201 / DELETE 204
 ├── middleware/
-│   └── cacheMiddleware.js       # wrappea res.json para guardar respuesta en caché
+│   └── cacheMiddleware.js             # wrappea res.json para guardar respuesta en caché
 └── routes/
     ├── geodata.js               # usa cacheMiddleware
-    └── proyectado.js            # NO usa cacheMiddleware (caché gestionada en controller)
+    ├── proyectado.js            # NO usa cacheMiddleware (caché gestionada en controller)
+    └── provinciasJuegos.js      # GET/POST/DELETE sin caché (invalida en mutaciones)
 ```
 
 ## Estrategia de caché actual (BETIX-29)
 
 - **proyectado**: `CACHE_KEY = 'betix:proyectado:all'`
-  - MISS → llama a core SIN filtros → obtiene las 30 combinaciones (10 provincias × 3 juegos) → guarda en caché
+  - MISS → llama a core SIN filtros → obtiene las 28 combinaciones (10 provincias × 3 juegos, Raspadita ausente en Neuquén y La Pampa) → guarda en caché
   - HIT → filtra en memoria por `provincia`, `juego`, `meses`
   - **Los tests deben mockear `cache` con `isEnabled: true`** (ver `proyectadoCache.test.js`)
+- **provincias_juegos**: no usa caché — invalida `betix:proyectado:all` y `betix:/api/datos/geodata:` tras POST 201 o DELETE 204
 - **geodata y otros**: usa `cacheMiddleware` con clave `betix:<path>:<sorted-query-params>`
 
 ## Comandos de test
@@ -88,6 +100,7 @@ make test-api               # solo Jest + Cucumber
 jest.mock('../src/cache', () => ({
   get: jest.fn(),
   set: jest.fn().mockResolvedValue(undefined),
+  del: jest.fn().mockResolvedValue(undefined),
   isEnabled: true,
 }));
 ```

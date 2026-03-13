@@ -10,9 +10,8 @@ Follow these steps **in order** when adding a new endpoint to Betix.
 
 ## 2. Node.js Proxy
 
-- Add service in `src/services/<name>Service.js` (proxy call to core, no logic)
-- Add controller in `src/controllers/<name>Controller.js` (thin, delegates to service)
-- Add route in `src/routes/<name>Routes.js`
+- Add controller in `src/controllers/<name>Controller.js` (proxy HTTP call to core + cache logic if needed)
+- Add route in `src/routes/<name>.js` (camelCase, sin sufijo "Routes")
 - Wire the route in `src/app.js`
 
 ## 3. Tests
@@ -31,5 +30,5 @@ make lint   # no ESLint errors
 ## Rules
 
 - The Node.js layer must NOT contain business logic — only proxy the Python response verbatim.
-- New endpoints must follow existing naming: `/api/datos/<resource>`.
+- Endpoints de datos/proyecciones usan `/api/datos/<resource>`. Endpoints de gestión de entidades usan `/api/<resource>` (ej: `/api/provincias_juegos`).
 - Document the endpoint shape in `docs/` if the response schema is non-trivial.

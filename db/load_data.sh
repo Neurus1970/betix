@@ -28,7 +28,7 @@ psql "${BETIX_DB_URL}" -f "${MIGRATIONS_DIR}/001_init.sql"
 
 echo "==> Truncando tablas..."
 psql "${BETIX_DB_URL}" <<SQL
-TRUNCATE betix.tickets_mensuales, betix.provincias, betix.juegos RESTART IDENTITY CASCADE;
+TRUNCATE betix.provincias_juegos, betix.tickets_mensuales, betix.provincias, betix.juegos RESTART IDENTITY CASCADE;
 SQL
 
 echo "==> Cargando provincias..."
@@ -63,10 +63,18 @@ JOIN   betix.juegos     j ON j.nombre = t.juego_nombre;
 DROP TABLE tmp_tickets;
 SQL
 
+echo "==> Cargando provincias_juegos..."
+psql "${BETIX_DB_URL}" <<SQL
+INSERT INTO betix.provincias_juegos (provincia_id, juego_id)
+SELECT DISTINCT t.provincia_id, t.juego_id
+FROM   betix.tickets_mensuales t;
+SQL
+
 echo "==> Carga completada."
 psql "${BETIX_DB_URL}" -c "
 SELECT
-    (SELECT COUNT(*) FROM betix.provincias)       AS provincias,
-    (SELECT COUNT(*) FROM betix.juegos)           AS juegos,
-    (SELECT COUNT(*) FROM betix.tickets_mensuales) AS tickets_mensuales;
+    (SELECT COUNT(*) FROM betix.provincias)         AS provincias,
+    (SELECT COUNT(*) FROM betix.juegos)             AS juegos,
+    (SELECT COUNT(*) FROM betix.tickets_mensuales)  AS tickets_mensuales,
+    (SELECT COUNT(*) FROM betix.provincias_juegos)  AS provincias_juegos;
 "

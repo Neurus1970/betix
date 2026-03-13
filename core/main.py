@@ -4,6 +4,11 @@ from flask import Flask, jsonify, request
 from .services.geodata_service import get_geodata
 from .services.proyecciones_service import calcular_proyecciones, get_provincias, get_juegos
 from .services.health_service import check_data_access
+from .services.provincias_juegos_service import (
+    get_provincias_juegos,
+    create_provincia_juego,
+    delete_provincia_juego,
+)
 
 app = Flask(__name__)
 
@@ -88,6 +93,44 @@ def proyectado():
         })
     except ValueError as e:
         return jsonify({"status": "error", "message": str(e)}), 400
+
+
+@app.get("/provincias_juegos")
+def list_provincias_juegos():
+    provincia_id = request.args.get("provincia_id", type=int)
+    juego_id = request.args.get("juego_id", type=int)
+    data = get_provincias_juegos(provincia_id=provincia_id, juego_id=juego_id)
+    return jsonify({"status": "ok", "data": data})
+
+
+@app.post("/provincias_juegos")
+def add_provincia_juego():
+    body = request.get_json(silent=True) or {}
+    provincia_id = body.get("provincia_id")
+    juego_id = body.get("juego_id")
+
+    if provincia_id is None or juego_id is None:
+        return jsonify({"status": "error", "message": "provincia_id y juego_id son requeridos"}), 400
+
+    if not isinstance(provincia_id, int) or not isinstance(juego_id, int):
+        return jsonify({"status": "error", "message": "provincia_id y juego_id deben ser enteros"}), 400
+
+    try:
+        record = create_provincia_juego(provincia_id, juego_id)
+        return jsonify({"status": "ok", "data": record}), 201
+    except ValueError as e:
+        message = str(e)
+        if message == "La asignación ya existe":
+            return jsonify({"status": "error", "message": message}), 409
+        return jsonify({"status": "error", "message": message}), 400
+
+
+@app.delete("/provincias_juegos/<int:provincia_id>/<int:juego_id>")
+def remove_provincia_juego(provincia_id, juego_id):
+    deleted = delete_provincia_juego(provincia_id, juego_id)
+    if not deleted:
+        return jsonify({"status": "error", "message": "Asignación no encontrada"}), 404
+    return "", 204
 
 
 if __name__ == "__main__":
