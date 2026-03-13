@@ -18,7 +18,7 @@
 
 ---
 
-## Módulo 2 — Git como contrato de equipo
+## [Módulo 2 — Git como contrato de equipo](modulos/2.md)
 - Branching strategy: `develop` como rama principal, prefijos obligatorios (`feature/`, `fix/`, `refactor/`)
 - Conventional Commits: por qué el mensaje importa (Release Please lo lee)
 - Pull Requests a `develop`: qué revisar, qué no bloquear
