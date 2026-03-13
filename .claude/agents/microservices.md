@@ -14,17 +14,19 @@ Betix es una plataforma de estadísticas de lotería para provincias argentinas.
 
 ```
 core/          # Python 3.12 + Flask (puerto 5000) — TODA la lógica de negocio
-├── main.py    # Flask app: endpoints /health, /geodata, /proyectado
-├── db.py      # Conexión PostgreSQL (psycopg2)
-├── services/  # geodata_service.py, proyecciones_service.py, health_service.py
+├── main.py    # Flask app: endpoints /health, /geodata, /proyectado, /provincias_juegos
+├── db.py      # Conexión PostgreSQL (psycopg3 — psycopg, no psycopg2)
+├── services/  # geodata_service.py, proyecciones_service.py, health_service.py,
+│              # provincias_juegos_service.py
 ├── data/      # mock_data.py, tickets_por_mes.py
-├── tests/     # pytest — 27+ tests
+├── tests/     # pytest — test_proyecciones.py, test_provincias_juegos.py
 └── Dockerfile
 
 src/           # Node.js 18 + Express (puerto 3000) — thin HTTP proxy a core
 ├── app.js     # Express app entry point
 ├── config.js  # exports CORE_URL (default: http://localhost:5000)
-├── routes/    # Proxy routes hacia core
+├── routes/    # Proxy routes hacia core (geodata.js, proyectado.js, provinciasJuegos.js)
+├── controllers/ # provinciasJuegosController.js (proxy + cache invalidation)
 └── public/    # Static assets (servidos por frontend/nginx)
 
 tests/         # Jest + Supertest — tests de integración del API Node.js
