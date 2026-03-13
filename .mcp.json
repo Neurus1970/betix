@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "jira": {
+      "command": "uvx",
+      "args": ["mcp-atlassian"],
+      "env": {
+        "JIRA_URL": "https://cristian-f-medrano.atlassian.net"
+      }
+    }
+  }
+}

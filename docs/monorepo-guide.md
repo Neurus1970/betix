@@ -17,10 +17,11 @@ Sin path filters, cualquier cambio en el repositorio (aunque sea un comentario e
 Cada job declara los paths que le incumben. Si ningún archivo de esos paths cambió, el job se salta automáticamente.
 
 ```
-Cambio en core/ db/        → corre solo ci-core (pytest)
+Cambio en core/ db/             → corre solo ci-core (pytest)
 Cambio en src/ tests/ features/ → corre solo ci-api (Jest + Cucumber)
-Cambio en README.md        → ningún job corre (correcto)
-Cambio en cualquier rama   → build.yml (SonarCloud, solo en PRs a main)
+Push/PR en hotfix/**            → corre ci-hotfix (pytest + Jest + Cucumber, sin filtros)
+Cambio en README.md             → ningún job corre (correcto)
+Cambio en cualquier rama        → build.yml (SonarCloud, solo en PRs a main)
 ```
 
 ### Cómo funciona
@@ -167,6 +168,7 @@ betix/
 ├── .github/workflows/
 │   ├── ci-core.yml          # paths: core/**, db/**
 │   ├── ci-api.yml           # paths: src/**, tests/**, features/**
+│   ├── ci-hotfix.yml        # hotfix/** — suite completa, sin path filters
 │   ├── build.yml            # SonarCloud — PRs a main
 │   ├── ai-pr-review.yml     # Claude AI review — PRs
 │   ├── release.yml          # Build + push ECR — release tags
