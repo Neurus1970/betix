@@ -27,6 +27,7 @@ async function getProvinciasJuegos(req, res) {
     const body = await upstream.json();
     res.status(upstream.status).json(body);
   } catch (err) {
+    logger.error(`getProvinciasJuegos error: ${err.message}`);
     res.status(502).json({ status: 'error', message: 'Core service unavailable' });
   }
 }
@@ -42,13 +43,18 @@ async function createProvinciaJuego(req, res) {
     if (upstream.status === 201) await _invalidateCache();
     res.status(upstream.status).json(body);
   } catch (err) {
+    logger.error(`createProvinciaJuego error: ${err.message}`);
     res.status(502).json({ status: 'error', message: 'Core service unavailable' });
   }
 }
 
 async function deleteProvinciaJuego(req, res) {
   try {
-    const { provincia_id, juego_id } = req.params;
+    const provincia_id = parseInt(req.params.provincia_id, 10);
+    const juego_id     = parseInt(req.params.juego_id, 10);
+    if (isNaN(provincia_id) || isNaN(juego_id)) {
+      return res.status(400).json({ status: 'error', message: 'provincia_id y juego_id deben ser enteros' });
+    }
     const upstream = await fetch(
       `${CORE_URL}/provincias_juegos/${provincia_id}/${juego_id}`,
       { method: 'DELETE' }
@@ -60,6 +66,7 @@ async function deleteProvinciaJuego(req, res) {
     const body = await upstream.json();
     res.status(upstream.status).json(body);
   } catch (err) {
+    logger.error(`deleteProvinciaJuego error: ${err.message}`);
     res.status(502).json({ status: 'error', message: 'Core service unavailable' });
   }
 }

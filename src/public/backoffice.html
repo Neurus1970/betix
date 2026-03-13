@@ -508,7 +508,7 @@
         </div>
         <div class="table-wrapper">
           <table class="matrix-table" id="matrix-table">
-            <thead id="matrix-thead"></thead>
+            <thead id="matrix-thead"><tr><th scope="col">Provincia / Juego</th></tr></thead>
             <tbody id="matrix-tbody"></tbody>
           </table>
         </div>
@@ -548,7 +548,7 @@
       setTimeout(function() {
         el.classList.add('fade-out');
         setTimeout(function() {
-          if (el.parentNode) { el.parentNode.removeChild(el); }
+          el.remove();
         }, 350);
       }, 3000);
     }
@@ -774,13 +774,7 @@
         method: 'DELETE'
       })
         .then(function(res) {
-          if (res.status === 204) {
-            assignments.delete(assignKey(provId, juegoId));
-            setTimeout(function() {
-              refreshCardUI(provId);
-            }, 300);
-            refreshMatrixCell(provId, juegoId, false);
-          } else if (res.status === 404) {
+          if (res.status === 204 || res.status === 404) {
             assignments.delete(assignKey(provId, juegoId));
             setTimeout(function() {
               refreshCardUI(provId);
@@ -822,7 +816,7 @@
       setTimeout(function() {
         badge.classList.add('fade-out');
         setTimeout(function() {
-          if (badge.parentNode) { badge.parentNode.removeChild(badge); }
+          badge.remove();
         }, 350);
       }, 2000);
     }
