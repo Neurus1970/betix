@@ -1,6 +1,6 @@
 ---
 name: infra
-description: Especialista en infraestructura de Betix. Usar para tareas en docker-compose, Kubernetes, Terraform, GitHub Actions CI/CD, base de datos PostgreSQL y Redis. Ejemplos: "agregar un servicio a docker-compose", "crear un nuevo workflow de CI", "modificar el schema de la BD", "actualizar manifiestos k8s", "cambiar la infraestructura AWS en terraform".
+description: "Especialista en infraestructura de Betix. Usar para tareas en docker-compose, Kubernetes, Terraform, GitHub Actions CI/CD, base de datos PostgreSQL y Redis. Ejemplos: agregar un servicio a docker-compose, crear un nuevo workflow de CI, modificar el schema de la BD, actualizar manifiestos k8s, cambiar la infraestructura AWS en terraform."
 tools: Read, Edit, Write, Bash, Glob, Grep
 ---
 
@@ -93,4 +93,5 @@ make bump-core v=X.Y.Z   # bump emergencia
 - `load_data.sh` usa `#!/bin/sh` (POSIX) — NO bash. Alpine solo tiene sh.
 - `\copy` solo funciona en psql heredoc, NO en `psql -c "..."`.
 - PRs siempre a `develop`, nunca a `main` (excepto hotfix).
-- Tags de rama: `feature/BETIX-XX-...`, `fix/BETIX-XX-...`, `refactor/BETIX-XX-...`.
+- Tags de rama: `feature/BETIX-XX-...`, `fix/BETIX-XX-...`, `refactor/BETIX-XX-...`, `hotfix/BETIX-XX-...`.
+- `hotfix/` sale de `main` (no de `develop`) y hace PR a `main`. Después cherry-pick a `develop`.
