@@ -27,14 +27,24 @@ def _add_month(fecha_yyyy_mm: str) -> str:
 def get_provincias() -> list:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT nombre FROM betix.provincias ORDER BY nombre")
+            cur.execute("""
+                SELECT DISTINCT p.nombre
+                FROM betix.provincias p
+                JOIN betix.provincias_juegos pj ON pj.provincia_id = p.id
+                ORDER BY p.nombre
+            """)
             return [r[0] for r in cur.fetchall()]
 
 
 def get_juegos() -> list:
     with get_connection() as conn:
         with conn.cursor() as cur:
-            cur.execute("SELECT nombre FROM betix.juegos ORDER BY nombre")
+            cur.execute("""
+                SELECT DISTINCT j.nombre
+                FROM betix.juegos j
+                JOIN betix.provincias_juegos pj ON pj.juego_id = j.id
+                ORDER BY j.nombre
+            """)
             return [r[0] for r in cur.fetchall()]
 
 
@@ -49,8 +59,10 @@ def calcular_proyecciones(provincia: str, juego: str, k: int, n: int = SMA_WINDO
                     t.costo,
                     (t.ingresos - t.costo)      AS beneficio
                 FROM betix.tickets_mensuales t
-                JOIN betix.provincias p ON p.id = t.provincia_id
-                JOIN betix.juegos     j ON j.id = t.juego_id
+                JOIN betix.provincias        p  ON p.id = t.provincia_id
+                JOIN betix.juegos            j  ON j.id = t.juego_id
+                JOIN betix.provincias_juegos pj ON pj.provincia_id = t.provincia_id
+                                               AND pj.juego_id     = t.juego_id
                 WHERE p.nombre = %s
                   AND j.nombre = %s
                 ORDER BY t.fecha

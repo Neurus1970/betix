@@ -98,7 +98,7 @@ def test_proyectado_api_todos_estructura(client):
 
 def test_proyectado_api_todos_tiene_todas_las_combinaciones(client):
     data = client.get("/proyectado").get_json()["data"]
-    assert len(data["todos"]) == 30  # 10 provincias × 3 juegos
+    assert len(data["todos"]) == 28  # 10 provincias × 3 juegos − Raspadita ausente en Neuquén y La Pampa
 
 
 def test_proyectado_api_todos_entry_structure(client):

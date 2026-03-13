@@ -38,8 +38,15 @@ erDiagram
         decimal_14_2 costo           "NOT NULL"
     }
 
+    PROVINCIAS_JUEGOS {
+        integer provincia_id FK "NOT NULL"
+        integer juego_id     FK "NOT NULL"
+    }
+
     PROVINCIAS ||--o{ TICKETS_MENSUALES : "provincia_id"
     JUEGOS     ||--o{ TICKETS_MENSUALES : "juego_id"
+    PROVINCIAS ||--o{ PROVINCIAS_JUEGOS : "provincia_id"
+    JUEGOS     ||--o{ PROVINCIAS_JUEGOS : "juego_id"
 ```
 
 > `beneficio` no se persiste. Se calcula en query como `ingresos - costo`.
@@ -86,6 +93,17 @@ Serie temporal de apuestas por provincia, juego y mes.
 
 Índice compuesto: `(provincia_id, juego_id, fecha)` UNIQUE.
 
+### `betix.provincias_juegos`
+
+Tabla de asociación muchos-a-muchos entre provincias y juegos. Registra explícitamente qué juegos están habilitados en cada provincia.
+
+| Columna | Tipo | Restricciones |
+|---------|------|---------------|
+| `provincia_id` | `INTEGER` | PK parcial, FK → `provincias.id` NOT NULL |
+| `juego_id` | `INTEGER` | PK parcial, FK → `juegos.id` NOT NULL |
+
+Clave primaria compuesta: `(provincia_id, juego_id)`.
+
 ---
 
 ## Archivos
@@ -96,6 +114,7 @@ Serie temporal de apuestas por provincia, juego y mes.
 | `db/seeds/_provincias.csv` | 10 provincias con lat/lng |
 | `db/seeds/_juegos.csv` | 3 juegos |
 | `db/seeds/_tickets_mensuales.csv` | 360 registros (30 combinaciones × 12 meses) |
+| `db/seeds/provincias_juegos` | Combinaciones iniciales (derivadas de tickets_mensuales al cargar) |
 | `db/load_data.sh` | Script de carga: trunca + recarga desde CSVs |
 
 ---
@@ -111,7 +130,7 @@ BETIX_DB_URL=postgresql://betix:betix@localhost:5432/betix ./db/load_data.sh
 El script:
 1. Ejecuta las migraciones (idempotente — `IF NOT EXISTS`)
 2. Trunca todas las tablas (`RESTART IDENTITY CASCADE`)
-3. Carga los CSVs en orden: `provincias` → `juegos` → `tickets_mensuales`
+3. Carga los CSVs en orden: `provincias` → `juegos` → `tickets_mensuales` → `provincias_juegos (derivado de tickets_mensuales)`
 
 ### Con docker-compose
 

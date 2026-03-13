@@ -2,9 +2,10 @@ const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const logger = require('./logger');
-const healthRouter       = require('./routes/health');
-const geodataRouter      = require('./routes/geodata');
-const proyectadoRouter   = require('./routes/proyectado');
+const healthRouter           = require('./routes/health');
+const geodataRouter          = require('./routes/geodata');
+const proyectadoRouter       = require('./routes/proyectado');
+const provinciasJuegosRouter = require('./routes/provinciasJuegos');
 
 const app = express();
 const PORT = process.env.BETIX_PORT || 3000;
@@ -16,9 +17,14 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(healthRouter);
 app.use('/api/datos', geodataRouter);
 app.use('/api/datos', proyectadoRouter);
+app.use('/api', provinciasJuegosRouter);
 
 app.get('/dashboard', (_req, res) =>
   res.sendFile(path.join(__dirname, 'public', 'dashboard.html'))
+);
+
+app.get('/backoffice', (_req, res) =>
+  res.sendFile(path.join(__dirname, 'public', 'backoffice.html'))
 );
 
 // eslint-disable-next-line no-unused-vars

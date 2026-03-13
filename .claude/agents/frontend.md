@@ -19,7 +19,8 @@ frontend/
 └── VERSION         # Versión semver del frontend (ej: 1.0.5)
 
 src/public/         # Assets estáticos servidos por nginx
-├── dashboard.html  # Dashboard principal (único punto de entrada frontend)
+├── dashboard.html  # Dashboard principal con visualizaciones D3.js
+├── backoffice.html # Backoffice de gestión de asignaciones provincia↔juego
 ├── css/            # Estilos
 └── js/             # JavaScript del cliente, incluyendo D3.js visualizaciones
 ```
@@ -38,6 +39,13 @@ Todos retornan JSON:
 - `GET /api/datos/geodata` — Datos geográficos de provincias con estadísticas de ventas
 - `GET /api/datos/proyectado` — Proyecciones SMA (Simple Moving Average) de tickets
 - `GET /healthz` — Health check del sistema
+- `GET /api/provincias_juegos[?provincia_id=X&juego_id=Y]` — Lista asignaciones provincia↔juego
+- `POST /api/provincias_juegos` — Crea asignación `{ provincia_id, juego_id }` → 201/409/400
+- `DELETE /api/provincias_juegos/:provincia_id/:juego_id` → 204/404
+
+**Páginas disponibles:**
+- `/dashboard` — Dashboard principal
+- `/backoffice` — Gestión de asignaciones provincia↔juego (dos tabs: visual kanban + matriz)
 
 ## Stack tecnológico
 

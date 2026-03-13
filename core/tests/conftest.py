@@ -33,7 +33,7 @@ def setup_test_db():
 
         # Truncar y recargar seeds
         conn.execute(
-            "TRUNCATE betix.tickets_mensuales, betix.provincias, betix.juegos "
+            "TRUNCATE betix.provincias_juegos, betix.tickets_mensuales, betix.provincias, betix.juegos "
             "RESTART IDENTITY CASCADE"
         )
 
@@ -74,6 +74,11 @@ def setup_test_db():
                 FROM   tmp_tickets t
                 JOIN   betix.provincias p ON p.nombre = t.provincia_nombre
                 JOIN   betix.juegos     j ON j.nombre = t.juego_nombre
+            """)
+            cur.execute("""
+                INSERT INTO betix.provincias_juegos (provincia_id, juego_id)
+                SELECT DISTINCT t.provincia_id, t.juego_id
+                FROM betix.tickets_mensuales t
             """)
 
         conn.commit()

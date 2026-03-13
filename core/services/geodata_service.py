@@ -16,8 +16,10 @@ def get_geodata() -> dict:
                     SUM(t.costo)               AS costo,
                     SUM(t.ingresos - t.costo)  AS beneficio
                 FROM betix.tickets_mensuales t
-                JOIN betix.provincias p ON p.id = t.provincia_id
-                JOIN betix.juegos     j ON j.id = t.juego_id
+                JOIN betix.provincias        p  ON p.id = t.provincia_id
+                JOIN betix.juegos            j  ON j.id = t.juego_id
+                JOIN betix.provincias_juegos pj ON pj.provincia_id = t.provincia_id
+                                               AND pj.juego_id     = t.juego_id
                 GROUP BY p.nombre, p.lat, p.lng, j.nombre
                 ORDER BY p.nombre, j.nombre
             """)
