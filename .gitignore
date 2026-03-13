@@ -8,3 +8,9 @@ test-results/
 .DS_Store
 coverage-core.xml
 .coverage
+
+# Claude Code — personal/local (no compartir con el equipo)
+.claude/settings.local.json
+.claude/worktrees/
+__pycache__/
+*.pyc
