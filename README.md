@@ -203,9 +203,11 @@ npm run lint
 
 | Suite | Herramienta | Tests |
 |---|---|---|
-| Unit / Integration (Node.js) | Jest + Supertest + nock | 62 |
+| Unit / Integration (Node.js) | Jest + Supertest + nock | 156 |
 | Functional / BDD | Cucumber | 26 escenarios / 70 steps |
-| Unit (Python core) | pytest | 27+ |
+| Unit (Python core) | pytest | 45 |
+
+Los datos de fixture (provincias, juegos, tickets) tienen **una única fuente de verdad**: los CSVs en `db/seeds/`. Pytest los carga vía PostgreSQL; Jest y Cucumber los leen directamente con `tests/fixtures/csvLoader.js`. Para agregar un nuevo caso de prueba, solo editá los CSVs.
 
 ---
 

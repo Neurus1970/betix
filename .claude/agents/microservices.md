@@ -18,7 +18,6 @@ core/          # Python 3.12 + Flask (puerto 5000) — TODA la lógica de negoci
 ├── db.py      # Conexión PostgreSQL (psycopg3 — psycopg, no psycopg2)
 ├── services/  # geodata_service.py, proyecciones_service.py, health_service.py,
 │              # provincias_juegos_service.py
-├── data/      # mock_data.py, tickets_por_mes.py
 ├── tests/     # pytest — test_proyecciones.py, test_provincias_juegos.py
 └── Dockerfile
 

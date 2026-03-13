@@ -15,6 +15,9 @@ betix/
 ├── frontend/      # nginx 1.27 Alpine (port 8080) — static assets + reverse proxy
 ├── features/      # Cucumber BDD scenarios (.feature + step_definitions/)
 ├── tests/         # Jest unit/integration tests
+│   └── fixtures/  # csvLoader.js — reads db/seeds/ CSVs as test data source
+├── db/            # PostgreSQL migrations + seeds (single source of truth for data)
+│   └── seeds/     # _provincias.csv, _juegos.csv, _tickets_mensuales.csv
 ├── docs/          # Architecture docs → read here before modifying architecture
 ├── k8s/           # Kubernetes manifests (betix namespace)
 └── terraform/     # AWS infrastructure (EKS, ECR, VPC)
