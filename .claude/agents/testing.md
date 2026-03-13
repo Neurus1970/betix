@@ -11,6 +11,10 @@ tools: Read, Edit, Write, Bash, Glob, Grep
 Betix es una plataforma de estadísticas de lotería para provincias argentinas con 3 capas de tests:
 
 ```
+tests/
+├── fixtures/
+│   └── csvLoader.js           # Lee db/seeds/*.csv — fuente única de provincias, juegos y tickets
+                                # Importar desde aquí en lugar de hardcodear arrays en los tests
 tests/          # Jest + Supertest — tests unitarios/integración del API Node.js
 ├── cache.test.js              # Redis/caché sin Redis (no-op mode, REDIS_URL no seteado)
 ├── cacheErrors.test.js        # Ramas de error de cache.js con Redis configurado (ioredis mockeado)
@@ -45,8 +49,6 @@ core/tests/     # pytest — tests unitarios/integración del core Python
 core/           # Python 3.12 + Flask (puerto 5000) — toda la lógica de negocio
 ├── main.py     # endpoints: /health, /geodata, /proyectado, /provincias_juegos
 ├── services/   # geodata_service.py, proyecciones_service.py, provincias_juegos_service.py
-└── data/       # mock_data.py (28 tickets), tickets_por_mes.py (336 registros)
-               # (Raspadita eliminado de Neuquén y La Pampa → 28 combos, no 30)
 
 src/            # Node.js 18 + Express (puerto 3000) — thin proxy a core
 ├── app.js      # Express app
@@ -138,6 +140,21 @@ def client():
     with app.test_client() as client:
         yield client
 ```
+
+## Fuente única de datos de test
+
+Los datos de provincias, juegos y tickets viven **exclusivamente** en `db/seeds/`:
+
+| Archivo | Contenido |
+|---------|-----------|
+| `db/seeds/_provincias.csv` | 10 provincias con lat/lng |
+| `db/seeds/_juegos.csv` | 3 juegos |
+| `db/seeds/_tickets_mensuales.csv` | 336 registros mensuales |
+
+- **pytest** los carga vía PostgreSQL en `conftest.py`
+- **Jest y Cucumber** los leen a través de `tests/fixtures/csvLoader.js`
+
+**Para agregar un nuevo caso de prueba** (nueva provincia, nuevo juego): editar solo los CSVs. No hay arrays que actualizar en los tests.
 
 ## Reglas críticas de testing
 

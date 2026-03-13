@@ -15,6 +15,9 @@ betix/
 ├── frontend/      # nginx 1.27 Alpine (port 8080) — static assets + reverse proxy
 ├── features/      # Cucumber BDD scenarios (.feature + step_definitions/)
 ├── tests/         # Jest unit/integration tests
+│   └── fixtures/  # csvLoader.js — reads db/seeds/ CSVs as test data source
+├── db/            # PostgreSQL migrations + seeds (single source of truth for data)
+│   └── seeds/     # _provincias.csv, _juegos.csv, _tickets_mensuales.csv
 ├── docs/          # Architecture docs → read here before modifying architecture
 ├── k8s/           # Kubernetes manifests (betix namespace)
 └── terraform/     # AWS infrastructure (EKS, ECR, VPC)
@@ -66,7 +69,6 @@ make version      # muestra versión actual de los 3 servicios
 ### Critical
 
 - **Business logic lives in `core/` (Python) only.** Never duplicate in Node.js.
-- **Mock data has two copies** — always edit both: `src/data/` AND `core/data/`.
 - **No `console.log`** in JS — use `logger.info()` / `logger.error()` (Winston).
 - **CommonJS only** in Node.js — use `require`/`module.exports`, not ES modules.
 
@@ -157,5 +159,4 @@ Ante cualquier tarea de implementación, delegar en el sub-agente correspondient
 Reusable step-by-step playbooks in `.claude/skills/`:
 
 - **add-endpoint** — add a new API endpoint end-to-end
-- **sync-mock-data** — modify mock data in both JS and Python copies
 - **release** — bump versions, tag, and push a release
