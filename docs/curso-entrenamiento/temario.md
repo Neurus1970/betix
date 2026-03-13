@@ -26,7 +26,7 @@
 
 ---
 
-## Módulo 3 — Claude Code como herramienta de SDLC
+## [Módulo 3 — Claude Code como herramienta de SDLC](modulos/3.md)
 - Instalación y configuración en VS Code
 - Casos de uso por etapa:
   - **Entender código legado**: `/explain`, preguntas sobre archivos

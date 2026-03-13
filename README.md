@@ -1,17 +1,24 @@
-# Betix API
+# Betix
 
 [![Unit Tests](https://img.shields.io/github/actions/workflow/status/Neurus1970/betix/ci-api.yml?branch=develop&label=unit%20tests&logo=jest)](https://github.com/Neurus1970/betix/actions/workflows/ci-api.yml)
 [![Functional Tests](https://img.shields.io/github/actions/workflow/status/Neurus1970/betix/ci-api.yml?branch=develop&label=functional%20tests&logo=cucumber)](https://github.com/Neurus1970/betix/actions/workflows/ci-api.yml)
 [![Python Core](https://img.shields.io/github/actions/workflow/status/Neurus1970/betix/ci-core.yml?branch=develop&label=python%20core&logo=python)](https://github.com/Neurus1970/betix/actions/workflows/ci-core.yml)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=Neurus1970_betix&metric=coverage)](https://sonarcloud.io/dashboard?id=Neurus1970_betix)
 
-Plataforma de estadísticas de tickets de lotería por provincia y juego, con dashboards interactivos D3.js y proyecciones estadísticas con SMA rolling. Arquitectura de microservicios: Python Flask core, Node.js thin proxy y nginx frontend, desplegable con docker-compose o Kubernetes.
+> **Proyecto didáctico — Tecno Acción**
+> Betix implementa un set de funcionalidades ficticias con fines exclusivamente educativos. Fue creada como *playground* de referencia para el [curso de onboarding de desarrolladores](docs/curso-entrenamiento/temario.md), donde se demuestran en la práctica las capacidades de la plataforma de desarrollo propuesta para Tecno Accion, los procesos automatizados y los estándares de desarrollo de Tecno Accion. Los datos, provincias, juegos y estadísticas son inventados.
 
 ---
 
 ## Onboarding a la plataforma
 
-Este repositorio es el **proyecto de referencia** de nuestra plataforma corporativa de desarrollo. Antes de sumarte a un proyecto productivo, el recorrido recomendado es practicar el ciclo completo aquí:
+Este repositorio es el **playground** de la plataforma corporativa de desarrollo. Antes de sumarte a un proyecto productivo, el recorrido recomendado es practicar el ciclo completo aquí:
+
+[curso de onboarding de desarrolladores](docs/curso-entrenamiento/temario.md)
+
+## Flujo automatizado
+
+Para cadauno de los pasos del proceso, existe un estándard a adoptar, unas herramientas que lo soportan y una automatizacion que reduce el tramite burocrático y la integracion. Proceso:
 
 ```
 Ticket → Branch → Código → Tests → PR → CI → Review → Merge → Release
@@ -33,7 +40,7 @@ Para una descripción exhaustiva de cada etapa y las herramientas que la soporta
 
 ## Inicio rápido
 
-Guía para tener el proyecto corriendo en local y empezar a colaborar.
+Guía para tener el proyecto **playground** corriendo en local y empezar a colaborar.
 
 ### Requisitos previos
 
@@ -45,6 +52,14 @@ Guía para tener el proyecto corriendo en local y empezar a colaborar.
 | [Make](https://www.gnu.org/software/make/) | cualquiera | `make --version` |
 
 > En macOS: `brew install node python make`. Docker Desktop se instala desde su sitio oficial.
+
+**Cuenta de Jira (obligatorio):**
+
+Betix usa Jira para gestionar tickets. Cada rama que creás debe incluir el ID del ticket (`BETIX-XX`), lo que dispara automáticamente la transición de estado en Jira. Para acceder al proyecto:
+
+1. Solicitá acceso al proyecto **BETIX** en [cristian-f-medrano.atlassian.net](https://cristian-f-medrano.atlassian.net) — pedíselo a tu tech lead.
+2. Una vez que tengas acceso, generá tu API token en [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens).
+3. Configurá las credenciales en tu entorno local siguiendo las instrucciones del [Módulo 1 del curso](docs/curso-entrenamiento/modulos/1.md#configurar-el-servidor-mcp-de-jira).
 
 ### 1. Clonar el repositorio
 
