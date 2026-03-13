@@ -17,13 +17,10 @@ Sin path filters, cualquier cambio en el repositorio (aunque sea un comentario e
 Cada job declara los paths que le incumben. Si ningún archivo de esos paths cambió, el job se salta automáticamente.
 
 ```
-Cambio en core/            → corre solo ci-core (pytest)
-Cambio en src/ tests/      → corre solo ci-api (Jest + Cucumber)
-Cambio en docs/diagrams/   → corre solo ci-diagrams (regenera PNGs)
-Cambio en terraform/       → corre solo ci-diagrams (arquitectura AWS cambió)
-Cambio en k8s/             → corre solo ci-diagrams (arquitectura K8s cambió)
-Cambio en docker-compose   → corre solo ci-diagrams (arquitectura local cambió)
+Cambio en core/ db/        → corre solo ci-core (pytest)
+Cambio en src/ tests/ features/ → corre solo ci-api (Jest + Cucumber)
 Cambio en README.md        → ningún job corre (correcto)
+Cambio en cualquier rama   → build.yml (SonarCloud, solo en PRs a main)
 ```
 
 ### Cómo funciona
@@ -31,18 +28,25 @@ Cambio en README.md        → ningún job corre (correcto)
 Los workflows en `.github/workflows/` tienen filtros `paths` en el trigger `on`. GitHub Actions evalúa si algún archivo modificado en el commit/PR coincide con esos paths antes de encolar el job.
 
 ```yaml
-# ci-diagrams.yml — también se dispara con cambios en infraestructura
+# ci-core.yml — solo corre si cambia el core o la base de datos
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     paths:
-      - 'docs/diagrams/**'   # fuentes Python de los diagramas
-      - 'docker-compose.yml' # arquitectura local
-      - 'k8s/**'             # arquitectura Kubernetes
-      - 'terraform/**'       # arquitectura AWS
+      - 'core/**'
+      - 'db/**'
+
+# ci-api.yml — solo corre si cambia el API, tests o features
+on:
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'features/**'
 ```
 
-> **Nota**: los path filters aplican a nivel de workflow (archivo `.yml`), no a nivel de job. Por eso los tres jobs se separaron en tres archivos independientes: `ci-core.yml`, `ci-api.yml` y `ci-diagrams.yml`.
+> **Nota**: los path filters aplican a nivel de workflow (archivo `.yml`), no a nivel de job. Los dos workflows de CI se separaron en dos archivos independientes: `ci-core.yml` y `ci-api.yml`.
 
 ### Comportamiento en PRs
 
@@ -161,15 +165,20 @@ make bump-frontend v=1.1.0   # actualiza frontend/VERSION
 ```
 betix/
 ├── .github/workflows/
-│   ├── ci-core.yml          # paths: core/**
+│   ├── ci-core.yml          # paths: core/**, db/**
 │   ├── ci-api.yml           # paths: src/**, tests/**, features/**
-│   └── ci-diagrams.yml      # paths: docs/diagrams/**
+│   ├── build.yml            # SonarCloud — PRs a main
+│   ├── ai-pr-review.yml     # Claude AI review — PRs
+│   ├── release.yml          # Build + push ECR — release tags
+│   └── jira-*.yml           # Automatización Jira
 ├── core/
 │   └── VERSION              # 1.0.0
 ├── src/
 │   └── VERSION              # 1.0.0
 ├── frontend/
 │   └── VERSION              # 1.0.0
+├── db/
+│   └── seeds/               # fuente única de verdad de datos
 ├── Makefile
 └── docs/
     └── monorepo-guide.md    # este archivo
