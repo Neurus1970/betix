@@ -80,8 +80,11 @@ Branch prefix **must** match the type of change:
 - `feature/BETIX-XX-description` — new functionality
 - `fix/BETIX-XX-description` — bug fix
 - `refactor/BETIX-XX-description` — restructuring without behaviour change
+- `hotfix/BETIX-XX-description` — urgent fix directly on `main` (production)
 
 Pattern: `<prefix>/BETIX-XX-short-description` (kebab-case, Jira ID required).
+
+`hotfix/` branches diverge from `main` (not `develop`) and PR back to `main`. After merging, cherry-pick the fix to `develop` to avoid regression.
 
 ### Code Style
 

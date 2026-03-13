@@ -1,0 +1,113 @@
+name: CI - Hotfix (Full Suite)
+
+# Este workflow corre la suite COMPLETA de tests (core + api) para ramas hotfix/.
+# No tiene path filters — un hotfix puede tocar cualquier capa y siempre hay
+# que validar todo antes de mergear directamente a main.
+#
+# Se dispara en:
+#   - Push a cualquier rama hotfix/**
+#   - Pull Request a main o develop (solo si la rama fuente es hotfix/)
+
+on:
+  push:
+    branches: ['hotfix/**']
+  pull_request:
+    branches: [main, develop]
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  test-core:
+    name: Python Core Tests (Hotfix)
+    runs-on: ubuntu-latest
+    # Solo ejecutar para ramas hotfix/ (en push o en PR desde hotfix/)
+    if: startsWith(github.head_ref, 'hotfix/') || startsWith(github.ref, 'refs/heads/hotfix/')
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB:       betix
+          POSTGRES_USER:     betix
+          POSTGRES_PASSWORD: betix
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U betix -d betix"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Instalar dependencias Python
+        run: pip install -r core/requirements.txt
+
+      - name: Ejecutar tests Python con cobertura
+        env:
+          BETIX_DB_URL: postgresql://betix:betix@localhost:5432/betix
+        run: python3 -m pytest core/tests/ --cov=core --cov-report=xml:coverage-core.xml --cov-report=term-missing
+
+      - name: Publicar cobertura Python
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-core-hotfix
+          path: coverage-core.xml
+
+  lint-and-test:
+    name: Lint & Test Node.js (Hotfix)
+    runs-on: ubuntu-latest
+    # Solo ejecutar para ramas hotfix/ (en push o en PR desde hotfix/)
+    if: startsWith(github.head_ref, 'hotfix/') || startsWith(github.ref, 'refs/heads/hotfix/')
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Ejecutar lint
+        run: npm run lint
+
+      - name: Ejecutar tests con cobertura
+        run: npm run test:ci
+        env:
+          REDIS_URL: ''
+
+      - name: Ejecutar tests funcionales (Cucumber)
+        run: npm run test:functional:ci
+        env:
+          REDIS_URL: ''
+        continue-on-error: false
+
+      - name: Publicar resultados de tests
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: test-results-hotfix
+          path: |
+            test-results/junit.xml
+            test-results/cucumber.xml
+
+      - name: Publicar reporte de cobertura
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report-hotfix
+          path: coverage/
