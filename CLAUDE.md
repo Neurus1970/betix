@@ -168,9 +168,10 @@ Reusable step-by-step playbooks in `.claude/skills/`:
 
 ## Claude Code — Configuración de equipo
 
-La carpeta `.claude/` es parte del repositorio. Todo lo que vive ahí es **conocimiento compartido del equipo**, versionado y revisado en PR igual que el código de producción.
+La carpeta `.claude/` y el archivo `.mcp.json` en la raíz son parte del repositorio. Todo lo que vive ahí es **conocimiento compartido del equipo**, versionado y revisado en PR igual que el código de producción.
 
 ```
+.mcp.json              # Servidores MCP del proyecto (Jira URL pre-configurada)
 .claude/
 ├── agents/              # Sub-agentes especializados por área
 │   ├── microservices.md # core/ (Python) + src/ (Node.js proxy)
@@ -187,12 +188,15 @@ La carpeta `.claude/` es parte del repositorio. Todo lo que vive ahí es **conoc
 
 | Archivo / carpeta | ¿Se commitea? | Para qué sirve |
 |---|---|---|
+| `.mcp.json` | Sí | Config del servidor MCP de Jira (URL del proyecto, sin credenciales) |
 | `.claude/agents/` | Sí | Contexto especializado por área — todo el equipo lo usa |
 | `.claude/skills/` | Sí | Playbooks de flujos comunes — referencia compartida |
 | `.claude/hooks/` | Sí | Automatizaciones del ciclo de trabajo |
 | `.claude/settings.json` | Sí | Settings del proyecto (no incluye tokens ni secrets) |
 | `.claude/settings.local.json` | No (`.gitignore`) | Preferencias personales que sobreescriben settings del proyecto |
 | `.claude/worktrees/` | No (`.gitignore`) | Worktrees temporales de Claude — locales, no compartidos |
+
+**Credenciales MCP (nunca en el repo):** cada developer configura `JIRA_USERNAME` y `JIRA_API_TOKEN` como variables de entorno en su shell (`~/.bashrc` / `~/.zshrc`). Claude Code las pasa automáticamente al servidor MCP al iniciarse.
 
 ### Principio
 
