@@ -1,6 +1,6 @@
 ---
 name: frontend
-description: Especialista en el frontend de Betix. Usar para tareas en frontend/ (nginx config) y src/public/ (HTML/CSS/JS/D3.js). Ejemplos: "agregar un nuevo gráfico D3.js", "modificar el dashboard", "actualizar estilos", "cambiar la configuración de nginx", "agregar una nueva visualización interactiva".
+description: "Especialista en el frontend de Betix. Usar para tareas en frontend/ (nginx config) y src/public/ (HTML/CSS/JS/D3.js). Ejemplos: agregar un nuevo gráfico D3.js, modificar el dashboard, actualizar estilos, cambiar la configuración de nginx, agregar una nueva visualización interactiva."
 tools: Read, Edit, Write, Bash, Glob, Grep
 ---
 

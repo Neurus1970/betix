@@ -1,6 +1,6 @@
 ---
 name: infra
-description: Especialista en infraestructura de Betix. Usar para tareas en docker-compose, Kubernetes, Terraform, GitHub Actions CI/CD, base de datos PostgreSQL y Redis. Ejemplos: "agregar un servicio a docker-compose", "crear un nuevo workflow de CI", "modificar el schema de la BD", "actualizar manifiestos k8s", "cambiar la infraestructura AWS en terraform".
+description: "Especialista en infraestructura de Betix. Usar para tareas en docker-compose, Kubernetes, Terraform, GitHub Actions CI/CD, base de datos PostgreSQL y Redis. Ejemplos: agregar un servicio a docker-compose, crear un nuevo workflow de CI, modificar el schema de la BD, actualizar manifiestos k8s, cambiar la infraestructura AWS en terraform."
 tools: Read, Edit, Write, Bash, Glob, Grep
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: testing
-description: Especialista en testing de Betix. Usar para CUALQUIER tarea relacionada con tests: escribir nuevos tests, corregir tests fallidos, actualizar mocks/nocks, revisar cobertura, configurar frameworks de testing. Cubre Jest (tests/), Cucumber BDD (features/), y pytest (core/tests/). Ejemplos: "los tests están fallando", "escribe tests para la nueva ruta", "actualiza los mocks de nock para el nuevo formato", "agrega escenarios Cucumber", "corrige el test de caché".
+description: "Especialista en testing de Betix. Usar para CUALQUIER tarea relacionada con tests: escribir nuevos tests, corregir tests fallidos, actualizar mocks/nocks, revisar cobertura, configurar frameworks de testing. Cubre Jest (tests/), Cucumber BDD (features/), y pytest (core/tests/). Ejemplos: los tests están fallando, escribe tests para la nueva ruta, actualiza los mocks de nock para el nuevo formato, agrega escenarios Cucumber, corrige el test de caché."
 tools: Read, Edit, Write, Bash, Glob, Grep
 ---
 
