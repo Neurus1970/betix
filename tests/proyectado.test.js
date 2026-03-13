@@ -3,16 +3,14 @@
 const request = require('supertest');
 const nock    = require('nock');
 const app     = require('../src/app');
+const { provincias, juegos: JUEGOS } = require('./fixtures/csvLoader');
+
+// El core devuelve las provincias ordenadas alfabéticamente
+const PROVINCIAS = [...provincias].sort();
 
 const CORE_URL = process.env.CORE_URL || 'http://localhost:5000';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
-
-const PROVINCIAS = [
-  'Catamarca', 'Corrientes', 'La Pampa', 'La Rioja', 'Neuquén',
-  'Río Negro', 'Salta', 'Santa Cruz', 'Santiago del Estero', 'Tierra del Fuego',
-];
-const JUEGOS = ['Lotería', 'Quiniela', 'Raspadita'];
 
 function makeHistorico(n = 12) {
   return Array.from({ length: n }, (_, i) => ({

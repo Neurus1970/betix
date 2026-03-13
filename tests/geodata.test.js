@@ -3,16 +3,14 @@
 const request = require('supertest');
 const nock    = require('nock');
 const app     = require('../src/app');
+const { provinciasConCoordenadas } = require('./fixtures/csvLoader');
 
 const CORE_URL = process.env.CORE_URL || 'http://localhost:5000';
 
-const MOCK_PROVINCES = [
-  'Catamarca', 'Corrientes', 'La Pampa', 'La Rioja', 'Neuquén',
-  'Río Negro', 'Salta', 'Santa Cruz', 'Santiago del Estero', 'Tierra del Fuego',
-].map(name => ({
-  provincia: name,
-  lat: -30.0,
-  lng: -65.0,
+const MOCK_PROVINCES = provinciasConCoordenadas.map(({ nombre, lat, lng }) => ({
+  provincia: nombre,
+  lat,
+  lng,
   totals: { cantidad: 1000, importe: 50000, beneficio: 10000 },
   games: [{ juego: 'Quiniela', cantidad: 500, importe: 25000, beneficio: 5000 }],
 }));
@@ -55,11 +53,11 @@ describe('GET /api/datos/geodata', () => {
     expect(res.body.data.globalTotals).toHaveProperty('beneficio');
   });
 
-  it('data.provinces debe tener 10 provincias', async () => {
+  it('data.provinces tiene tantas provincias como el CSV', async () => {
     nock(CORE_URL).get('/geodata').reply(200, MOCK_GEODATA);
     const res = await request(app).get('/api/datos/geodata');
     expect(Array.isArray(res.body.data.provinces)).toBe(true);
-    expect(res.body.data.provinces).toHaveLength(10);
+    expect(res.body.data.provinces).toHaveLength(provinciasConCoordenadas.length);
   });
 
   it('cada provincia tiene lat, lng, totals y games con campos correctos', async () => {

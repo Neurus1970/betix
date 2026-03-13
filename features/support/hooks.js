@@ -6,21 +6,16 @@ process.env.REDIS_URL = '';
 
 const { Before, After, BeforeAll } = require('@cucumber/cucumber');
 const nock = require('nock');
+const { provincias: PROVINCIAS, juegos: JUEGOS, provinciasConCoordenadas } = require('../../tests/fixtures/csvLoader');
 
 const CORE_URL = process.env.CORE_URL || 'http://localhost:5000';
 
 // ── Fixtures ──────────────────────────────────────────────────────────────────
 
-const PROVINCIAS = [
-  'Catamarca', 'Corrientes', 'La Pampa', 'La Rioja', 'Neuquén',
-  'Río Negro', 'Salta', 'Santa Cruz', 'Santiago del Estero', 'Tierra del Fuego',
-];
-const JUEGOS = ['Lotería', 'Quiniela', 'Raspadita'];
-
-const MOCK_PROVINCES = PROVINCIAS.map(name => ({
-  provincia: name,
-  lat: -30.0,
-  lng: -65.0,
+const MOCK_PROVINCES = provinciasConCoordenadas.map(({ nombre, lat, lng }) => ({
+  provincia: nombre,
+  lat,
+  lng,
   totals: { cantidad: 1000, importe: 50000, beneficio: 10000 },
   games: [{ juego: 'Quiniela', cantidad: 500, importe: 25000, beneficio: 5000 }],
 }));
