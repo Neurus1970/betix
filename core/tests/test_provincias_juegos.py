@@ -128,6 +128,9 @@ def test_delete_provincia_juego_existing(client):
     assert res.status_code == 204
     assert res.data == b""
 
+    # Restore to avoid polluting session-scoped DB state for subsequent tests
+    client.post("/provincias_juegos", json={"provincia_id": 1, "juego_id": 1})
+
 
 def test_delete_provincia_juego_not_found(client):
     # Make sure the row does not exist
