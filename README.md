@@ -81,7 +81,34 @@ make lint          # ESLint
 
 Los tests de Node.js **no requieren que el servidor esté corriendo** — usan `nock` para interceptar las llamadas HTTP al core.
 
-### 4. Próximos pasos
+### 4. Configurar Claude Code (IA integrada al proyecto)
+
+Claude Code es la IA que el equipo usa como copiloto durante todo el ciclo de vida del desarrollo. Al clonar este repositorio ya tenés la configuración completa disponible en la carpeta `.claude/`:
+
+| Qué incluye | Dónde vive | Para qué sirve |
+|-------------|-----------|----------------|
+| Instrucciones del proyecto | `CLAUDE.md` | Claude entiende la arquitectura, reglas y convenciones sin que tengas que explicarlas |
+| Sub-agentes especializados | `.claude/agents/` | Agentes con contexto específico para `microservices`, `testing`, `infra` y `frontend` |
+| Playbooks reutilizables | `.claude/skills/` | Flujos paso a paso: `add-endpoint`, `release` |
+| Hooks automáticos | `.claude/hooks/` | Ejecutan acciones en eventos del ciclo de trabajo (ej: antes de un commit) |
+
+**Instalación:**
+
+1. Instalar la extensión **Claude Code** en VS Code (buscar "Claude Code" en el Marketplace)
+2. Autenticarse con tu cuenta Anthropic
+3. Abrir el proyecto — Claude ya conoce el contexto completo
+
+**Configuración personal (no se commitea):**
+
+```bash
+# Sobreescribir settings sin afectar al equipo
+~/.claude/settings.json          # preferencias globales personales
+.claude/settings.local.json      # preferencias locales del proyecto (en .gitignore)
+```
+
+> Lo que está en `.claude/agents/`, `.claude/skills/` y `.claude/hooks/` es código del equipo — se versiona, se revisa en PR y evoluciona con el proyecto. Lo personal queda fuera del repo.
+
+### 5. Próximos pasos
 
 - Flujo de ramas, convenciones y comandos del `Makefile` → [docs/monorepo-guide.md](docs/monorepo-guide.md)
 - Arquitectura del sistema (modelo C4) → [docs/ArquitecturaC4.md](docs/ArquitecturaC4.md)

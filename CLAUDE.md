@@ -160,3 +160,37 @@ Reusable step-by-step playbooks in `.claude/skills/`:
 
 - **add-endpoint** — add a new API endpoint end-to-end
 - **release** — bump versions, tag, and push a release
+
+---
+
+## Claude Code — Configuración de equipo
+
+La carpeta `.claude/` es parte del repositorio. Todo lo que vive ahí es **conocimiento compartido del equipo**, versionado y revisado en PR igual que el código de producción.
+
+```
+.claude/
+├── agents/              # Sub-agentes especializados por área
+│   ├── microservices.md # core/ (Python) + src/ (Node.js proxy)
+│   ├── testing.md       # tests/, features/, core/tests/
+│   ├── infra.md         # docker-compose, k8s, terraform, CI/CD
+│   └── frontend.md      # src/public/ (HTML/CSS/JS/D3.js) + nginx
+├── skills/              # Playbooks reutilizables paso a paso
+│   ├── add-endpoint.md  # flujo completo para agregar un endpoint
+│   └── release.md       # cómo funciona el versionado automatizado
+└── hooks/               # Comandos que se ejecutan en eventos del ciclo de trabajo
+```
+
+### Qué se comparte vs qué es personal
+
+| Archivo / carpeta | ¿Se commitea? | Para qué sirve |
+|---|---|---|
+| `.claude/agents/` | Sí | Contexto especializado por área — todo el equipo lo usa |
+| `.claude/skills/` | Sí | Playbooks de flujos comunes — referencia compartida |
+| `.claude/hooks/` | Sí | Automatizaciones del ciclo de trabajo |
+| `.claude/settings.json` | Sí | Settings del proyecto (no incluye tokens ni secrets) |
+| `.claude/settings.local.json` | No (`.gitignore`) | Preferencias personales que sobreescriben settings del proyecto |
+| `.claude/worktrees/` | No (`.gitignore`) | Worktrees temporales de Claude — locales, no compartidos |
+
+### Principio
+
+> **La plataforma es el repositorio.** Un developer que clona el repo obtiene automáticamente el mismo Claude configurado, con el mismo conocimiento del proyecto, que el resto del equipo. No hay setup manual de prompts ni contexto que transmitir por Slack.
