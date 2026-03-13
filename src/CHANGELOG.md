@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.3.0](https://github.com/Neurus1970/betix/compare/betix-api-v1.2.0...betix-api-v1.3.0) (2026-03-13)
+
+
+### Features
+
+* **BETIX-32:** agregar página backoffice y completar implementación del ticket ([e58a9c4](https://github.com/Neurus1970/betix/commit/e58a9c480c517435ce0af3142cccab153dcae3b0))
+* **BETIX-32:** agregar proxy Node.js para /api/provincias_juegos ([3b1a0f9](https://github.com/Neurus1970/betix/commit/3b1a0f9bc061ce8f0804ca3e0eff28c3a5b9d6f0))
+* **BETIX-32:** invalidar caché en mutaciones y filtrar queries por provincias_juegos ([29573c4](https://github.com/Neurus1970/betix/commit/29573c4c829157d4f12e3e1a44768a5fd7b6ec34))
+* **BETIX-32:** modelo de datos juegos por provincia + API + backoffice ([bac3123](https://github.com/Neurus1970/betix/commit/bac3123db4996e6d7c9ac4c9c2cdbaf9be788f5a))
+
+
+### Bug Fixes
+
+* **BETIX-32:** corregir issues Sonar — reliability, security y maintainability ([a5da831](https://github.com/Neurus1970/betix/commit/a5da8319373cf62b8eca326b9016ea81e45535d0))
+
 ## [1.2.0](https://github.com/Neurus1970/betix/compare/betix-api-v1.1.0...betix-api-v1.2.0) (2026-03-12)
 
 

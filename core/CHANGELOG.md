@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.3.0](https://github.com/Neurus1970/betix/compare/betix-core-v1.2.0...betix-core-v1.3.0) (2026-03-13)
+
+
+### Features
+
+* **BETIX-32:** agregar tabla provincias_juegos y endpoint /provincias_juegos ([6dde29c](https://github.com/Neurus1970/betix/commit/6dde29ced3612ccdc14f6ff14b2c92b2e67239e5))
+* **BETIX-32:** invalidar caché en mutaciones y filtrar queries por provincias_juegos ([29573c4](https://github.com/Neurus1970/betix/commit/29573c4c829157d4f12e3e1a44768a5fd7b6ec34))
+* **BETIX-32:** modelo de datos juegos por provincia + API + backoffice ([bac3123](https://github.com/Neurus1970/betix/commit/bac3123db4996e6d7c9ac4c9c2cdbaf9be788f5a))
+
+
+### Bug Fixes
+
+* **BETIX-32:** actualizar test de combinaciones a 28 tras quitar Raspadita de Neuquén y La Pampa ([9994657](https://github.com/Neurus1970/betix/commit/999465719ffb3964cb650661d283007e22d42196))
+* **BETIX-32:** restaurar fila (1,1) tras test de delete para evitar polución de estado ([53b64be](https://github.com/Neurus1970/betix/commit/53b64bebc31a71b5393bec262322c561ba26eebd))
+
 ## [1.2.0](https://github.com/Neurus1970/betix/compare/betix-core-v1.1.0...betix-core-v1.2.0) (2026-03-12)
 
 
