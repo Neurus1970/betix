@@ -172,3 +172,21 @@ REDIS_URL=                    # deshabilita Redis/caché en tests (modo no-op)
 REDIS_URL=redis://localhost:6379  # conecta a Redis real (puede causar timeouts en tests)
 CORE_URL=http://localhost:5000    # URL del core Python (nock la intercepta en tests)
 ```
+
+## Cobertura de código y SonarCloud
+
+SonarCloud analiza la cobertura en cada PR. Para que el análisis funcione correctamente, los reportes deben generarse con estos comandos exactos (los usa `build.yml`):
+
+```bash
+# Node.js → genera coverage/lcov.info
+npm run test:ci   # jest --coverage --ci
+
+# Python → genera coverage-core.xml
+python3 -m pytest core/tests/ --cov=core --cov-report=xml:coverage-core.xml
+```
+
+**Reglas:**
+- Usar siempre `npm run test:ci` (no `npm test`) para CI — genera `lcov.info` en `coverage/`
+- El flag `--cov=core` en pytest limita la cobertura al módulo `core/` (excluye `core/tests/` propiamente)
+- `src/app.js` y `terraform/` están excluidos del Quality Gate (configurado en `build.yml`)
+- Si se agrega un nuevo módulo Python en `core/`, no es necesario tocar la config de SonarCloud — `--cov=core` lo cubre automáticamente
