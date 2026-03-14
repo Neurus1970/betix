@@ -13,12 +13,16 @@ except Exception:
     print('')
 " 2>/dev/null)
 
+# Normalizar el path — elimina prefijo "./" si Claude lo resuelve como ruta relativa
+# Cubre tanto "terraform/vpc.tf" como "./terraform/vpc.tf"
+NORMALIZED_PATH=$(echo "$FILE_PATH" | sed 's|^\./||')
+
 # Solo actúa sobre archivos de infra — todo lo demás pasa sin intervención
-if [[ "$FILE_PATH" =~ ^(terraform|k8s)/ ]]; then
+if [[ "$NORMALIZED_PATH" =~ ^(terraform|k8s)/ ]]; then
     echo ""
     echo "⛔ [BETIX Platform Rule] Edición de infraestructura bloqueada"
     echo ""
-    echo "Archivo: $FILE_PATH"
+    echo "Archivo: $NORMALIZED_PATH"
     echo ""
     echo "Los archivos de terraform/ y k8s/ requieren aprobación explícita del usuario antes de editarse."
     echo "Estos cambios pueden generar costos en AWS o causar downtime en servicios corriendo."
