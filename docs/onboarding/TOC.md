@@ -3,6 +3,7 @@
 
 
 ## [¿Por qué una plataforma unificada?](modulos/0.md)
+### Capítulo 0
 - El costo real del caos: entornos inconsistentes, bugs en prod que no reproducen en local, onboarding de semanas
 - Qué es una plataforma de desarrollo (Developer Platform): herramientas + procesos + estándares
 - El desarrollador como "cliente interno" de la plataforma
@@ -11,6 +12,7 @@
 ---
 
 ## [El entorno local estandarizado](modulos/1.md)
+### Capítulo 1
 - Prerequisitos: Git, Docker, VS Code + extensión Claude Code
 - Clonar Betix y levantar los 3 servicios en un solo comando (`make up`)
 - Anatomía del proyecto: qué corre dónde y por qué (C4 model en `docs/`)
@@ -19,6 +21,7 @@
 ---
 
 ## [Git como contrato de equipo](modulos/2.md)
+### Capítulo 2
 - Branching strategy: `develop` como rama principal, prefijos obligatorios (`feature/`, `fix/`, `refactor/`)
 - Conventional Commits: por qué el mensaje importa (Release Please lo lee)
 - Pull Requests a `develop`: qué revisar, qué no bloquear
@@ -27,6 +30,7 @@
 ---
 
 ## [Claude Code como herramienta de SDLC](modulos/3.md)
+### Capítulo 3
 - Instalación y configuración en VS Code
 - Casos de uso por etapa:
   - **Entender código legado**: `/explain`, preguntas sobre archivos
@@ -40,6 +44,7 @@
 ---
 
 ## [Testing como cultura, no como tarea](modulos/4.md)
+### Capítulo 4
 - La pirámide de tests en Betix: pytest (unit), Jest (integration), Cucumber (BDD/acceptance)
 - BDD: escribir escenarios en lenguaje de negocio antes del código
 - `make test` y cómo leer los resultados
@@ -49,6 +54,7 @@
 ---
 
 ## [CI/CD: de commit a producción](modulos/5.md)
+### Capítulo 5
 - Qué es un pipeline y qué problema resuelve
 - El ecosistema de workflows de Betix: 8 workflows con responsabilidades distintas
 - `ci-core.yml` y `ci-api.yml`: path filters — qué corre y cuándo
@@ -63,6 +69,7 @@
 ---
 
 ## [Infraestructura como código](modulos/6.md)
+### Capítulo 6
 - Docker: imágenes, contenedores, `docker-compose` para dev local
 - Kubernetes: namespaces, deployments, services — `make k8s-apply` en minikube
 - Terraform: infraestructura AWS (EKS, ECR, VPC) — solo lectura/comprensión
@@ -107,4 +114,4 @@
 ---
 
 ## [Glosario de términos técnicos](glosario.md)
-Definiciones de bump, cherry-pick, semver, SHA, hotfix, RC, IaC, pipeline, rollback y más — referencia rápida para cualquier módulo del curso.
+Definiciones de bump, cherry-pick, semver, SHA, hotfix, RC, IaC, pipeline, rollback y más — referencia rápida para cualquier capítulo del curso.
