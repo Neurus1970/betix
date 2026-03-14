@@ -48,11 +48,17 @@
 
 ---
 
-## Módulo 5 — CI/CD: de commit a producción
+## [Módulo 5 — CI/CD: de commit a producción](modulos/5.md)
 - Qué es un pipeline y qué problema resuelve
-- Los dos workflows de Betix: `ci-core.yml` y `ci-api.yml`, path filters
-- Lectura de un run fallido en GitHub Actions: cómo diagnosticar sin pánico
-- **Ejercicio con Claude**: simular un fallo de CI en Betix y usar Claude para diagnosticarlo y proponer el fix
+- El ecosistema de workflows de Betix: 8 workflows con responsabilidades distintas
+- `ci-core.yml` y `ci-api.yml`: path filters — qué corre y cuándo
+- `ci-hotfix.yml`: suite completa sin filtros para ramas de producción
+- `build.yml`: SonarCloud Quality Gate en cada PR a `main`
+- Automatizaciones de Jira: branch → In Progress, PR merge → Done
+- `ai-pr-review.yml`: Claude como revisor automático en cada PR
+- Lectura de un run fallido en GitHub Actions: Jest, Cucumber, ESLint, pytest
+- **Ejercicio con Claude**: diagnosticar un fallo de CI y proponer el fix
+- **Caso real BETIX-9**: recorrido completo con links a Jira, GitHub Actions, PR y SonarCloud
 
 ---
 

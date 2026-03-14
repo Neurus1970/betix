@@ -9,7 +9,7 @@ Este glosario reúne los términos técnicos usados a lo largo del curso. Están
 ## B
 
 ### Branch
-Rama de trabajo en Git. Permite desarrollar cambios de forma aislada sin afectar el código principal. Ver [Módulo 2 — Estrategia de branches](modulos/2.md#2-la-estrategia-de-branches-de-betix).
+Rama de trabajo en Git. Permite desarrollar cambios de forma aislada sin afectar el código principal. Ver [Módulo 2 — Estrategia de branches](modulos/2.md#2-la-estrategia-de-branches-de-tecnoaccion).
 
 ### BREAKING CHANGE
 Cambio que rompe la compatibilidad con versiones anteriores de una API o interfaz. En Conventional Commits se declara con `!` en el tipo o con un footer `BREAKING CHANGE:`. Genera un bump de versión MAJOR (ej: 1.2.0 → 2.0.0).
