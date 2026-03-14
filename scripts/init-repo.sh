@@ -16,13 +16,13 @@ set -euo pipefail
 # -----------------------------------------------------------------------------
 # Colores y prefijos de output
 # -----------------------------------------------------------------------------
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-CYAN='\033[0;36m'
-BOLD='\033[1m'
-RESET='\033[0m'
+RED=$(printf '\033[0;31m')
+GREEN=$(printf '\033[0;32m')
+YELLOW=$(printf '\033[1;33m')
+BLUE=$(printf '\033[0;34m')
+CYAN=$(printf '\033[0;36m')
+BOLD=$(printf '\033[1m')
+RESET=$(printf '\033[0m')
 
 ok()   { printf "${GREEN}[OK]${RESET}   %s\n" "$*"; }
 warn() { printf "${YELLOW}[WARN]${RESET}  %s\n" "$*"; }
@@ -145,6 +145,55 @@ while [ $# -gt 0 ]; do
       ;;
   esac
 done
+
+# -----------------------------------------------------------------------------
+# Modo interactivo — se activa cuando faltan requeridos y stdin es una TTY
+# -----------------------------------------------------------------------------
+prompt_required() {
+  _prompt="$1"
+  _example="$2"
+  while true; do
+    printf "${BOLD}%s${RESET}" "$_prompt" >&2
+    [ -n "$_example" ] && printf " ${CYAN}(ej: %s)${RESET}" "$_example" >&2
+    printf ": " >&2
+    read -r _val
+    [ -n "$_val" ] && { printf '%s' "$_val"; return 0; }
+    printf "${RED}  Este campo es requerido.${RESET}\n" >&2
+  done
+}
+
+prompt_optional() {
+  _prompt="$1"
+  _default="$2"
+  printf "${BOLD}%s${RESET} [${CYAN}%s${RESET}]: " "$_prompt" "$_default" >&2
+  read -r _val
+  [ -n "$_val" ] && printf '%s' "$_val" || printf '%s' "$_default"
+}
+
+NEEDS_INTERACTIVE=0
+{ [ -z "$REPO" ] || [ -z "$JIRA_PROJECT" ] || [ -z "$JIRA_URL" ] || [ -z "$CI_CHECKS" ]; } && NEEDS_INTERACTIVE=1
+
+if [ "$NEEDS_INTERACTIVE" = "1" ]; then
+  if [ ! -t 0 ]; then
+    err "Modo no interactivo: faltan parámetros requeridos (--repo, --jira-project, --jira-url, --ci-checks)"
+    usage
+    exit 1
+  fi
+
+  printf "\n${BOLD}${BLUE}Modo interactivo — completar los parámetros faltantes${RESET}\n"
+  printf "${CYAN}(Los campos opcionales muestran el valor por defecto entre corchetes; Enter para aceptar)${RESET}\n\n"
+
+  [ -z "$REPO" ]         && REPO=$(prompt_required         "Repositorio (owner/repo)"             "MyOrg/my-repo")
+  [ -z "$JIRA_PROJECT" ] && JIRA_PROJECT=$(prompt_required "Clave del proyecto Jira"               "BETIX")
+  [ -z "$JIRA_URL" ]     && JIRA_URL=$(prompt_required     "URL base de Jira"                      "https://org.atlassian.net")
+  [ -z "$CI_CHECKS" ]    && CI_CHECKS=$(prompt_required    "Jobs de CI requeridos (separados por coma)" "test-core,lint-and-test")
+
+  DEVELOP_BRANCH=$(prompt_optional  "Rama de integración"                          "$DEVELOP_BRANCH")
+  MAIN_BRANCH=$(prompt_optional     "Rama de producción"                           "$MAIN_BRANCH")
+  REQUIRED_APPROVALS=$(prompt_optional "Approvals requeridos (main)"               "$REQUIRED_APPROVALS")
+  ENFORCE_ADMINS=$(prompt_optional  "Aplicar reglas a admins (true/false)"         "$ENFORCE_ADMINS")
+  TEAM=$(prompt_optional            "Equipo GitHub (slug, dejar vacío para omitir)" "$TEAM")
+fi
 
 # -----------------------------------------------------------------------------
 # Validación de parámetros requeridos
