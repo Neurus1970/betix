@@ -11,11 +11,9 @@ tools: Read, Edit, Write, Bash, Glob, Grep
 Betix es una plataforma de estadísticas de lotería para provincias argentinas con 3 capas de tests:
 
 ```
-tests/
-├── fixtures/
-│   └── csvLoader.js           # Lee db/seeds/*.csv — fuente única de provincias, juegos y tickets
-                                # Importar desde aquí en lugar de hardcodear arrays en los tests
 tests/          # Jest + Supertest — tests unitarios/integración del API Node.js
+├── fixtures/
+│   └── csvLoader.js           # Lee db/seeds/*.csv — fuente única de datos; importar desde aquí
 ├── cache.test.js              # Redis/caché sin Redis (no-op mode, REDIS_URL no seteado)
 ├── cacheErrors.test.js        # Ramas de error de cache.js con Redis configurado (ioredis mockeado)
 ├── cacheMiddleware.test.js    # cacheMiddleware con Redis mockeado
