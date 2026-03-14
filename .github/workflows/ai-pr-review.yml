@@ -2,7 +2,7 @@ name: AI - Review & Documentación de PR
 
 on:
   pull_request:
-    branches: [main]
+    branches: [main, develop]
     types: [opened, synchronize, reopened]
 
 env:

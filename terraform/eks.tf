@@ -88,6 +88,23 @@ resource "aws_eks_cluster" "betix" {
   ]
 }
 
+# ── Security Group para los nodos EC2 ────────────────────────────────────────
+
+resource "aws_security_group" "eks_nodes" {
+  name        = "betix-eks-nodes-sg-${var.environment}"
+  description = "Security group de los nodos del node group EKS"
+  vpc_id      = aws_vpc.betix.id
+
+  egress {
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = { Name = "betix-eks-nodes-sg-${var.environment}" }
+}
+
 # ── EKS Managed Node Group ────────────────────────────────────────────────────
 
 resource "aws_eks_node_group" "betix" {

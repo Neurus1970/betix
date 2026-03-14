@@ -18,12 +18,25 @@ spec:
       containers:
         - name: frontend
           image: betix-frontend:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
           livenessProbe:
             httpGet:
               path: /dashboard
               port: 80
             initialDelaySeconds: 3
             periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /dashboard
+              port: 80
+            initialDelaySeconds: 3
+            periodSeconds: 5

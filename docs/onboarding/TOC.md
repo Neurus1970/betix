@@ -1,4 +1,4 @@
-# Temario: Plataforma de Desarrollo Tecnoaccion — Curso de Onboarding
+# Tabla de Contenidos: Plataforma de Desarrollo Tecnoaccion — Curso de Onboarding
 
 ---
 
@@ -39,10 +39,11 @@
 
 ---
 
-## Módulo 4 — Testing como cultura, no como tarea
+## [Módulo 4 — Testing como cultura, no como tarea](modulos/4.md)
 - La pirámide de tests en Betix: pytest (unit), Jest (integration), Cucumber (BDD/acceptance)
 - BDD: escribir escenarios en lenguaje de negocio antes del código
 - `make test` y cómo leer los resultados
+- Cobertura de código con SonarCloud: `build.yml`, Quality Gate en cada PR, lcov + coverage-core.xml
 - **Ejercicio con Claude**: el agente `testing` escribe un test para un escenario de Betix dado en lenguaje natural
 
 ---
@@ -96,3 +97,8 @@
 - Debugging en contenedores: `docker exec`, `kubectl logs`
 - **Claude** como primer nivel de diagnóstico: pegar un stacktrace y pedir análisis
 - Cierre: qué hace a una plataforma "viva" — retroalimentación, mejora continua, ownership compartido
+
+---
+
+## [Glosario de términos técnicos](glosario.md)
+Definiciones de bump, cherry-pick, semver, SHA, hotfix, RC, IaC, pipeline, rollback y más — referencia rápida para cualquier módulo del curso.

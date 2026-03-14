@@ -8,7 +8,8 @@ terraform {
     }
   }
 
-  # Descomenta para usar backend remoto con S3 + DynamoDB (recomendado para equipos)
+  # Backend remoto (S3 + DynamoDB) — activar antes de trabajar en equipo con AWS real.
+  # Requiere crear previamente el bucket S3 y la tabla DynamoDB fuera de Terraform.
   # backend "s3" {
   #   bucket         = "betix-terraform-state"
   #   key            = "betix/terraform.tfstate"

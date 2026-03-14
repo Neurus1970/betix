@@ -11,11 +11,9 @@ tools: Read, Edit, Write, Bash, Glob, Grep
 Betix es una plataforma de estadísticas de lotería para provincias argentinas con 3 capas de tests:
 
 ```
-tests/
-├── fixtures/
-│   └── csvLoader.js           # Lee db/seeds/*.csv — fuente única de provincias, juegos y tickets
-                                # Importar desde aquí en lugar de hardcodear arrays en los tests
 tests/          # Jest + Supertest — tests unitarios/integración del API Node.js
+├── fixtures/
+│   └── csvLoader.js           # Lee db/seeds/*.csv — fuente única de datos; importar desde aquí
 ├── cache.test.js              # Redis/caché sin Redis (no-op mode, REDIS_URL no seteado)
 ├── cacheErrors.test.js        # Ramas de error de cache.js con Redis configurado (ioredis mockeado)
 ├── cacheMiddleware.test.js    # cacheMiddleware con Redis mockeado
@@ -172,3 +170,21 @@ REDIS_URL=                    # deshabilita Redis/caché en tests (modo no-op)
 REDIS_URL=redis://localhost:6379  # conecta a Redis real (puede causar timeouts en tests)
 CORE_URL=http://localhost:5000    # URL del core Python (nock la intercepta en tests)
 ```
+
+## Cobertura de código y SonarCloud
+
+SonarCloud analiza la cobertura en cada PR. Para que el análisis funcione correctamente, los reportes deben generarse con estos comandos exactos (los usa `build.yml`):
+
+```bash
+# Node.js → genera coverage/lcov.info
+npm run test:ci   # jest --coverage --ci
+
+# Python → genera coverage-core.xml
+python3 -m pytest core/tests/ --cov=core --cov-report=xml:coverage-core.xml
+```
+
+**Reglas:**
+- Usar siempre `npm run test:ci` (no `npm test`) para CI — genera `lcov.info` en `coverage/`
+- El flag `--cov=core` en pytest limita la cobertura al módulo `core/` (excluye `core/tests/` propiamente)
+- `src/app.js` y `terraform/` están excluidos del Quality Gate (configurado en `build.yml`)
+- Si se agrega un nuevo módulo Python en `core/`, no es necesario tocar la config de SonarCloud — `--cov=core` lo cubre automáticamente
