@@ -96,3 +96,8 @@
 - Debugging en contenedores: `docker exec`, `kubectl logs`
 - **Claude** como primer nivel de diagnóstico: pegar un stacktrace y pedir análisis
 - Cierre: qué hace a una plataforma "viva" — retroalimentación, mejora continua, ownership compartido
+
+---
+
+## [Glosario de términos técnicos](glosario.md)
+Definiciones de bump, cherry-pick, semver, SHA, hotfix, RC, IaC, pipeline, rollback y más — referencia rápida para cualquier módulo del curso.
