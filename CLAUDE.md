@@ -2,7 +2,7 @@
 
 ## WHY
 
-**Betix** is a lottery ticket statistics platform for Argentine provinces. It visualizes ticket sales, revenue, and projections via interactive D3.js dashboards.
+**Betix** is a fictional lottery ticket statistics platform for Argentine provinces, built as an educational *playground* for the Tecno Acción developer onboarding course (`docs/onboarding/`). It demonstrates the team's development platform tools, processes, and standards end-to-end. All data, provinces, games and statistics are invented.
 
 ---
 
@@ -15,7 +15,11 @@ betix/
 ├── frontend/      # nginx 1.27 Alpine (port 8080) — static assets + reverse proxy
 ├── features/      # Cucumber BDD scenarios (.feature + step_definitions/)
 ├── tests/         # Jest unit/integration tests
+│   └── fixtures/  # csvLoader.js — reads db/seeds/ CSVs as test data source
+├── db/            # PostgreSQL migrations + seeds (single source of truth for data)
+│   └── seeds/     # _provincias.csv, _juegos.csv, _tickets_mensuales.csv
 ├── docs/          # Architecture docs → read here before modifying architecture
+│   └── onboarding/  # Developer onboarding course (modules 0–10)
 ├── k8s/           # Kubernetes manifests (betix namespace)
 └── terraform/     # AWS infrastructure (EKS, ECR, VPC)
 ```
@@ -66,7 +70,6 @@ make version      # muestra versión actual de los 3 servicios
 ### Critical
 
 - **Business logic lives in `core/` (Python) only.** Never duplicate in Node.js.
-- **Mock data has two copies** — always edit both: `src/data/` AND `core/data/`.
 - **No `console.log`** in JS — use `logger.info()` / `logger.error()` (Winston).
 - **CommonJS only** in Node.js — use `require`/`module.exports`, not ES modules.
 
@@ -78,8 +81,11 @@ Branch prefix **must** match the type of change:
 - `feature/BETIX-XX-description` — new functionality
 - `fix/BETIX-XX-description` — bug fix
 - `refactor/BETIX-XX-description` — restructuring without behaviour change
+- `hotfix/BETIX-XX-description` — urgent fix directly on `main` (production)
 
 Pattern: `<prefix>/BETIX-XX-short-description` (kebab-case, Jira ID required).
+
+`hotfix/` branches diverge from `main` (not `develop`) and PR back to `main`. After merging, cherry-pick the fix to `develop` to avoid regression.
 
 ### Code Style
 
@@ -157,5 +163,42 @@ Ante cualquier tarea de implementación, delegar en el sub-agente correspondient
 Reusable step-by-step playbooks in `.claude/skills/`:
 
 - **add-endpoint** — add a new API endpoint end-to-end
-- **sync-mock-data** — modify mock data in both JS and Python copies
 - **release** — bump versions, tag, and push a release
+
+---
+
+## Claude Code — Configuración de equipo
+
+La carpeta `.claude/` y el archivo `.mcp.json` en la raíz son parte del repositorio. Todo lo que vive ahí es **conocimiento compartido del equipo**, versionado y revisado en PR igual que el código de producción.
+
+```
+.mcp.json              # Servidores MCP del proyecto (Jira URL pre-configurada)
+.claude/
+├── agents/              # Sub-agentes especializados por área
+│   ├── microservices.md # core/ (Python) + src/ (Node.js proxy)
+│   ├── testing.md       # tests/, features/, core/tests/
+│   ├── infra.md         # docker-compose, k8s, terraform, CI/CD
+│   └── frontend.md      # src/public/ (HTML/CSS/JS/D3.js) + nginx
+├── skills/              # Playbooks reutilizables paso a paso
+│   ├── add-endpoint.md  # flujo completo para agregar un endpoint
+│   └── release.md       # cómo funciona el versionado automatizado
+└── hooks/               # Comandos que se ejecutan en eventos del ciclo de trabajo
+```
+
+### Qué se comparte vs qué es personal
+
+| Archivo / carpeta | ¿Se commitea? | Para qué sirve |
+|---|---|---|
+| `.mcp.json` | Sí | Config del servidor MCP de Jira (URL del proyecto, sin credenciales) |
+| `.claude/agents/` | Sí | Contexto especializado por área — todo el equipo lo usa |
+| `.claude/skills/` | Sí | Playbooks de flujos comunes — referencia compartida |
+| `.claude/hooks/` | Sí | Automatizaciones del ciclo de trabajo |
+| `.claude/settings.json` | Sí | Settings del proyecto (no incluye tokens ni secrets) |
+| `.claude/settings.local.json` | No (`.gitignore`) | Preferencias personales que sobreescriben settings del proyecto |
+| `.claude/worktrees/` | No (`.gitignore`) | Worktrees temporales de Claude — locales, no compartidos |
+
+**Credenciales MCP (nunca en el repo):** cada developer configura sus credenciales en `.claude/settings.local.json` (está en `.gitignore`). Ver instrucciones completas en `docs/onboarding/modulos/1.md#configurar-el-servidor-mcp-de-jira`.
+
+### Principio
+
+> **La plataforma es el repositorio.** Un developer que clona el repo obtiene automáticamente el mismo Claude configurado, con el mismo conocimiento del proyecto, que el resto del equipo. No hay setup manual de prompts ni contexto que transmitir por Slack.

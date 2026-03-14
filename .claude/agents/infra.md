@@ -1,6 +1,6 @@
 ---
 name: infra
-description: Especialista en infraestructura de Betix. Usar para tareas en docker-compose, Kubernetes, Terraform, GitHub Actions CI/CD, base de datos PostgreSQL y Redis. Ejemplos: "agregar un servicio a docker-compose", "crear un nuevo workflow de CI", "modificar el schema de la BD", "actualizar manifiestos k8s", "cambiar la infraestructura AWS en terraform".
+description: "Especialista en infraestructura de Betix. Usar para tareas en docker-compose, Kubernetes, Terraform, GitHub Actions CI/CD, base de datos PostgreSQL y Redis. Ejemplos: agregar un servicio a docker-compose, crear un nuevo workflow de CI, modificar el schema de la BD, actualizar manifiestos k8s, cambiar la infraestructura AWS en terraform."
 tools: Read, Edit, Write, Bash, Glob, Grep
 ---
 
@@ -18,7 +18,7 @@ db/
 ├── migrations/001_init.sql     # DDL idempotente (IF NOT EXISTS)
 ├── seeds/_provincias.csv       # 10 provincias
 ├── seeds/_juegos.csv           # 3 juegos
-├── seeds/_tickets_mensuales.csv # 360 registros
+├── seeds/_tickets_mensuales.csv # 336 registros (28 combos × 12 meses)
 └── load_data.sh                # Script POSIX sh: migra + trunca + carga seeds
 
 k8s/               # Manifiestos Kubernetes (namespace: betix)
@@ -38,9 +38,10 @@ terraform/         # AWS IaC
 .github/workflows/
 ├── ci-api.yml     # ESLint + Jest + Cucumber (triggers: src/, tests/, features/)
 ├── ci-core.yml    # pytest (triggers: core/, db/)
-├── build.yml      # SonarCloud scan (triggers: main + PRs)
-├── ai-review.yml  # Claude AI PR review
-└── jira-*.yml     # Automatización Jira (In Progress / Done)
+├── build.yml          # SonarCloud scan (triggers: main + PRs)
+├── ai-pr-review.yml   # Claude AI PR review
+├── release.yml        # Build + push imágenes ECR al crear un release tag
+└── jira-*.yml         # Automatización Jira (In Progress / Done)
 ```
 
 ## Base de datos
@@ -92,4 +93,5 @@ make bump-core v=X.Y.Z   # bump emergencia
 - `load_data.sh` usa `#!/bin/sh` (POSIX) — NO bash. Alpine solo tiene sh.
 - `\copy` solo funciona en psql heredoc, NO en `psql -c "..."`.
 - PRs siempre a `develop`, nunca a `main` (excepto hotfix).
-- Tags de rama: `feature/BETIX-XX-...`, `fix/BETIX-XX-...`, `refactor/BETIX-XX-...`.
+- Tags de rama: `feature/BETIX-XX-...`, `fix/BETIX-XX-...`, `refactor/BETIX-XX-...`, `hotfix/BETIX-XX-...`.
+- `hotfix/` sale de `main` (no de `develop`) y hace PR a `main`. Después cherry-pick a `develop`.

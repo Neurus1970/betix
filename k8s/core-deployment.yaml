@@ -18,12 +18,24 @@ spec:
       containers:
         - name: core
           image: betix-core:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 5000
           env:
             - name: CORE_PORT
               value: "5000"
+            - name: BETIX_DB_URL
+              valueFrom:
+                secretKeyRef:
+                  name: betix-db-secret
+                  key: url
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
           livenessProbe:
             httpGet:
               path: /healthz

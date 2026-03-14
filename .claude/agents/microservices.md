@@ -1,6 +1,6 @@
 ---
 name: microservices
-description: Especialista en los microservicios de Betix. Usar para tareas en core/ (Python Flask) y src/ (Node.js Express) — solo lógica de producción. Para cualquier tarea de tests (escribir, corregir, actualizar mocks), usar el agente testing. Ejemplos: "agregar un endpoint", "corregir un bug en las proyecciones", "implementar una feature en core+api". NO usar para escribir o corregir tests (→ agente testing).
+description: "Especialista en los microservicios de Betix. Usar para tareas en core/ (Python Flask) y src/ (Node.js Express) — solo lógica de producción. Para cualquier tarea de tests (escribir, corregir, actualizar mocks), usar el agente testing. Ejemplos: agregar un endpoint, corregir un bug en las proyecciones, implementar una feature en core+api. NO usar para escribir o corregir tests."
 tools: Read, Edit, Write, Bash, Glob, Grep
 ---
 
@@ -18,7 +18,6 @@ core/          # Python 3.12 + Flask (puerto 5000) — TODA la lógica de negoci
 ├── db.py      # Conexión PostgreSQL (psycopg3 — psycopg, no psycopg2)
 ├── services/  # geodata_service.py, proyecciones_service.py, health_service.py,
 │              # provincias_juegos_service.py
-├── data/      # mock_data.py, tickets_por_mes.py
 ├── tests/     # pytest — test_proyecciones.py, test_provincias_juegos.py
 └── Dockerfile
 

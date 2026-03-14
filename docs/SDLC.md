@@ -39,35 +39,54 @@ Todo trabajo comienza con un ticket. Los tickets son la unidad de trazabilidad: 
 
 **Herramientas:** Git · [GitHub](https://github.com)
 
-Seguimos una variante simplificada de [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow) con dos ramas permanentes, inspirada en el [modelo Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow) pero sin las ramas de release y hotfix de alta complejidad. La elección responde a la necesidad de balancear estructura con agilidad — ver el análisis de trade-offs en [Patterns for Managing Source Code Branches](https://martinfowler.com/articles/branching-patterns.html) de Martin Fowler.
+Seguimos una variante simplificada de [GitHub Flow](https://docs.github.com/en/get-started/using-github/github-flow) con dos ramas permanentes, inspirada en el [modelo Gitflow](https://www.atlassian.com/git/tutorials/comparing-workflows/gitflow-workflow). La elección responde a la necesidad de balancear estructura con agilidad — ver el análisis de trade-offs en [Patterns for Managing Source Code Branches](https://martinfowler.com/articles/branching-patterns.html) de Martin Fowler.
 
 **Ramas permanentes:**
 
 | Rama | Propósito |
 |------|-----------|
-| `main` | Código en producción. Solo recibe merges de releases. |
+| `main` | Código en producción. Solo recibe merges de releases y hotfixes. |
 | `develop` | Rama de integración. Todos los PRs de trabajo diario apuntan aquí. |
 
 **Ramas temporales de trabajo:**
 
-| Prefijo | Cuándo usarlo |
-|---------|--------------|
-| `feature/TICKET-XX-descripcion` | Nueva funcionalidad |
-| `fix/TICKET-XX-descripcion` | Corrección de bug |
-| `refactor/TICKET-XX-descripcion` | Reestructuración sin cambio de comportamiento |
+| Prefijo | Base | PR hacia | Cuándo usarlo |
+|---------|------|----------|--------------|
+| `feature/TICKET-XX-descripcion` | `develop` | `develop` | Nueva funcionalidad |
+| `fix/TICKET-XX-descripcion` | `develop` | `develop` | Corrección de bug |
+| `refactor/TICKET-XX-descripcion` | `develop` | `develop` | Reestructuración sin cambio de comportamiento |
+| `hotfix/TICKET-XX-descripcion` | `main` | `main` | Fix urgente en producción, no puede esperar el ciclo normal |
 
 El ID del ticket en el nombre de rama es obligatorio: habilita la automatización que mueve el ticket en Jira al crear la rama y al hacer merge.
 
 ```bash
+# Flujo estándar (feature / fix / refactor)
 git checkout develop
 git pull origin develop
 git checkout -b feature/TICKET-42-nueva-funcionalidad
 # ... trabajar, commitear ...
 git push origin feature/TICKET-42-nueva-funcionalidad
 # → abrir PR contra develop en GitHub
+
+# Flujo hotfix (bug crítico en producción)
+git checkout main
+git pull origin main
+git checkout -b hotfix/TICKET-55-fix-critico
+# ... aplicar el fix mínimo necesario ...
+git push origin hotfix/TICKET-55-fix-critico
+# → abrir PR contra main en GitHub
+# → tras el merge, cherry-pick el commit a develop
 ```
 
 > Nunca modificar `develop` o `main` directamente. Todo cambio entra por Pull Request.
+
+**Hotfix — flujo post-merge:** una vez mergeado a `main`, llevar el fix a `develop` para que no se pierda en el siguiente ciclo:
+
+```bash
+git checkout develop
+git cherry-pick <hash-del-commit-de-fix>
+git push origin develop
+```
 
 Para contexto sobre desarrollo basado en tronco vs. ramas de features, ver [Trunk-based Development](https://www.atlassian.com/continuous-delivery/continuous-integration/trunk-based-development) de Atlassian.
 
@@ -166,19 +185,20 @@ Esta revisión **complementa, no reemplaza**, la revisión humana. El revisor hu
 
 **Herramienta:** [GitHub Actions](https://docs.github.com/en/actions/get-started/continuous-integration)
 
-El CI se ejecuta automáticamente en cada PR y en cada push. Está organizado en workflows independientes con **path filters**: cada workflow corre solo si los archivos de su dominio cambiaron, evitando ejecuciones innecesarias y reduciendo el tiempo de feedback.
+El CI se ejecuta automáticamente en cada PR y en cada push. Está organizado en workflows independientes con **path filters**: cada workflow corre solo si los archivos de su dominio cambiaron, evitando ejecuciones innecesarias y reduciendo el tiempo de feedback. La excepción es `ci-hotfix`, que siempre corre la suite completa.
 
-**Estructura de workflows recomendada:**
+**Workflows activos:**
 
-| Workflow | Disparado por cambios en | Qué ejecuta |
-|----------|--------------------------|-------------|
-| `ci-core` | Capa de negocio | Tests unitarios + cobertura |
-| `ci-api` | Capa API + tests + features | Lint + tests unitarios + BDD |
-| `ci-diagrams` | Diagramas de arquitectura, IaC | Regenera diagramas como artefactos |
-| `build` | Cualquier push | Análisis SonarCloud |
-| `ai-review` | Pull Requests | Revisión IA con Claude |
+| Workflow | Se dispara en | Path filters | Qué ejecuta |
+|----------|--------------|--------------|-------------|
+| `ci-core` | PRs/pushes a `main`/`develop` | `core/**`, `db/**` | pytest + cobertura Python |
+| `ci-api` | PRs/pushes a `main`/`develop` | `src/**`, `tests/**`, `features/**` | Lint + Jest + Cucumber |
+| `ci-hotfix` | Push a `hotfix/**` + PRs desde `hotfix/` | Sin filtros (suite completa) | pytest + Lint + Jest + Cucumber |
+| `build` | PRs a `main` | — | Análisis SonarCloud |
+| `ai-pr-review` | Pull Requests | — | Revisión IA con Claude |
+| `release` | Tags de release | — | Build + push imágenes a ECR |
 
-**Principio clave:** Si un workflow no corre porque sus paths no cambiaron, GitHub lo considera automáticamente superado. Esto no bloquea las branch protection rules.
+**Principio clave:** Si un workflow no corre porque sus paths no cambiaron, GitHub lo considera automáticamente superado. Esto no bloquea las branch protection rules. Los hotfixes no tienen path filters porque un fix urgente debe validarse contra toda la suite antes de ir a producción.
 
 Ver también [buenas prácticas de seguridad para GitHub Actions](https://docs.github.com/en/actions/security-for-github-actions/security-guides/security-hardening-for-github-actions).
 
