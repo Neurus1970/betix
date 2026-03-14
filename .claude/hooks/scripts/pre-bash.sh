@@ -18,8 +18,8 @@ if ! echo "$COMMAND" | grep -qE 'git (checkout -b|switch -c|branch) '; then
     exit 0
 fi
 
-# Extrae el nombre de la rama (primer token que no empieza con -)
-BRANCH_NAME=$(echo "$COMMAND" | grep -oP '(?<=(checkout -b|switch -c|branch) )[^\s-]\S*' | head -1)
+# Extrae el nombre de la rama — compatible POSIX/macOS (sin grep -P)
+BRANCH_NAME=$(echo "$COMMAND" | sed -E 's/.*(checkout -b|switch -c|branch) ([^ ]+).*/\2/')
 
 if [ -z "$BRANCH_NAME" ]; then
     exit 0
@@ -28,7 +28,7 @@ fi
 # Valida el patrón requerido: <prefix>/BETIX-XX-descripcion
 VALID_PATTERN='^(feature|fix|refactor|hotfix)/BETIX-[0-9]+-[a-zA-Z0-9-]+$'
 
-if ! echo "$BRANCH_NAME" | grep -qP "$VALID_PATTERN"; then
+if ! echo "$BRANCH_NAME" | grep -qE "$VALID_PATTERN"; then
     echo ""
     echo "⛔ [BETIX Platform Rule] Nombre de rama inválido: '$BRANCH_NAME'"
     echo ""

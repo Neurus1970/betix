@@ -17,7 +17,7 @@ except Exception:
 # Solo actúa sobre archivos JS en src/ o tests/
 if [[ "$FILE_PATH" =~ ^(src|tests)/.*\.(js|mjs)$ ]]; then
     echo ">>> [BETIX Hook] ESLint automático en $FILE_PATH"
-    npm run lint 2>&1
+    npx eslint "$FILE_PATH" 2>&1
     EXIT_CODE=$?
     if [ $EXIT_CODE -ne 0 ]; then
         echo ""
