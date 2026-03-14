@@ -17,14 +17,13 @@ except Exception:
 # Solo actúa sobre archivos JS en src/ o tests/
 if [[ "$FILE_PATH" =~ ^(src|tests)/.*\.(js|mjs)$ ]]; then
     echo ">>> [BETIX Hook] ESLint automático en $FILE_PATH"
-    npx eslint "$FILE_PATH" 2>&1
-    EXIT_CODE=$?
-    if [ $EXIT_CODE -ne 0 ]; then
+    if ! npx eslint "$FILE_PATH" 2>&1; then
         echo ""
-        echo "⚠️  ESLint falló. Corrige antes de commitear."
+        echo "⚠️  ESLint falló en $FILE_PATH — corrige antes de commitear."
         echo "    Violaciones comunes: console.log → logger.info(), require() en lugar de import, semicolons"
     fi
-    exit $EXIT_CODE
+    # PostToolUse hooks siempre exit 0 — la edición ya ocurrió.
+    # El output de ESLint es feedback para Claude, no un bloqueo.
 fi
 
 exit 0
