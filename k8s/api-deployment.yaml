@@ -18,7 +18,7 @@ spec:
       containers:
         - name: api
           image: betix-api:latest
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
           env:
@@ -32,6 +32,13 @@ spec:
               value: "redis://redis:6379"
             - name: CACHE_TTL
               value: "60"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "256Mi"
           livenessProbe:
             httpGet:
               path: /healthz

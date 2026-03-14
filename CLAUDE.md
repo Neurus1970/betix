@@ -2,7 +2,7 @@
 
 ## WHY
 
-**Betix** is a fictional lottery ticket statistics platform for Argentine provinces, built as an educational *playground* for the Tecno Acción developer onboarding course (`docs/curso-entrenamiento/`). It demonstrates the team's development platform tools, processes, and standards end-to-end. All data, provinces, games and statistics are invented.
+**Betix** is a fictional lottery ticket statistics platform for Argentine provinces, built as an educational *playground* for the Tecno Acción developer onboarding course (`docs/onboarding/`). It demonstrates the team's development platform tools, processes, and standards end-to-end. All data, provinces, games and statistics are invented.
 
 ---
 
@@ -19,7 +19,7 @@ betix/
 ├── db/            # PostgreSQL migrations + seeds (single source of truth for data)
 │   └── seeds/     # _provincias.csv, _juegos.csv, _tickets_mensuales.csv
 ├── docs/          # Architecture docs → read here before modifying architecture
-│   └── curso-entrenamiento/  # Developer onboarding course (modules 0–10)
+│   └── onboarding/  # Developer onboarding course (modules 0–10)
 ├── k8s/           # Kubernetes manifests (betix namespace)
 └── terraform/     # AWS infrastructure (EKS, ECR, VPC)
 ```
@@ -197,7 +197,7 @@ La carpeta `.claude/` y el archivo `.mcp.json` en la raíz son parte del reposit
 | `.claude/settings.local.json` | No (`.gitignore`) | Preferencias personales que sobreescriben settings del proyecto |
 | `.claude/worktrees/` | No (`.gitignore`) | Worktrees temporales de Claude — locales, no compartidos |
 
-**Credenciales MCP (nunca en el repo):** cada developer configura sus credenciales en `.claude/settings.local.json` (está en `.gitignore`). Ver instrucciones completas en `docs/curso-entrenamiento/modulos/1.md#configurar-el-servidor-mcp-de-jira`.
+**Credenciales MCP (nunca en el repo):** cada developer configura sus credenciales en `.claude/settings.local.json` (está en `.gitignore`). Ver instrucciones completas en `docs/onboarding/modulos/1.md#configurar-el-servidor-mcp-de-jira`.
 
 ### Principio
 
