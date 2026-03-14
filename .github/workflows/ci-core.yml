@@ -14,7 +14,6 @@ env:
 
 jobs:
   test-core:
-    name: Python Core Tests
     runs-on: ubuntu-latest
 
     services:
