@@ -26,6 +26,9 @@ Ver también: [Semver](#semver), [Release Please](#release-please).
 
 ## C
 
+### C4 Model
+Modelo de documentación de arquitectura de software creado por Simon Brown. Propone cuatro niveles de abstracción progresiva: Contexto (L1), Contenedores (L2), Componentes (L3) y Código (L4). Cada nivel responde a una audiencia distinta, de stakeholders de negocio hasta desarrolladores. En Betix, los niveles L1-L3 están documentados en [`docs/ArquitecturaC4.md`](../ArquitecturaC4.md) con la sintaxis C4 de Mermaid.
+
 ### CHANGELOG
 Archivo que registra todos los cambios de cada versión de un proyecto. En Betix es generado automáticamente por Release Please al leer los mensajes de commits.
 
@@ -49,6 +52,9 @@ Convención de formato para mensajes de commits. Define tipos estándar (`feat`,
 
 ### Deploy / Deployment
 Proceso de poner una nueva versión de software en funcionamiento en un entorno (desarrollo, staging, producción). En Betix se hace con `kubectl set image` o actualizando los manifiestos de `k8s/`.
+
+### Diagrams as Code
+Práctica de expresar diagramas de arquitectura e infraestructura en texto plano (código), versionable en Git y revisable en PRs, en lugar de capturas de pantalla o archivos binarios. En Betix se usa [Mermaid](#mermaid): [`docs/ArquitecturaC4.md`](../ArquitecturaC4.md) documenta la arquitectura C4 y [`docs/diagrams/infrastructure.md`](../diagrams/infrastructure.md) documenta los flujos de infraestructura en local, Kubernetes y AWS. Los diagramas se renderizan automáticamente en GitHub.
 
 ### Docker / Imagen Docker
 Tecnología de contenedores. Una *imagen* es un paquete autónomo con el código y sus dependencias. Un *contenedor* es una instancia en ejecución de esa imagen. Ver [Módulo 6 — Infraestructura como código](modulos/6.md).
@@ -74,6 +80,9 @@ Fix urgente aplicado directamente sobre el código en producción (rama `main`),
 ### IaC (Infrastructure as Code)
 Práctica de definir y gestionar infraestructura (servidores, redes, bases de datos) mediante archivos de código versionados, en lugar de configuración manual. En Betix: `terraform/` para AWS y `k8s/` para Kubernetes.
 
+### Ingress (Kubernetes)
+Recurso de Kubernetes que gestiona el acceso externo al cluster. Define reglas de routing basadas en host y path: una sola IP o DNS pública que distribuye tráfico a distintos Services internos. En Betix, `k8s/ingress.yaml` rutea `/api/*` y `/healthz` al servicio `api:3000` y `/` al servicio `frontend:80`. Ver [Módulo 6 — Kubernetes](modulos/6.md#el-ingress-routing-de-entrada).
+
 ---
 
 ## K
@@ -91,6 +100,9 @@ Plataforma de orquestación de contenedores. Gestiona el despliegue, escalado y 
 ### Merge / Mergear
 Integrar los cambios de una rama en otra. En Betix, las ramas temporales se mergean a `develop` mediante Pull Requests.
 
+### Mermaid
+Lenguaje de texto para crear diagramas (flowcharts, sequenceDiagram, mindmap, diagramas C4) que se renderizan automáticamente en GitHub, GitLab y muchos editores. En Betix se usa para todos los diagramas de arquitectura e infraestructura: [`docs/ArquitecturaC4.md`](../ArquitecturaC4.md) y [`docs/diagrams/infrastructure.md`](../diagrams/infrastructure.md). Ver también: [Diagrams as Code](#diagrams-as-code), [C4 Model](#c4-model).
+
 ### Minor / Major / Patch
 Las tres partes de un número de versión semántica (ej: `1.3.0`):
 - **MAJOR** (`1`.3.0) — cambios incompatibles con versiones anteriores
@@ -101,10 +113,20 @@ Ver: [Semver](#semver).
 
 ---
 
+## N
+
+### Namespace (Kubernetes)
+Espacio de aislamiento dentro de un cluster de Kubernetes. Agrupa recursos relacionados (pods, services, secrets, ingress) bajo un nombre común y los aísla de otros namespaces. En Betix todos los recursos viven en el namespace `betix`, definido en `k8s/namespace.yaml`. Ver [Módulo 6 — Kubernetes](modulos/6.md#el-namespace).
+
+---
+
 ## P
 
 ### Pipeline
 Secuencia automatizada de pasos que se ejecutan al subir código: lint → tests → build → deploy. En Betix son los workflows de GitHub Actions.
+
+### Probe (Kubernetes)
+Mecanismo de healthcheck continuo de Kubernetes para monitorear el estado de los pods. Hay dos tipos: `livenessProbe` (si falla, Kubernetes reinicia el pod) y `readinessProbe` (si falla, el pod deja de recibir tráfico pero no se reinicia). En Betix, el deployment del `api` usa ambas apuntando a `GET /healthz`. Ver [Módulo 6 — Probes](modulos/6.md#1-probes-liveness-vs-readiness).
 
 ### Pull Request (PR)
 Propuesta formal de integrar los cambios de una rama en otra. Incluye revisión de código, ejecución de CI y al menos una aprobación humana antes del merge. Ver [Módulo 2 — Pull Requests](modulos/2.md#5-pull-requests--qué-revisar-qué-no-bloquear).
@@ -151,6 +173,13 @@ Herramienta de IaC de HashiCorp. Define infraestructura cloud (AWS, GCP, Azure) 
 
 ### UAT (User Acceptance Testing)
 Pruebas de aceptación de usuario. Validación funcional en un entorno de staging antes de pasar a producción, típicamente con los usuarios o analistas que van a usar el sistema.
+
+---
+
+## V
+
+### VPC (Virtual Private Cloud)
+Red privada virtual en AWS. Aísla los recursos de otras cuentas y del internet público. En Betix, la VPC `betix-dev` (10.0.0.0/16) tiene subnets públicas (para el load balancer y el NAT Gateway) y subnets privadas (para los nodos EKS y la base de datos RDS). Los nodos EKS no son accesibles desde internet — solo reciben tráfico a través del ALB. Definida en `terraform/vpc.tf`. Ver [Módulo 6 — La VPC](modulos/6.md#la-vpc-red-privada-en-aws).
 
 ---
 

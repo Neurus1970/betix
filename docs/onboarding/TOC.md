@@ -62,7 +62,7 @@
 
 ---
 
-## Módulo 6 — Infraestructura como código
+## [Módulo 6 — Infraestructura como código](modulos/6.md)
 - Docker: imágenes, contenedores, `docker-compose` para dev local
 - Kubernetes: namespaces, deployments, services — `make k8s-apply` en minikube
 - Terraform: infraestructura AWS (EKS, ECR, VPC) — solo lectura/comprensión
