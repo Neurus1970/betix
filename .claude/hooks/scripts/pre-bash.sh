@@ -4,14 +4,9 @@
 
 INPUT=$(cat)
 
-COMMAND=$(echo "$INPUT" | python3 -c "
-import sys, json
-try:
-    d = json.load(sys.stdin)
-    print(d.get('tool_input', {}).get('command', ''))
-except Exception:
-    print('')
-" 2>/dev/null)
+# shellcheck source=lib/json_parse.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib/json_parse.sh"
+COMMAND=$(echo "$INPUT" | get_tool_input_field "command")
 
 # Solo actúa sobre comandos de creación de ramas
 if ! echo "$COMMAND" | grep -qE 'git (checkout -b|switch -c|branch) '; then
