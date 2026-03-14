@@ -37,7 +37,7 @@ El agente de infra encontró el dato más revelador: el workflow de hotfix (ci-h
 
 Por qué es fundacional: Bajo presión (deadline, incidente, hotfix urgente) la primera víctima son los estándares voluntarios. La plataforma los convierte en restricciones automáticas.
 
-Betix en código: ci-hotfix.yml (suite completa, stricter que en develop) — features/support/hooks.js nock.disableNetConnect() — SonarCloud Quality Gate en cada PR — branch protection rules en GitHub.
+Betix en código: ci-hotfix.yml (suite completa, stricter que en develop) — features/support/hooks.js nock.disableNetConnect() — SonarCloud Quality Gate en cada PR — branch protection rules en GitHub — .claude/settings.json hooks (ESLint automático en cada edición de src/, branch naming bloqueado si no sigue el patrón, edición de terraform/ y k8s/ bloqueada sin aprobación explícita).
 
 ## Principio 4: Una sola fuente de verdad — cero estado implícito
 "Lo que no está en el código no existe para la plataforma. Lo que está duplicado tiene dos versiones y una de ellas ya es mentira."
