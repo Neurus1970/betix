@@ -87,11 +87,12 @@
 
 ---
 
-## Versionado y releases
+## [Versionado y releases](modulos/8.md)
+### Capítulo 8
 - Semver: MAJOR.MINOR.PATCH y cuándo usar cada uno
 - Release Please: cómo los conventional commits generan el CHANGELOG y bumpa versiones automáticamente
 - Tags de ECR: `sha-`, `-rc.`, `latest`
-- **Ejercicio**: hacer un merge a `develop` con cambios en `core/` y observar qué jobs de CI corren (y cuáles no)
+- **Ejercicio**: crear una rama con cambios en `core/` y observar qué jobs de CI corren (y cuáles no)
 
 ---
 
