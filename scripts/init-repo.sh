@@ -13,6 +13,11 @@
 # =============================================================================
 set -euo pipefail
 
+# Evitar que Git Bash en Windows convierta rutas de URL (/repos/...) a rutas
+# de filesystem (C:/Program Files/Git/repos/...) al invocar gh api.
+export MSYS_NO_PATHCONV=1
+export MSYS2_ARG_CONV_EXCL="*"
+
 # -----------------------------------------------------------------------------
 # Colores y prefijos de output
 # -----------------------------------------------------------------------------
