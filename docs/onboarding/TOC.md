@@ -43,6 +43,7 @@
 - La pirámide de tests en Betix: pytest (unit), Jest (integration), Cucumber (BDD/acceptance)
 - BDD: escribir escenarios en lenguaje de negocio antes del código
 - `make test` y cómo leer los resultados
+- Cobertura de código con SonarCloud: `build.yml`, Quality Gate en cada PR, lcov + coverage-core.xml
 - **Ejercicio con Claude**: el agente `testing` escribe un test para un escenario de Betix dado en lenguaje natural
 
 ---

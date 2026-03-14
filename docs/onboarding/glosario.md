@@ -132,6 +132,9 @@ Convención de versionado `MAJOR.MINOR.PATCH` que comunica el impacto de los cam
 ### SHA (commit hash)
 Identificador único de un commit en Git. Ejemplo: `abc1234`. En Betix, las imágenes Docker de ramas no-main se tagean con el SHA corto del commit (`sha-abc1234`) para trazabilidad exacta.
 
+### SonarCloud
+Plataforma de análisis estático de código en la nube. En Betix analiza cobertura de tests (JS y Python), detecta bugs, vulnerabilidades y code smells en cada PR. El resultado aparece como un *Quality Gate* directamente en GitHub. Ver [Módulo 4 — Cobertura con SonarCloud](modulos/4.md#6-cobertura-de-código-con-sonarcloud).
+
 ---
 
 ## T
