@@ -1,8 +1,8 @@
-# Tabla de Contenidos: Plataforma de Desarrollo Tecnoaccion — Curso de Onboarding
+# Plataforma de Desarrollo de Tecno Acción
+## Curso de Onboarding | Tabla de contenidos
 
----
 
-## [Módulo 0 — ¿Por qué una plataforma unificada?](modulos/0.md)
+## [¿Por qué una plataforma unificada?](modulos/0.md)
 - El costo real del caos: entornos inconsistentes, bugs en prod que no reproducen en local, onboarding de semanas
 - Qué es una plataforma de desarrollo (Developer Platform): herramientas + procesos + estándares
 - El desarrollador como "cliente interno" de la plataforma
@@ -10,7 +10,7 @@
 
 ---
 
-## [Módulo 1 — El entorno local estandarizado](modulos/1.md)
+## [El entorno local estandarizado](modulos/1.md)
 - Prerequisitos: Git, Docker, VS Code + extensión Claude Code
 - Clonar Betix y levantar los 3 servicios en un solo comando (`make up`)
 - Anatomía del proyecto: qué corre dónde y por qué (C4 model en `docs/`)
@@ -18,7 +18,7 @@
 
 ---
 
-## [Módulo 2 — Git como contrato de equipo](modulos/2.md)
+## [Git como contrato de equipo](modulos/2.md)
 - Branching strategy: `develop` como rama principal, prefijos obligatorios (`feature/`, `fix/`, `refactor/`)
 - Conventional Commits: por qué el mensaje importa (Release Please lo lee)
 - Pull Requests a `develop`: qué revisar, qué no bloquear
@@ -26,7 +26,7 @@
 
 ---
 
-## [Módulo 3 — Claude Code como herramienta de SDLC](modulos/3.md)
+## [Claude Code como herramienta de SDLC](modulos/3.md)
 - Instalación y configuración en VS Code
 - Casos de uso por etapa:
   - **Entender código legado**: `/explain`, preguntas sobre archivos
@@ -39,7 +39,7 @@
 
 ---
 
-## [Módulo 4 — Testing como cultura, no como tarea](modulos/4.md)
+## [Testing como cultura, no como tarea](modulos/4.md)
 - La pirámide de tests en Betix: pytest (unit), Jest (integration), Cucumber (BDD/acceptance)
 - BDD: escribir escenarios en lenguaje de negocio antes del código
 - `make test` y cómo leer los resultados
@@ -48,7 +48,7 @@
 
 ---
 
-## [Módulo 5 — CI/CD: de commit a producción](modulos/5.md)
+## [CI/CD: de commit a producción](modulos/5.md)
 - Qué es un pipeline y qué problema resuelve
 - El ecosistema de workflows de Betix: 8 workflows con responsabilidades distintas
 - `ci-core.yml` y `ci-api.yml`: path filters — qué corre y cuándo
@@ -62,7 +62,7 @@
 
 ---
 
-## [Módulo 6 — Infraestructura como código](modulos/6.md)
+## [Infraestructura como código](modulos/6.md)
 - Docker: imágenes, contenedores, `docker-compose` para dev local
 - Kubernetes: namespaces, deployments, services — `make k8s-apply` en minikube
 - Terraform: infraestructura AWS (EKS, ECR, VPC) — solo lectura/comprensión
@@ -70,14 +70,14 @@
 
 ---
 
-## Módulo 7 — Gestión de tickets con Jira + Git
+## Gestión de tickets con Jira + Git
 - Del ticket al branch: convención `BETIX-XX` en el nombre de la rama y en commits
 - Trazabilidad: de un bug en prod → al commit → al ticket
 - **Ejercicio con Claude**: tomar un ticket ficticio de Jira, crear la rama correcta y el primer commit con el mensaje adecuado
 
 ---
 
-## Módulo 8 — Versionado y releases
+## Versionado y releases
 - Semver: MAJOR.MINOR.PATCH y cuándo usar cada uno
 - Release Please: cómo los conventional commits generan el CHANGELOG y bumpa versiones automáticamente
 - Tags de ECR: `sha-`, `-rc.`, `latest`
@@ -85,7 +85,7 @@
 
 ---
 
-## Módulo 9 — Hands-on: construir un requisito de punta a punta
+## Hands-on: construir un requisito de punta a punta
 > Escenario: *"Como analista, quiero ver el total de ventas del mes actual en el dashboard de Betix"*
 
 1. Crear ticket ficticio en Jira → rama `feature/BETIX-99-ventas-mes-actual`
@@ -98,7 +98,7 @@
 
 ---
 
-## Módulo 10 — Operación y observabilidad
+## Operación y observabilidad
 - Logs estructurados: Winston (JS) y cómo leerlos en `make logs`
 - Debugging en contenedores: `docker exec`, `kubectl logs`
 - **Claude** como primer nivel de diagnóstico: pegar un stacktrace y pedir análisis
