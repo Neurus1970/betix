@@ -4,14 +4,9 @@
 
 INPUT=$(cat)
 
-FILE_PATH=$(echo "$INPUT" | python3 -c "
-import sys, json
-try:
-    d = json.load(sys.stdin)
-    print(d.get('tool_input', {}).get('file_path', ''))
-except Exception:
-    print('')
-" 2>/dev/null)
+# shellcheck source=lib/json_parse.sh
+. "$(dirname "${BASH_SOURCE[0]}")/lib/json_parse.sh"
+FILE_PATH=$(echo "$INPUT" | get_tool_input_field "file_path")
 
 # Normalizar el path — elimina prefijo "./" si Claude lo resuelve como ruta relativa
 # Cubre tanto "terraform/vpc.tf" como "./terraform/vpc.tf"
