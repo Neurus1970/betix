@@ -77,9 +77,12 @@
 
 ---
 
-## Gestión de tickets con Jira + Git
+## [Gestión de tickets con Jira + Git](modulos/7.md)
+### Capítulo 7
 - Del ticket al branch: convención `BETIX-XX` en el nombre de la rama y en commits
+- Conventional Commits: tipos, alcance y su efecto en el versionado automático
 - Trazabilidad: de un bug en prod → al commit → al ticket
+- Hotfix: el flujo de emergencia desde `main`
 - **Ejercicio con Claude**: tomar un ticket ficticio de Jira, crear la rama correcta y el primer commit con el mensaje adecuado
 
 ---
