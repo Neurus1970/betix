@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.4.0](https://github.com/Neurus1970/betix/compare/betix-api-v1.3.0...betix-api-v1.4.0) (2026-03-14)
+
+
+### Features
+
+* **BETIX-38:** migrate onboarding course to docs/onboarding/ and add module 4 ([305e38e](https://github.com/Neurus1970/betix/commit/305e38edbc0a244ab10e8b179684964bbdf5a3e4))
+* **BETIX-38:** migrate onboarding course to docs/onboarding/ and add module 4 ([8448463](https://github.com/Neurus1970/betix/commit/844846388e7567f832c550ee2aecb21dd8ff0bc6))
+
 ## [1.3.0](https://github.com/Neurus1970/betix/compare/betix-api-v1.2.0...betix-api-v1.3.0) (2026-03-13)
 
 
