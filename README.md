@@ -10,24 +10,6 @@
 
 ---
 
-## Arquitectura
-
-Betix está compuesto por tres servicios independientes. Cada uno tiene su propia imagen Docker, versionado semántico y pipeline de CI.
-
-| Componente | Tecnología | Puerto | Responsabilidad |
-|---|---|---|---|
-| `core/` | Python 3.12 + Flask | 5000 | Toda la lógica de negocio (geodata, proyecciones SMA, health) |
-| `src/` (api) | Node.js 18 + Express | 3000 | Thin HTTP proxy hacia core + caché Redis |
-| `frontend/` | nginx | 8080 | Sirve archivos estáticos (HTML + D3.js) |
-| PostgreSQL | postgres:16-alpine | 5432 | Base de datos principal — schema `betix` |
-| Redis | redis:7-alpine | 6379 | Caché de respuestas del core (TTL configurable) |
-
-Las rutas `/api/datos/*` usan **Redis** como caché entre el proxy Node.js y el core Python: el primer request procesa y almacena; los siguientes lo sirven desde memoria. Si Redis no está disponible, las peticiones pasan al core sin interrupciones (degradación elegante).
-
-→ Modelo C4 completo: [docs/ArquitecturaC4.md](docs/ArquitecturaC4.md) | Caché: [docs/caching.md](docs/caching.md) | DB: [docs/database.md](docs/database.md)
-
----
-
 ## Inicio rápido
 
 ### Requisitos previos
@@ -90,6 +72,8 @@ Claude Code es la IA que el equipo usa como copiloto en todo el ciclo de vida de
 **Instalación:** extensión **Claude Code** en VS Code → autenticarse con cuenta Anthropic → abrir el proyecto.
 
 > Lo que está en `.claude/agents/`, `.claude/skills/` y `.claude/hooks/` es código del equipo — se versiona, se revisa en PR y evoluciona con el proyecto. Las preferencias personales van en `.claude/settings.local.json` (en `.gitignore`).
+
+→ Cómo funcionan los sub-agentes y cómo colaboran: [docs/claude-en-betix.md](docs/claude-en-betix.md)
 
 ### 5. Acceso y permisos
 
@@ -213,6 +197,24 @@ Cada PR dispara dos jobs en paralelo:
 
 ---
 
+## Arquitectura
+
+Betix está compuesto por tres servicios independientes. Cada uno tiene su propia imagen Docker, versionado semántico y pipeline de CI.
+
+| Componente | Tecnología | Puerto | Responsabilidad |
+|---|---|---|---|
+| `core/` | Python 3.12 + Flask | 5000 | Toda la lógica de negocio (geodata, proyecciones SMA, health) |
+| `src/` (api) | Node.js 18 + Express | 3000 | Thin HTTP proxy hacia core + caché Redis |
+| `frontend/` | nginx | 8080 | Sirve archivos estáticos (HTML + D3.js) |
+| PostgreSQL | postgres:16-alpine | 5432 | Base de datos principal — schema `betix` |
+| Redis | redis:7-alpine | 6379 | Caché de respuestas del core (TTL configurable) |
+
+Las rutas `/api/datos/*` usan **Redis** como caché entre el proxy Node.js y el core Python: el primer request procesa y almacena; los siguientes lo sirven desde memoria. Si Redis no está disponible, las peticiones pasan al core sin interrupciones (degradación elegante).
+
+→ Modelo C4 completo: [docs/ArquitecturaC4.md](docs/ArquitecturaC4.md) | Caché: [docs/caching.md](docs/caching.md) | DB: [docs/database.md](docs/database.md)
+
+---
+
 ## Infraestructura
 
 ### Local — docker-compose
@@ -283,3 +285,20 @@ Un **Ingress** enruta el tráfico por path hacia los **Services**, cada uno resp
 La infraestructura en AWS está definida con **Terraform** (`terraform/`): VPC con subnets públicas (ALB + NAT Gateway) y privadas (EKS + RDS). Las imágenes se almacenan en tres repositorios **ECR** independientes (`betix-core`, `betix-api`, `betix-frontend`) con política de retención de las últimas 10 versiones.
 
 → [docs/diagrams/infrastructure.md](docs/diagrams/infrastructure.md)
+
+---
+
+## Documentación
+
+| Documento | Contenido |
+|-----------|-----------|
+| [docs/onboarding/TOC.md](docs/onboarding/TOC.md) | Curso de onboarding — punto de entrada para nuevos desarrolladores |
+| [docs/principios-fundamentales.md](docs/principios-fundamentales.md) | Los 5 principios que guían las decisiones de arquitectura y proceso |
+| [docs/ArquitecturaC4.md](docs/ArquitecturaC4.md) | Modelo C4 completo (contexto, contenedores, componentes) con diagramas Mermaid |
+| [docs/claude-en-betix.md](docs/claude-en-betix.md) | Cómo está configurado Claude: sub-agentes, hooks y skills |
+| [CLAUDE.md](CLAUDE.md) | Instrucciones del proyecto para Claude (convenciones, reglas críticas, mapa del repo) |
+| [docs/SDLC.md](docs/SDLC.md) | Ciclo de vida completo del desarrollo en este proyecto |
+| [docs/monorepo-guide.md](docs/monorepo-guide.md) | Versionado independiente por servicio, path filters de CI, Makefile |
+| [docs/caching.md](docs/caching.md) | Estrategia de caché Redis entre Node.js proxy y Python core |
+| [docs/database.md](docs/database.md) | Schema PostgreSQL, migraciones y seeds |
+| [docs/diagrams/infrastructure.md](docs/diagrams/infrastructure.md) | Diagramas de infraestructura local, Kubernetes y AWS |
