@@ -100,13 +100,13 @@ provider "aws" {
 
 Los presupuestos se definen en `finops/tagging-taxonomy.yaml` bajo la clave `budgets`, con tres granularidades:
 
-| Entorno | Mensual | Anual | Semanal |
-|---------|---------|-------|---------|
-| `dev`   | $200    | $2400 | $60     |
-| `uat`   | $500    | $6000 | $150    |
-| `prod`  | $2000   | $24000| $600    |
+| Entorno | Mensual | Anual  | Trimestral |
+|---------|---------|--------|------------|
+| `dev`   | $200    | $2400  | $600       |
+| `uat`   | $500    | $6000  | $1500      |
+| `prod`  | $2000   | $24000 | $6000      |
 
-Terraform crea tres recursos `aws_budgets_budget` (mensual, anual, semanal) por entorno. Cada uno dispara alertas al 70%, 80% y 90% del límite mediante SNS + email.
+Terraform crea tres recursos `aws_budgets_budget` (mensual, anual, trimestral) por entorno. Cada uno dispara alertas al 70%, 80% y 90% del límite mediante SNS + email.
 
 Las alertas van a la dirección configurada en `alerts.channels.email` del YAML. Para agregar Slack, descomentar `slack_webhook` y configurar el secret `FINOPS_SLACK_WEBHOOK` en GitHub.
 
@@ -116,7 +116,7 @@ Las alertas van a la dirección configurada en `alerts.channels.email` del YAML.
 - `aws_sns_topic_subscription.finops_email` — suscripción email
 - `aws_budgets_budget.betix_monthly` — presupuesto mensual con 3 notificaciones
 - `aws_budgets_budget.betix_annual` — presupuesto anual con 3 notificaciones
-- `aws_budgets_budget.betix_weekly` — presupuesto semanal con 3 notificaciones
+- `aws_budgets_budget.betix_quarterly` — presupuesto trimestral con 3 notificaciones
 
 Los budgets filtran por `TagKeyValue: product$betix`, lo que aísla los costos de Betix del resto de la cuenta AWS.
 

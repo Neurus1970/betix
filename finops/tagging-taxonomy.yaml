@@ -34,17 +34,17 @@ required_tags:
 
 budgets:
   dev:
-    annual_usd:  2400
-    monthly_usd: 200   # annual / 12
-    weekly_usd:  46    # annual / 52
+    annual_usd:   2400
+    monthly_usd:  200   # annual / 12
+    quarterly_usd: 600  # annual / 4
   uat:
-    annual_usd:  6000
-    monthly_usd: 500   # annual / 12
-    weekly_usd:  115   # annual / 52
+    annual_usd:   6000
+    monthly_usd:  500   # annual / 12
+    quarterly_usd: 1500 # annual / 4
   prod:
-    annual_usd:  24000
-    monthly_usd: 2000  # annual / 12
-    weekly_usd:  461   # annual / 52
+    annual_usd:   24000
+    monthly_usd:  2000  # annual / 12
+    quarterly_usd: 6000 # annual / 4
 
 alerts:
   thresholds: [70, 80, 90]

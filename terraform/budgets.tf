@@ -1,6 +1,6 @@
 # terraform/budgets.tf
 # ─────────────────────────────────────────────────────────────────────────────
-# AWS Budgets — presupuesto anual, mensual y semanal para el producto betix.
+# AWS Budgets — presupuesto anual, mensual y trimestral para el producto betix.
 # Los montos se leen desde finops/tagging-taxonomy.yaml vía locals en main.tf.
 # Para modificar los montos: editar finops/tagging-taxonomy.yaml y reaplicar.
 # ─────────────────────────────────────────────────────────────────────────────
@@ -110,14 +110,14 @@ resource "aws_budgets_budget" "betix_annual" {
   }
 }
 
-# ── Budget semanal ─────────────────────────────────────────────────────────────
+# ── Budget trimestral ──────────────────────────────────────────────────────────
 
-resource "aws_budgets_budget" "betix_weekly" {
-  name         = "betix-${var.environment}-weekly"
+resource "aws_budgets_budget" "betix_quarterly" {
+  name         = "betix-${var.environment}-quarterly"
   budget_type  = "COST"
-  limit_amount = tostring(local.budget_weekly_usd)
+  limit_amount = tostring(local.budget_quarterly_usd)
   limit_unit   = "USD"
-  time_unit    = "WEEKLY"
+  time_unit    = "QUARTERLY"
 
   cost_filter {
     name   = "TagKeyValue"

@@ -39,7 +39,7 @@ locals {
   # Valores de budget para el entorno actual
   budget_monthly_usd = local.finops.budgets[var.environment].monthly_usd
   budget_annual_usd  = local.finops.budgets[var.environment].annual_usd
-  budget_weekly_usd  = local.finops.budgets[var.environment].weekly_usd
+  budget_quarterly_usd = local.finops.budgets[var.environment].quarterly_usd
   finops_email       = local.finops.alerts.channels.email
   alert_thresholds   = local.finops.alerts.thresholds
 }
