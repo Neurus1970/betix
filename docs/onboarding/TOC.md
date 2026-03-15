@@ -110,7 +110,8 @@
 
 ---
 
-## Operación y observabilidad
+## [Operación y observabilidad](modulos/10.md)
+### Capítulo 10
 - Logs estructurados: Winston (JS) y cómo leerlos en `make logs`
 - Debugging en contenedores: `docker exec`, `kubectl logs`
 - **Claude** como primer nivel de diagnóstico: pegar un stacktrace y pedir análisis
