@@ -100,7 +100,7 @@
 ### Capítulo 9
 > Escenario: *"Como analista, quiero ver el total de ingresos de un mes a elección en el dashboard de Betix"*
 
-1. Crear ticket ficticio en Jira → rama `feature/BETIX-99-ventas-mes-dashboard`
+1. Crear ticket ficticio en Jira → rama `feature/BETIX-<NN>-ventas-mes-dashboard`
 2. Escribir el escenario Cucumber primero (BDD antes del código)
 3. Implementar el endpoint Flask en `core/` (toda la lógica de negocio aquí)
 4. Conectar el proxy Node.js en `src/` (solo transporte, sin lógica)
