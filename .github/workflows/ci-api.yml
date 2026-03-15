@@ -20,7 +20,6 @@ env:
 
 jobs:
   lint-and-test:
-    name: Lint & Test (Node.js)
     runs-on: ubuntu-latest
 
     steps:
