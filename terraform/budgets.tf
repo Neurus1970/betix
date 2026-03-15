@@ -8,7 +8,8 @@
 # ── SNS topic para notificaciones de budget ───────────────────────────────────
 
 resource "aws_sns_topic" "finops_alerts" {
-  name = "betix-finops-alerts-${var.environment}"
+  name              = "betix-finops-alerts-${var.environment}"
+  kms_master_key_id = "alias/aws/sns"  # AWS managed key — cifrado en reposo sin costo adicional
 
   tags = {
     Name = "betix-finops-alerts-${var.environment}"
