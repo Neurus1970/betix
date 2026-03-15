@@ -96,16 +96,17 @@
 
 ---
 
-## Hands-on: construir un requisito de punta a punta
-> Escenario: *"Como analista, quiero ver el total de ventas del mes actual en el dashboard de Betix"*
+## [Hands-on: construir un requisito de punta a punta](modulos/9.md)
+### Capítulo 9
+> Escenario: *"Como analista, quiero ver el total de ingresos de un mes a elección en el dashboard de Betix"*
 
-1. Crear ticket ficticio en Jira → rama `feature/BETIX-99-ventas-mes-actual`
-2. **Claude** escribe el escenario Cucumber (agente `testing`)
-3. **Claude** implementa el endpoint Flask en `core/` (agente `microservices`)
-4. **Claude** conecta el proxy Node.js en `src/` (agente `microservices`)
-5. **Claude** actualiza el widget D3.js en `src/public/` (agente `frontend`)
+1. Crear ticket ficticio en Jira → rama `feature/BETIX-99-ventas-mes-dashboard`
+2. Escribir el escenario Cucumber primero (BDD antes del código)
+3. Implementar el endpoint Flask en `core/` (toda la lógica de negocio aquí)
+4. Conectar el proxy Node.js en `src/` (solo transporte, sin lógica)
+5. Actualizar el widget en `src/public/dashboard.html`
 6. Tests pasan (`make test`) → PR a `develop` → revisión → merge
-7. CI corre automáticamente → imágenes taggeadas con SHA
+7. CI corre automáticamente → imágenes taggeadas con SHA → flujo de release
 
 ---
 
