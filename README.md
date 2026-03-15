@@ -284,7 +284,9 @@ Un **Ingress** enruta el tráfico por path hacia los **Services**, cada uno resp
 
 La infraestructura en AWS está definida con **Terraform** (`terraform/`): VPC con subnets públicas (ALB + NAT Gateway) y privadas (EKS + RDS). Las imágenes se almacenan en tres repositorios **ECR** independientes (`betix-core`, `betix-api`, `betix-frontend`) con política de retención de las últimas 10 versiones.
 
-→ [docs/diagrams/infrastructure.md](docs/diagrams/infrastructure.md)
+El control de costos sigue la estrategia **FinOps**: 5 tags obligatorios en todos los recursos, presupuestos por entorno (dev/uat/prod) con alertas al 70/80/90%, y validación automática en CI. La fuente única de verdad es `finops/tagging-taxonomy.yaml`.
+
+→ [docs/diagrams/infrastructure.md](docs/diagrams/infrastructure.md) | [docs/finops/tagging-strategy.md](docs/finops/tagging-strategy.md)
 
 ---
 
@@ -302,3 +304,4 @@ La infraestructura en AWS está definida con **Terraform** (`terraform/`): VPC c
 | [docs/caching.md](docs/caching.md) | Estrategia de caché Redis entre Node.js proxy y Python core |
 | [docs/database.md](docs/database.md) | Schema PostgreSQL, migraciones y seeds |
 | [docs/diagrams/infrastructure.md](docs/diagrams/infrastructure.md) | Diagramas de infraestructura local, Kubernetes y AWS |
+| [docs/finops/tagging-strategy.md](docs/finops/tagging-strategy.md) | Estrategia FinOps: tags obligatorios, presupuestos por entorno y validación en CI |
