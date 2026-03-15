@@ -1,0 +1,70 @@
+name: Validate FinOps tags
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/**'
+      - 'finops/**'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  validate-tags:
+    runs-on: ubuntu-latest
+    name: Validate mandatory FinOps tags
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.6"
+          terraform_wrapper: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/latest/download/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Terraform init
+        working-directory: terraform
+        env:
+          AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        run: terraform init -backend=false
+
+      - name: Terraform plan
+        working-directory: terraform
+        env:
+          AWS_ACCESS_KEY_ID:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          TF_VAR_rds_password:   ${{ secrets.TF_VAR_RDS_PASSWORD }}
+        run: |
+          terraform plan \
+            -var="environment=dev" \
+            -out=tfplan.binary
+          terraform show -json tfplan.binary > tfplan.json
+
+      - name: Validate FinOps tags
+        run: |
+          # Leer los tags requeridos del YAML (single source of truth)
+          REQUIRED=$(yq '.required_tags[].key' finops/tagging-taxonomy.yaml | tr '\n' ',')
+          echo "Tags requeridos: $REQUIRED"
+
+          python3 scripts/check-tags.py tfplan.json finops/tagging-taxonomy.yaml
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terraform-plan
+          path: terraform/tfplan.json

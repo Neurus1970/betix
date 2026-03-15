@@ -1,0 +1,53 @@
+# finops/tagging-taxonomy.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# Taxonomía de tagging FinOps — fuente única de verdad para Betix / Tecno Acción
+# Generado por: scripts/init-repo.sh --finops-* flags
+# Consumido por: terraform/ (yamldecode) + .github/workflows/ (yq)
+# Referencia: FinOps Foundation — Cost Allocation capability
+#
+# Para regenerar este archivo:
+#   ./scripts/init-repo.sh --finops-product betix --finops-owner platform-team \
+#     --finops-cost-center CC-001 --finops-email finops@tecnoaccion.com \
+#     --finops-budget-monthly-dev 200 --finops-budget-monthly-uat 500 \
+#     --finops-budget-monthly-prod 2000
+# ─────────────────────────────────────────────────────────────────────────────
+version: "1.0"
+
+required_tags:
+  - key: product
+    description: "Nombre del producto"
+    value: betix
+  - key: environment
+    description: "Entorno de despliegue"
+    allowed_values: [dev, uat, prod]
+    value: null  # set by var.environment at apply time
+  - key: owner
+    description: "Equipo o persona responsable del recurso"
+    value: platform-team
+  - key: cost-center
+    description: "Código de centro de costo financiero"
+    value: CC-001
+  - key: created-by
+    description: "Herramienta que creó el recurso"
+    allowed_values: [terraform, github-actions]
+    value: terraform
+
+budgets:
+  dev:
+    monthly_usd: 200
+    annual_usd:  2400
+    weekly_usd:  60
+  uat:
+    monthly_usd: 500
+    annual_usd:  6000
+    weekly_usd:  150
+  prod:
+    monthly_usd: 2000
+    annual_usd:  24000
+    weekly_usd:  600
+
+alerts:
+  thresholds: [70, 80, 90]
+  channels:
+    email: finops@tecnoaccion.com
+    # slack_webhook: configure via GitHub Secret FINOPS_SLACK_WEBHOOK

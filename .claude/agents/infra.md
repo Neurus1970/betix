@@ -95,3 +95,26 @@ make bump-core v=X.Y.Z   # bump emergencia
 - PRs siempre a `develop`, nunca a `main` (excepto hotfix).
 - Tags de rama: `feature/BETIX-XX-...`, `fix/BETIX-XX-...`, `refactor/BETIX-XX-...`, `hotfix/BETIX-XX-...`.
 - `hotfix/` sale de `main` (no de `develop`) y hace PR a `main`. Después cherry-pick a `develop`.
+
+## FinOps — Tags obligatorios
+
+`finops/tagging-taxonomy.yaml` es la fuente única de verdad para la taxonomía de tagging. Terraform lo lee via `yamldecode` en `locals` de `main.tf`. Los 5 tags obligatorios se propagan a todos los recursos AWS via `default_tags` del provider.
+
+### Reglas
+
+- **Antes de generar cualquier nuevo recurso Terraform**, verificar que los 5 tags obligatorios (`product`, `environment`, `owner`, `cost-center`, `created-by`) se aplicarán al recurso — ya sea via `default_tags` (automático) o explícitamente en el bloque `resource`.
+- **Antes de modificar `finops/tagging-taxonomy.yaml`**, mostrar los valores actuales al usuario y explicar el impacto (cuántos recursos se retaggearán, si los budgets cambiarán).
+- **Nunca cambiar los montos de presupuesto** (`budgets.*_usd`) sin confirmar explícitamente los nuevos valores con el usuario. Un cambio en el YAML afecta los tres niveles de alerta (mensual, anual, semanal) del entorno correspondiente.
+- **Al agregar un nuevo recurso AWS** que pertenezca a un sub-componente específico de Betix (core, api o frontend), agregar el tag `component` explícitamente en el bloque `resource` además de los tags heredados via `default_tags`:
+
+  ```hcl
+  resource "aws_something" "example" {
+    # ...
+    tags = {
+      component = "core"  # o "api", "frontend"
+    }
+  }
+  ```
+
+  Para recursos compartidos (VPC, EKS, RDS), no agregar `component` — el valor `shared` es el default de `var.component`.
+- El workflow `validate-tags.yml` valida el plan Terraform en cada PR. Si falla, revisar la salida de `scripts/check-tags.py` para identificar qué recursos tienen tags faltantes.

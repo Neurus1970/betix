@@ -55,6 +55,15 @@ REQUIRED_APPROVALS="1"
 ENFORCE_ADMINS="false"
 TEAM=""
 
+# FinOps
+FINOPS_PRODUCT=""
+FINOPS_OWNER=""
+FINOPS_COST_CENTER=""
+FINOPS_EMAIL=""
+FINOPS_BUDGET_MONTHLY_DEV="200"
+FINOPS_BUDGET_MONTHLY_UAT="500"
+FINOPS_BUDGET_MONTHLY_PROD="2000"
+
 # -----------------------------------------------------------------------------
 # Ayuda
 # -----------------------------------------------------------------------------
@@ -88,6 +97,13 @@ ${BOLD}FLAGS OPCIONALES${RESET}
     --enforce-admins  Aplicar reglas también a admins del repo (default: false)
     --team            Slug del equipo GitHub al que dar permiso push (opcional)
                       Ejemplo: backend-team
+    --finops-product      Nombre del producto para el tag "product" (ej: betix)
+    --finops-owner        Equipo o persona responsable (ej: platform-team)
+    --finops-cost-center  Código de centro de costo financiero (ej: CC-001)
+    --finops-email        Email para alertas de presupuesto (ej: finops@org.com)
+    --finops-budget-monthly-dev   Presupuesto mensual en USD para dev (default: 200)
+    --finops-budget-monthly-uat   Presupuesto mensual en USD para uat (default: 500)
+    --finops-budget-monthly-prod  Presupuesto mensual en USD para prod (default: 2000)
     --help            Muestra esta ayuda y sale
 
 ${BOLD}EJEMPLO COMPLETO${RESET}
@@ -143,6 +159,20 @@ while [ $# -gt 0 ]; do
       ENFORCE_ADMINS="$2"; shift 2 ;;
     --team)
       TEAM="$2"; shift 2 ;;
+    --finops-product)
+      FINOPS_PRODUCT="$2"; shift 2 ;;
+    --finops-owner)
+      FINOPS_OWNER="$2"; shift 2 ;;
+    --finops-cost-center)
+      FINOPS_COST_CENTER="$2"; shift 2 ;;
+    --finops-email)
+      FINOPS_EMAIL="$2"; shift 2 ;;
+    --finops-budget-monthly-dev)
+      FINOPS_BUDGET_MONTHLY_DEV="$2"; shift 2 ;;
+    --finops-budget-monthly-uat)
+      FINOPS_BUDGET_MONTHLY_UAT="$2"; shift 2 ;;
+    --finops-budget-monthly-prod)
+      FINOPS_BUDGET_MONTHLY_PROD="$2"; shift 2 ;;
     *)
       err "Flag desconocido: $1"
       usage
@@ -198,6 +228,13 @@ if [ "$NEEDS_INTERACTIVE" = "1" ]; then
   REQUIRED_APPROVALS=$(prompt_optional "Approvals requeridos (main)"               "$REQUIRED_APPROVALS")
   ENFORCE_ADMINS=$(prompt_optional  "Aplicar reglas a admins (true/false)"         "$ENFORCE_ADMINS")
   TEAM=$(prompt_optional            "Equipo GitHub (slug, dejar vacío para omitir)" "$TEAM")
+
+  # FinOps — solo preguntar si se pasó algún flag --finops-* o si el usuario lo quiere
+  printf "\n${BOLD}${BLUE}FinOps (opcional — Enter para omitir)${RESET}\n"
+  [ -z "$FINOPS_PRODUCT" ]     && FINOPS_PRODUCT=$(prompt_optional     "Producto FinOps (tag product)"      "betix")
+  [ -z "$FINOPS_OWNER" ]       && FINOPS_OWNER=$(prompt_optional       "Owner (tag owner)"                  "platform-team")
+  [ -z "$FINOPS_COST_CENTER" ] && FINOPS_COST_CENTER=$(prompt_optional "Centro de costo (tag cost-center)"  "CC-001")
+  [ -z "$FINOPS_EMAIL" ]       && FINOPS_EMAIL=$(prompt_optional       "Email para alertas FinOps"          "finops@org.com")
 fi
 
 # -----------------------------------------------------------------------------
@@ -531,6 +568,86 @@ else
 fi
 
 # =============================================================================
+# PASO 7 — FinOps: generar finops/tagging-taxonomy.yaml
+# =============================================================================
+header "Paso 7: FinOps tagging taxonomy"
+
+if [ -z "$FINOPS_PRODUCT" ]; then
+  skip "No se configuraron parámetros FinOps (--finops-product). Omitiendo."
+else
+  # Calcular annual y weekly desde el monthly
+  DEV_ANNUAL=$(( FINOPS_BUDGET_MONTHLY_DEV * 12 ))
+  DEV_WEEKLY=$(( FINOPS_BUDGET_MONTHLY_DEV / 4 ))
+  UAT_ANNUAL=$(( FINOPS_BUDGET_MONTHLY_UAT * 12 ))
+  UAT_WEEKLY=$(( FINOPS_BUDGET_MONTHLY_UAT / 4 ))
+  PROD_ANNUAL=$(( FINOPS_BUDGET_MONTHLY_PROD * 12 ))
+  PROD_WEEKLY=$(( FINOPS_BUDGET_MONTHLY_PROD / 4 ))
+
+  # Crear el directorio finops/ si no existe
+  mkdir -p finops
+
+  cat > finops/tagging-taxonomy.yaml <<FINOPS_EOF
+# finops/tagging-taxonomy.yaml
+# ─────────────────────────────────────────────────────────────────────────────
+# Taxonomía de tagging FinOps — fuente única de verdad para ${FINOPS_PRODUCT}
+# Generado por: scripts/init-repo.sh el $(date -u +%Y-%m-%dT%H:%M:%SZ)
+# Consumido por: terraform/ (yamldecode) + .github/workflows/ (yq)
+# Referencia: FinOps Foundation — Cost Allocation capability
+#
+# Para regenerar:
+#   ./scripts/init-repo.sh --repo ${REPO} --finops-product ${FINOPS_PRODUCT} \\
+#     --finops-owner "${FINOPS_OWNER}" --finops-cost-center ${FINOPS_COST_CENTER} \\
+#     --finops-email ${FINOPS_EMAIL} --finops-budget-monthly-dev ${FINOPS_BUDGET_MONTHLY_DEV} \\
+#     --finops-budget-monthly-uat ${FINOPS_BUDGET_MONTHLY_UAT} \\
+#     --finops-budget-monthly-prod ${FINOPS_BUDGET_MONTHLY_PROD}
+# ─────────────────────────────────────────────────────────────────────────────
+version: "1.0"
+
+required_tags:
+  - key: product
+    description: "Nombre del producto"
+    value: ${FINOPS_PRODUCT}
+  - key: environment
+    description: "Entorno de despliegue"
+    allowed_values: [dev, uat, prod]
+    value: null  # set by var.environment at terraform apply time
+  - key: owner
+    description: "Equipo o persona responsable del recurso"
+    value: "${FINOPS_OWNER}"
+  - key: cost-center
+    description: "Código de centro de costo financiero"
+    value: ${FINOPS_COST_CENTER}
+  - key: created-by
+    description: "Herramienta que creó el recurso"
+    allowed_values: [terraform, github-actions]
+    value: terraform
+
+budgets:
+  dev:
+    monthly_usd: ${FINOPS_BUDGET_MONTHLY_DEV}
+    annual_usd:  ${DEV_ANNUAL}
+    weekly_usd:  ${DEV_WEEKLY}
+  uat:
+    monthly_usd: ${FINOPS_BUDGET_MONTHLY_UAT}
+    annual_usd:  ${UAT_ANNUAL}
+    weekly_usd:  ${UAT_WEEKLY}
+  prod:
+    monthly_usd: ${FINOPS_BUDGET_MONTHLY_PROD}
+    annual_usd:  ${PROD_ANNUAL}
+    weekly_usd:  ${PROD_WEEKLY}
+
+alerts:
+  thresholds: [70, 80, 90]
+  channels:
+    email: ${FINOPS_EMAIL}
+    # slack_webhook: configure via GitHub Secret FINOPS_SLACK_WEBHOOK
+FINOPS_EOF
+
+  ok "finops/tagging-taxonomy.yaml generado"
+  info "Commiteá este archivo: git add finops/tagging-taxonomy.yaml && git commit -m 'feat: add FinOps tagging taxonomy'"
+fi
+
+# =============================================================================
 # RESUMEN FINAL
 # =============================================================================
 printf "\n${BOLD}${GREEN}╔══════════════════════════════════════════════════════════╗${RESET}\n"
@@ -544,6 +661,7 @@ printf "    ${MAIN_BRANCH}     → PR + ${REQUIRED_APPROVALS} approval(s), dismi
 printf "  Naming convention: ${BRANCH_PATTERN}\n"
 printf "  Labels:        feature, fix, hotfix, refactor, dependencies, documentation, infrastructure\n"
 [ -n "$TEAM" ] && printf "  Equipo:        ${TEAM} → permiso push\n"
+[ -n "$FINOPS_PRODUCT" ] && printf "  FinOps:        finops/tagging-taxonomy.yaml generado (product: ${FINOPS_PRODUCT}, owner: ${FINOPS_OWNER})\n"
 printf "\n"
 printf "  Jira project:  ${BOLD}${JIRA_URL}/jira/software/projects/${JIRA_PROJECT}${RESET}\n"
 printf "  Settings:      ${BOLD}https://github.com/${REPO}/settings${RESET}\n"

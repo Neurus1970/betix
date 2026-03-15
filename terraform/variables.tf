@@ -68,3 +68,18 @@ variable "rds_password" {
   type        = string
   sensitive   = true
 }
+
+# ── Variables de componente FinOps ─────────────────────────────────────────────
+# El tag "component" diferencia los sub-componentes dentro del producto "betix".
+# Los demás tags FinOps se leen desde finops/tagging-taxonomy.yaml.
+
+variable "component" {
+  description = "Sub-componente del producto (core | api | frontend | shared)"
+  type        = string
+  default     = "shared"
+
+  validation {
+    condition     = contains(["core", "api", "frontend", "shared"], var.component)
+    error_message = "El componente debe ser core, api, frontend o shared."
+  }
+}
