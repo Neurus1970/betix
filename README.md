@@ -10,24 +10,6 @@
 
 ---
 
-## Arquitectura
-
-Betix está compuesto por tres servicios independientes. Cada uno tiene su propia imagen Docker, versionado semántico y pipeline de CI.
-
-| Componente | Tecnología | Puerto | Responsabilidad |
-|---|---|---|---|
-| `core/` | Python 3.12 + Flask | 5000 | Toda la lógica de negocio (geodata, proyecciones SMA, health) |
-| `src/` (api) | Node.js 18 + Express | 3000 | Thin HTTP proxy hacia core + caché Redis |
-| `frontend/` | nginx | 8080 | Sirve archivos estáticos (HTML + D3.js) |
-| PostgreSQL | postgres:16-alpine | 5432 | Base de datos principal — schema `betix` |
-| Redis | redis:7-alpine | 6379 | Caché de respuestas del core (TTL configurable) |
-
-Las rutas `/api/datos/*` usan **Redis** como caché entre el proxy Node.js y el core Python: el primer request procesa y almacena; los siguientes lo sirven desde memoria. Si Redis no está disponible, las peticiones pasan al core sin interrupciones (degradación elegante).
-
-→ Modelo C4 completo: [docs/ArquitecturaC4.md](docs/ArquitecturaC4.md) | Caché: [docs/caching.md](docs/caching.md) | DB: [docs/database.md](docs/database.md)
-
----
-
 ## Inicio rápido
 
 ### Requisitos previos
@@ -212,6 +194,24 @@ Cada PR dispara dos jobs en paralelo:
 | `lint-and-test` | ESLint + Jest (cobertura) + Cucumber BDD |
 
 → [docs/SDLC.md](docs/SDLC.md)
+
+---
+
+## Arquitectura
+
+Betix está compuesto por tres servicios independientes. Cada uno tiene su propia imagen Docker, versionado semántico y pipeline de CI.
+
+| Componente | Tecnología | Puerto | Responsabilidad |
+|---|---|---|---|
+| `core/` | Python 3.12 + Flask | 5000 | Toda la lógica de negocio (geodata, proyecciones SMA, health) |
+| `src/` (api) | Node.js 18 + Express | 3000 | Thin HTTP proxy hacia core + caché Redis |
+| `frontend/` | nginx | 8080 | Sirve archivos estáticos (HTML + D3.js) |
+| PostgreSQL | postgres:16-alpine | 5432 | Base de datos principal — schema `betix` |
+| Redis | redis:7-alpine | 6379 | Caché de respuestas del core (TTL configurable) |
+
+Las rutas `/api/datos/*` usan **Redis** como caché entre el proxy Node.js y el core Python: el primer request procesa y almacena; los siguientes lo sirven desde memoria. Si Redis no está disponible, las peticiones pasan al core sin interrupciones (degradación elegante).
+
+→ Modelo C4 completo: [docs/ArquitecturaC4.md](docs/ArquitecturaC4.md) | Caché: [docs/caching.md](docs/caching.md) | DB: [docs/database.md](docs/database.md)
 
 ---
 
