@@ -64,6 +64,11 @@ FINOPS_BUDGET_ANNUAL_DEV="2400"
 FINOPS_BUDGET_ANNUAL_UAT="6000"
 FINOPS_BUDGET_ANNUAL_PROD="24000"
 
+# AWS
+AWS_ACCESS_KEY_ID=""
+AWS_SECRET_ACCESS_KEY=""
+AWS_REGION="us-east-1"
+
 # -----------------------------------------------------------------------------
 # Ayuda
 # -----------------------------------------------------------------------------
@@ -105,6 +110,9 @@ ${BOLD}FLAGS OPCIONALES${RESET}
                                   Mensual y trimestral se infieren: anual/12 y anual/4
     --finops-budget-annual-uat    Presupuesto anual en USD para uat (default: 6000)
     --finops-budget-annual-prod   Presupuesto anual en USD para prod (default: 24000)
+    --aws-access-key-id       AWS Access Key ID para el workflow de Terraform
+    --aws-secret-access-key   AWS Secret Access Key (se guarda como GitHub secret)
+    --aws-region              Región AWS (default: us-east-1)
     --help            Muestra esta ayuda y sale
 
 ${BOLD}EJEMPLO COMPLETO${RESET}
@@ -174,6 +182,12 @@ while [ $# -gt 0 ]; do
       FINOPS_BUDGET_ANNUAL_UAT="$2"; shift 2 ;;
     --finops-budget-annual-prod)
       FINOPS_BUDGET_ANNUAL_PROD="$2"; shift 2 ;;
+    --aws-access-key-id)
+      AWS_ACCESS_KEY_ID="$2"; shift 2 ;;
+    --aws-secret-access-key)
+      AWS_SECRET_ACCESS_KEY="$2"; shift 2 ;;
+    --aws-region)
+      AWS_REGION="$2"; shift 2 ;;
     *)
       err "Flag desconocido: $1"
       usage
@@ -240,6 +254,12 @@ if [ "$NEEDS_INTERACTIVE" = "1" ]; then
   FINOPS_BUDGET_ANNUAL_DEV=$(prompt_optional  "  Presupuesto anual dev  (USD)" "$FINOPS_BUDGET_ANNUAL_DEV")
   FINOPS_BUDGET_ANNUAL_UAT=$(prompt_optional  "  Presupuesto anual uat  (USD)" "$FINOPS_BUDGET_ANNUAL_UAT")
   FINOPS_BUDGET_ANNUAL_PROD=$(prompt_optional "  Presupuesto anual prod (USD)" "$FINOPS_BUDGET_ANNUAL_PROD")
+
+  # AWS — credenciales para el workflow de Terraform
+  printf "\n${BOLD}${BLUE}AWS (opcional — necesario para el workflow terraform plan)${RESET}\n"
+  [ -z "$AWS_ACCESS_KEY_ID" ]     && AWS_ACCESS_KEY_ID=$(prompt_optional     "AWS Access Key ID"     "")
+  [ -z "$AWS_SECRET_ACCESS_KEY" ] && AWS_SECRET_ACCESS_KEY=$(prompt_optional "AWS Secret Access Key" "")
+  AWS_REGION=$(prompt_optional "Región AWS" "$AWS_REGION")
 fi
 
 # -----------------------------------------------------------------------------
@@ -650,6 +670,109 @@ FINOPS_EOF
 
   ok "finops/tagging-taxonomy.yaml generado"
   info "Commiteá este archivo: git add finops/tagging-taxonomy.yaml && git commit -m 'feat: add FinOps tagging taxonomy'"
+fi
+
+# =============================================================================
+# PASO 8 — AWS: configurar secrets y generar workflow de validación de tags
+# =============================================================================
+header "Paso 8: AWS secrets y workflow validate-tags"
+
+if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+  skip "No se configuraron credenciales AWS. El workflow validate-tags usará terraform validate (sin credenciales)."
+else
+  # Guardar credenciales como GitHub secrets
+  info "Guardando AWS_ACCESS_KEY_ID como secret en ${REPO}..."
+  if echo "$AWS_ACCESS_KEY_ID" | gh secret set AWS_ACCESS_KEY_ID --repo "$REPO" 2>/dev/null; then
+    ok "Secret AWS_ACCESS_KEY_ID configurado"
+  else
+    warn "No se pudo configurar AWS_ACCESS_KEY_ID. Verificar permisos del token."
+  fi
+
+  info "Guardando AWS_SECRET_ACCESS_KEY como secret en ${REPO}..."
+  if echo "$AWS_SECRET_ACCESS_KEY" | gh secret set AWS_SECRET_ACCESS_KEY --repo "$REPO" 2>/dev/null; then
+    ok "Secret AWS_SECRET_ACCESS_KEY configurado"
+  else
+    warn "No se pudo configurar AWS_SECRET_ACCESS_KEY. Verificar permisos del token."
+  fi
+
+  # Regenerar .github/workflows/validate-tags.yml con terraform plan
+  mkdir -p .github/workflows
+
+  cat > .github/workflows/validate-tags.yml <<WORKFLOW_EOF
+name: Validate FinOps tags
+
+on:
+  pull_request:
+    paths:
+      - 'terraform/**'
+      - 'finops/**'
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  validate-tags:
+    runs-on: ubuntu-latest
+    name: Validate mandatory FinOps tags
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "~> 1.6"
+          terraform_wrapper: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install yq
+        run: |
+          sudo wget -qO /usr/local/bin/yq \\
+            https://github.com/mikefarah/yq/releases/download/v4.44.1/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Terraform init
+        working-directory: terraform
+        env:
+          AWS_ACCESS_KEY_ID:     \${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: \${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION:    ${AWS_REGION}
+        run: terraform init -backend=false
+
+      - name: Terraform plan
+        working-directory: terraform
+        env:
+          AWS_ACCESS_KEY_ID:     \${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: \${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION:    ${AWS_REGION}
+          TF_VAR_rds_password:   \${{ secrets.TF_VAR_RDS_PASSWORD }}
+        run: |
+          terraform plan \\
+            -var="environment=dev" \\
+            -out=tfplan.binary
+          terraform show -json tfplan.binary > tfplan.json
+
+      - name: Validate FinOps tags
+        run: |
+          REQUIRED=\$(yq '.required_tags[].key' finops/tagging-taxonomy.yaml | tr '\\n' ',')
+          echo "Tags requeridos: \$REQUIRED"
+          python3 scripts/check-tags.py tfplan.json finops/tagging-taxonomy.yaml
+
+      - name: Upload plan artifact
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: terraform-plan
+          path: terraform/tfplan.json
+WORKFLOW_EOF
+
+  ok ".github/workflows/validate-tags.yml regenerado con terraform plan"
+  info "Commiteá el workflow: git add .github/workflows/validate-tags.yml && git commit -m 'ci: use terraform plan in validate-tags workflow'"
 fi
 
 # =============================================================================
