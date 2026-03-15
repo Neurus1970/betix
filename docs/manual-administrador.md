@@ -118,7 +118,8 @@ flowchart TD
     P6 -- Sí --> P6A[Paso 6\nPermisos del equipo]
     P6 -- No --> P7
     P6A --> P7[Paso 7\nGitHub Actions secrets]
-    P7 --> FIN([Resumen final\ncon links])
+    P7 --> P8[Paso 8\nDocumentos iniciales]
+    P8 --> FIN([Resumen final\ncon links])
 
     style P4 fill:#fff3e0,stroke:#F57F17
     style P6 fill:#e3f2fd,stroke:#1565C0
@@ -208,6 +209,27 @@ AWS_SECRET_ACCESS_KEY (oculto — Enter para omitir): ████████
 [OK]   Secret 'AWS_ACCESS_KEY_ID' configurado
 [OK]   Secret 'AWS_SECRET_ACCESS_KEY' configurado
 ```
+
+### Paso 8 — Documentos iniciales de la plataforma
+
+Crea tres archivos en el repositorio destino a partir de templates parametrizados que viven en `scripts/templates/`:
+
+| Archivo creado | Template origen |
+|----------------|----------------|
+| `README.md` | `scripts/templates/README.md.tmpl` |
+| `docs/principios-fundamentales.md` | `scripts/templates/docs/principios-fundamentales.md.tmpl` |
+| `docs/SDLC.md` | `scripts/templates/docs/SDLC.md.tmpl` |
+
+Los templates usan placeholders que se sustituyen con los valores pasados al script:
+
+| Placeholder | Valor |
+|-------------|-------|
+| `{{REPO_NAME}}` | Nombre del repo (parte después del `/` en `--repo`) |
+| `{{JIRA_PROJECT}}` | Clave del proyecto Jira (`--jira-project`) |
+| `{{JIRA_URL}}` | URL base de Jira (`--jira-url`) |
+| `{{CI_CHECKS}}` | Job names de CI (`--ci-checks`) |
+
+**Comportamiento idempotente:** si un archivo ya existe en el repo destino, el paso lo omite sin error (`[SKIP]`). Si un template no existe localmente, emite `[WARN]` y continúa.
 
 ---
 

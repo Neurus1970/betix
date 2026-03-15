@@ -112,6 +112,8 @@ ${BOLD}QUÉ CONFIGURA${RESET}
     6. Permisos del equipo sobre el repo (si se pasa --team)
     7. GitHub Actions secrets (JIRA_*, ANTHROPIC_API_KEY, SONAR_TOKEN, AWS_*)
        Los valores sensibles se solicitan de forma interactiva (sin eco en terminal).
+    8. Documentos iniciales de la plataforma (README.md, docs/SDLC.md,
+       docs/principios-fundamentales.md) generados desde templates parametrizados.
 
 EOF
 }
@@ -578,6 +580,54 @@ set_secret "ANTHROPIC_API_KEY"         "${SECRET_ANTHROPIC_API_KEY:-}"
 set_secret "SONAR_TOKEN"               "${SECRET_SONAR_TOKEN:-}"
 set_secret "AWS_ACCESS_KEY_ID"         "${SECRET_AWS_ACCESS_KEY_ID:-}"
 set_secret "AWS_SECRET_ACCESS_KEY"     "${SECRET_AWS_SECRET_ACCESS_KEY:-}"
+
+# =============================================================================
+# PASO 8 — Crear documentos iniciales en el repositorio
+# =============================================================================
+header "Paso 8: Documentos iniciales de la plataforma"
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TEMPLATES_DIR="${SCRIPT_DIR}/templates"
+
+upload_template() {
+  tmpl_relpath="$1"
+  dest_path="$2"
+  tmpl_file="${TEMPLATES_DIR}/${tmpl_relpath}"
+
+  if [ ! -f "$tmpl_file" ]; then
+    warn "Template no encontrado: ${tmpl_file}. Omitiendo ${dest_path}."
+    return 0
+  fi
+
+  # Leer y sustituir placeholders
+  content=$(sed \
+    -e "s|{{REPO_NAME}}|${REPO_NAME}|g" \
+    -e "s|{{JIRA_PROJECT}}|${JIRA_PROJECT}|g" \
+    -e "s|{{JIRA_URL}}|${JIRA_URL}|g" \
+    -e "s|{{CI_CHECKS}}|${CI_CHECKS}|g" \
+    "$tmpl_file")
+
+  # Verificar si el archivo ya existe en el repo destino
+  if gh api --method GET "/repos/${REPO}/contents/${dest_path}" --silent 2>/dev/null; then
+    skip "${dest_path} ya existe en el repo. Omitiendo."
+    return 0
+  fi
+
+  # Base64-encode del contenido
+  encoded=$(printf '%s' "$content" | base64 | tr -d '\n')
+
+  # Subir el archivo
+  if printf '{"message":"chore: initialize platform documentation","content":"%s"}' "$encoded" \
+      | gh api --method PUT "/repos/${REPO}/contents/${dest_path}" --input - --silent 2>/dev/null; then
+    ok "${dest_path} creado en ${REPO}"
+  else
+    warn "No se pudo crear ${dest_path} en ${REPO}"
+  fi
+}
+
+upload_template "README.md.tmpl"                        "README.md"
+upload_template "docs/principios-fundamentales.md.tmpl" "docs/principios-fundamentales.md"
+upload_template "docs/SDLC.md.tmpl"                     "docs/SDLC.md"
 
 # =============================================================================
 # RESUMEN FINAL
