@@ -91,6 +91,8 @@ Claude Code es la IA que el equipo usa como copiloto en todo el ciclo de vida de
 
 > Lo que está en `.claude/agents/`, `.claude/skills/` y `.claude/hooks/` es código del equipo — se versiona, se revisa en PR y evoluciona con el proyecto. Las preferencias personales van en `.claude/settings.local.json` (en `.gitignore`).
 
+→ Cómo funcionan los sub-agentes y cómo colaboran: [docs/claude-en-betix.md](docs/claude-en-betix.md)
+
 ### 5. Acceso y permisos
 
 Betix usa Jira para gestionar tickets. El ID del ticket (`BETIX-XX`) en el nombre de cada rama dispara automáticamente la transición de estado.
@@ -283,3 +285,20 @@ Un **Ingress** enruta el tráfico por path hacia los **Services**, cada uno resp
 La infraestructura en AWS está definida con **Terraform** (`terraform/`): VPC con subnets públicas (ALB + NAT Gateway) y privadas (EKS + RDS). Las imágenes se almacenan en tres repositorios **ECR** independientes (`betix-core`, `betix-api`, `betix-frontend`) con política de retención de las últimas 10 versiones.
 
 → [docs/diagrams/infrastructure.md](docs/diagrams/infrastructure.md)
+
+---
+
+## Documentación
+
+| Documento | Contenido |
+|-----------|-----------|
+| [docs/onboarding/TOC.md](docs/onboarding/TOC.md) | Curso de onboarding — punto de entrada para nuevos desarrolladores |
+| [docs/principios-fundamentales.md](docs/principios-fundamentales.md) | Los 5 principios que guían las decisiones de arquitectura y proceso |
+| [docs/ArquitecturaC4.md](docs/ArquitecturaC4.md) | Modelo C4 completo (contexto, contenedores, componentes) con diagramas Mermaid |
+| [docs/claude-en-betix.md](docs/claude-en-betix.md) | Cómo está configurado Claude: sub-agentes, hooks y skills |
+| [CLAUDE.md](CLAUDE.md) | Instrucciones del proyecto para Claude (convenciones, reglas críticas, mapa del repo) |
+| [docs/SDLC.md](docs/SDLC.md) | Ciclo de vida completo del desarrollo en este proyecto |
+| [docs/monorepo-guide.md](docs/monorepo-guide.md) | Versionado independiente por servicio, path filters de CI, Makefile |
+| [docs/caching.md](docs/caching.md) | Estrategia de caché Redis entre Node.js proxy y Python core |
+| [docs/database.md](docs/database.md) | Schema PostgreSQL, migraciones y seeds |
+| [docs/diagrams/infrastructure.md](docs/diagrams/infrastructure.md) | Diagramas de infraestructura local, Kubernetes y AWS |
