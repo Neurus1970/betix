@@ -27,44 +27,36 @@ jobs:
             --data '{"transition":{"id":"21"}}'
           echo "Ticket ${{ steps.extract_ticket.outputs.ticket }} movido a In Progress"
 
-      - uses: actions/checkout@v4
-
       - name: Asignar ticket al desarrollador en Jira
         if: steps.extract_ticket.outputs.ticket != ''
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TICKET="${{ steps.extract_ticket.outputs.ticket }}"
-          ACTOR="${{ github.actor }}"
 
-          # 1. Buscar email en .github/jira-users.json (fuente de verdad del equipo)
-          USER_EMAIL=$(jq -r --arg actor "$ACTOR" '.[$actor] // empty' .github/jira-users.json 2>/dev/null)
+          # 1. Obtener el email público del actor de GitHub
+          GITHUB_EMAIL=$(curl -sf \
+            -H "Authorization: token $GITHUB_TOKEN" \
+            "https://api.github.com/users/${{ github.actor }}" \
+            | jq -r '.email // empty')
 
-          # 2. Si no está en el mapeo, intentar email público de GitHub como fallback
-          if [ -z "$USER_EMAIL" ]; then
-            USER_EMAIL=$(curl -sf \
-              -H "Authorization: token $GITHUB_TOKEN" \
-              "https://api.github.com/users/$ACTOR" \
-              | jq -r '.email // empty')
-          fi
-
-          if [ -z "$USER_EMAIL" ]; then
-            echo "⚠️  $ACTOR no está en jira-users.json ni tiene email público en GitHub. Asignación omitida."
+          if [ -z "$GITHUB_EMAIL" ]; then
+            echo "⚠️  ${{ github.actor }} no tiene email público en GitHub. Asignación omitida."
             exit 0
           fi
 
-          # 3. Buscar el accountId en Jira por email
+          # 2. Buscar el accountId en Jira por email
           ACCOUNT_ID=$(curl -sf \
             --user "${{ secrets.JIRA_USER_EMAIL }}:${{ secrets.JIRA_API_TOKEN }}" \
-            "${{ secrets.JIRA_BASE_URL }}/rest/api/3/user/search?query=$USER_EMAIL" \
+            "${{ secrets.JIRA_BASE_URL }}/rest/api/3/user/search?query=$GITHUB_EMAIL" \
             | jq -r '.[0].accountId // empty')
 
           if [ -z "$ACCOUNT_ID" ]; then
-            echo "⚠️  No se encontró usuario en Jira con email $USER_EMAIL. Asignación omitida."
+            echo "⚠️  No se encontró usuario en Jira con email $GITHUB_EMAIL. Asignación omitida."
             exit 0
           fi
 
-          # 4. Asignar el ticket
+          # 3. Asignar el ticket
           curl --silent --fail --show-error \
             --request PUT \
             --url "${{ secrets.JIRA_BASE_URL }}/rest/api/3/issue/$TICKET/assignee" \
@@ -72,4 +64,4 @@ jobs:
             --header "Content-Type: application/json" \
             --data "{\"accountId\": \"$ACCOUNT_ID\"}"
 
-          echo "✅ Ticket $TICKET asignado a $ACTOR (accountId: $ACCOUNT_ID)"
+          echo "✅ Ticket $TICKET asignado a ${{ github.actor }} (accountId: $ACCOUNT_ID)"
