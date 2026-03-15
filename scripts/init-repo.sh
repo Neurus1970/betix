@@ -135,6 +135,10 @@ ${BOLD}QUÉ CONFIGURA${RESET}
     4. Ruleset de naming convention de ramas (requiere GitHub Team/Enterprise)
     5. Labels estándar (elimina defaults, crea el set de la plataforma)
     6. Permisos del equipo sobre el repo (si se pasa --team)
+    7. GitHub Actions secrets (JIRA_*, ANTHROPIC_API_KEY, SONAR_TOKEN, AWS_*)
+       Los valores sensibles se solicitan de forma interactiva (sin eco en terminal).
+    8. Documentos iniciales de la plataforma (README.md, docs/SDLC.md,
+       docs/principios-fundamentales.md) generados desde templates parametrizados.
 
 EOF
 }
@@ -220,6 +224,14 @@ prompt_optional() {
   [ -n "$_val" ] && printf '%s' "$_val" || printf '%s' "$_default"
 }
 
+prompt_secret() {
+  _prompt="$1"
+  printf "${BOLD}%s${RESET} ${YELLOW}(oculto — Enter para omitir)${RESET}: " "$_prompt" >&2
+  read -rs _val
+  printf '\n' >&2
+  printf '%s' "$_val"
+}
+
 NEEDS_INTERACTIVE=0
 { [ -z "$REPO" ] || [ -z "$JIRA_PROJECT" ] || [ -z "$JIRA_URL" ] || [ -z "$CI_CHECKS" ]; } && NEEDS_INTERACTIVE=1
 
@@ -260,6 +272,14 @@ if [ "$NEEDS_INTERACTIVE" = "1" ]; then
   [ -z "$AWS_ACCESS_KEY_ID" ]     && AWS_ACCESS_KEY_ID=$(prompt_optional     "AWS Access Key ID"     "")
   [ -z "$AWS_SECRET_ACCESS_KEY" ] && AWS_SECRET_ACCESS_KEY=$(prompt_optional "AWS Secret Access Key" "")
   AWS_REGION=$(prompt_optional "Región AWS" "$AWS_REGION")
+
+  printf "\n${BOLD}${YELLOW}── Secrets de GitHub Actions ──────────────────────────────────${RESET}\n"
+  printf "${CYAN}Los valores se guardan como repository secrets en GitHub Actions.\nPresioná Enter en cualquier campo para omitirlo.${RESET}\n\n"
+
+  SECRET_JIRA_USER_EMAIL=$(prompt_secret   "JIRA_USER_EMAIL  (email del admin Jira)")
+  SECRET_JIRA_API_TOKEN=$(prompt_secret    "JIRA_API_TOKEN   (token de Atlassian)")
+  SECRET_ANTHROPIC_API_KEY=$(prompt_secret "ANTHROPIC_API_KEY (para AI PR review)")
+  SECRET_SONAR_TOKEN=$(prompt_secret       "SONAR_TOKEN      (para SonarCloud)")
 fi
 
 # -----------------------------------------------------------------------------
@@ -776,6 +796,81 @@ WORKFLOW_EOF
 fi
 
 # =============================================================================
+# PASO 9 — GitHub Actions secrets
+# =============================================================================
+header "Paso 9: GitHub Actions secrets"
+
+# JIRA_BASE_URL siempre se configura si se pasó --jira-url
+set_secret() {
+  _name="$1"
+  _value="$2"
+  if [ -n "$_value" ]; then
+    if printf '%s' "$_value" | gh secret set "$_name" --repo "$REPO" --body "$_value" 2>/dev/null; then
+      ok "  Secret '$_name' configurado"
+    else
+      warn "  No se pudo configurar '$_name'. Configurar manualmente en: https://github.com/${REPO}/settings/secrets/actions"
+    fi
+  else
+    skip "  '$_name' omitido (sin valor)"
+  fi
+}
+
+# JIRA_BASE_URL proviene del flag --jira-url (ya validado)
+set_secret "JIRA_BASE_URL"        "$JIRA_URL"
+set_secret "JIRA_USER_EMAIL"      "${SECRET_JIRA_USER_EMAIL:-}"
+set_secret "JIRA_API_TOKEN"       "${SECRET_JIRA_API_TOKEN:-}"
+set_secret "ANTHROPIC_API_KEY"    "${SECRET_ANTHROPIC_API_KEY:-}"
+set_secret "SONAR_TOKEN"          "${SECRET_SONAR_TOKEN:-}"
+
+# =============================================================================
+# PASO 10 — Crear documentos iniciales en el repositorio
+# =============================================================================
+header "Paso 10: Documentos iniciales de la plataforma"
+
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+TEMPLATES_DIR="${SCRIPT_DIR}/templates"
+
+upload_template() {
+  tmpl_relpath="$1"
+  dest_path="$2"
+  tmpl_file="${TEMPLATES_DIR}/${tmpl_relpath}"
+
+  if [ ! -f "$tmpl_file" ]; then
+    warn "Template no encontrado: ${tmpl_file}. Omitiendo ${dest_path}."
+    return 0
+  fi
+
+  # Leer y sustituir placeholders
+  content=$(sed \
+    -e "s|{{REPO_NAME}}|${REPO_NAME}|g" \
+    -e "s|{{JIRA_PROJECT}}|${JIRA_PROJECT}|g" \
+    -e "s|{{JIRA_URL}}|${JIRA_URL}|g" \
+    -e "s|{{CI_CHECKS}}|${CI_CHECKS}|g" \
+    "$tmpl_file")
+
+  # Verificar si el archivo ya existe en el repo destino
+  if gh api --method GET "/repos/${REPO}/contents/${dest_path}" --silent 2>/dev/null; then
+    skip "${dest_path} ya existe en el repo. Omitiendo."
+    return 0
+  fi
+
+  # Base64-encode del contenido
+  encoded=$(printf '%s' "$content" | base64 | tr -d '\n')
+
+  # Subir el archivo
+  if printf '{"message":"chore: initialize platform documentation","content":"%s"}' "$encoded" \
+      | gh api --method PUT "/repos/${REPO}/contents/${dest_path}" --input - --silent 2>/dev/null; then
+    ok "${dest_path} creado en ${REPO}"
+  else
+    warn "No se pudo crear ${dest_path} en ${REPO}"
+  fi
+}
+
+upload_template "README.md.tmpl"                        "README.md"
+upload_template "docs/principios-fundamentales.md.tmpl" "docs/principios-fundamentales.md"
+upload_template "docs/SDLC.md.tmpl"                     "docs/SDLC.md"
+
+# =============================================================================
 # RESUMEN FINAL
 # =============================================================================
 printf "\n${BOLD}${GREEN}╔══════════════════════════════════════════════════════════╗${RESET}\n"
@@ -790,6 +885,7 @@ printf "  Naming convention: ${BRANCH_PATTERN}\n"
 printf "  Labels:        feature, fix, hotfix, refactor, dependencies, documentation, infrastructure\n"
 [ -n "$TEAM" ] && printf "  Equipo:        ${TEAM} → permiso push\n"
 [ -n "$FINOPS_PRODUCT" ] && printf "  FinOps:        finops/tagging-taxonomy.yaml generado (product: ${FINOPS_PRODUCT}, owner: ${FINOPS_OWNER})\n"
+printf "  Secrets:       ${BOLD}https://github.com/${REPO}/settings/secrets/actions${RESET}\n"
 printf "\n"
 printf "  Jira project:  ${BOLD}${JIRA_URL}/jira/software/projects/${JIRA_PROJECT}${RESET}\n"
 printf "  Settings:      ${BOLD}https://github.com/${REPO}/settings${RESET}\n"
