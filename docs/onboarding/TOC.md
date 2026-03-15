@@ -73,6 +73,7 @@
 - Docker: imágenes, contenedores, `docker-compose` para dev local
 - Kubernetes: namespaces, deployments, services — `make k8s-apply` en minikube
 - Terraform: infraestructura AWS (EKS, ECR, VPC) — solo lectura/comprensión
+- FinOps: taxonomía de tagging, presupuestos AWS y alertas de costo — `finops/tagging-taxonomy.yaml` como fuente única de verdad
 - **Ejercicio con Claude**: el agente `infra` interpreta un manifiesto k8s de Betix y explica qué despliega
 
 ---

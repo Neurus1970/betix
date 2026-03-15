@@ -68,6 +68,13 @@ Registro privado de imágenes Docker de AWS. En Betix almacena las imágenes `be
 
 ---
 
+## F
+
+### FinOps
+Práctica de gestión financiera del gasto en cloud que combina cultura, procesos y herramientas para dar visibilidad y control sobre los costos de infraestructura. El nombre viene de "Finance + DevOps". En Betix se implementa con tres mecanismos: tagging obligatorio en todos los recursos AWS (vía `default_tags` del provider Terraform), presupuestos automáticos con alertas (AWS Budgets), y validación de tags en CI (`scripts/check-tags.py`). La fuente única de verdad es [`finops/tagging-taxonomy.yaml`](../../finops/tagging-taxonomy.yaml). Ver [Capítulo 6 — FinOps](modulos/6.md#5-finops-visibilidad-y-control-de-costos).
+
+---
+
 ## H
 
 ### Hotfix
@@ -153,6 +160,9 @@ Convención de versionado `MAJOR.MINOR.PATCH` que comunica el impacto de los cam
 
 ### SHA (commit hash)
 Identificador único de un commit en Git. Ejemplo: `abc1234`. En Betix, las imágenes Docker de ramas no-main se tagean con el SHA corto del commit (`sha-abc1234`) para trazabilidad exacta.
+
+### SNS (Simple Notification Service)
+Servicio de mensajería pub/sub de AWS. Permite publicar un mensaje a un topic y distribuirlo a múltiples suscriptores (email, Lambda, SQS, HTTP). En Betix se usa para las alertas de presupuesto FinOps: AWS Budgets publica en el topic `betix-finops-alerts-dev` cuando el gasto supera el 70%, 80% o 90% del límite, y el topic reenvía la notificación por email a `finops@tecnoaccion.com`. Ver [Capítulo 6 — FinOps](modulos/6.md#5-finops-visibilidad-y-control-de-costos).
 
 ### SonarCloud
 Plataforma de análisis estático de código en la nube. En Betix analiza cobertura de tests (JS y Python), detecta bugs, vulnerabilidades y code smells en cada PR. El resultado aparece como un *Quality Gate* directamente en GitHub. Ver [Capítulo 4 — Cobertura con SonarCloud](modulos/4.md#6-cobertura-de-código-con-sonarcloud).
