@@ -60,9 +60,9 @@ FINOPS_PRODUCT=""
 FINOPS_OWNER=""
 FINOPS_COST_CENTER=""
 FINOPS_EMAIL=""
-FINOPS_BUDGET_MONTHLY_DEV="200"
-FINOPS_BUDGET_MONTHLY_UAT="500"
-FINOPS_BUDGET_MONTHLY_PROD="2000"
+FINOPS_BUDGET_ANNUAL_DEV="2400"
+FINOPS_BUDGET_ANNUAL_UAT="6000"
+FINOPS_BUDGET_ANNUAL_PROD="24000"
 
 # -----------------------------------------------------------------------------
 # Ayuda
@@ -101,9 +101,10 @@ ${BOLD}FLAGS OPCIONALES${RESET}
     --finops-owner        Equipo o persona responsable (ej: platform-team)
     --finops-cost-center  Código de centro de costo financiero (ej: CC-001)
     --finops-email        Email para alertas de presupuesto (ej: finops@org.com)
-    --finops-budget-monthly-dev   Presupuesto mensual en USD para dev (default: 200)
-    --finops-budget-monthly-uat   Presupuesto mensual en USD para uat (default: 500)
-    --finops-budget-monthly-prod  Presupuesto mensual en USD para prod (default: 2000)
+    --finops-budget-annual-dev    Presupuesto anual en USD para dev (default: 2400)
+                                  Mensual y semanal se infieren: anual/12 y anual/52
+    --finops-budget-annual-uat    Presupuesto anual en USD para uat (default: 6000)
+    --finops-budget-annual-prod   Presupuesto anual en USD para prod (default: 24000)
     --help            Muestra esta ayuda y sale
 
 ${BOLD}EJEMPLO COMPLETO${RESET}
@@ -167,12 +168,12 @@ while [ $# -gt 0 ]; do
       FINOPS_COST_CENTER="$2"; shift 2 ;;
     --finops-email)
       FINOPS_EMAIL="$2"; shift 2 ;;
-    --finops-budget-monthly-dev)
-      FINOPS_BUDGET_MONTHLY_DEV="$2"; shift 2 ;;
-    --finops-budget-monthly-uat)
-      FINOPS_BUDGET_MONTHLY_UAT="$2"; shift 2 ;;
-    --finops-budget-monthly-prod)
-      FINOPS_BUDGET_MONTHLY_PROD="$2"; shift 2 ;;
+    --finops-budget-annual-dev)
+      FINOPS_BUDGET_ANNUAL_DEV="$2"; shift 2 ;;
+    --finops-budget-annual-uat)
+      FINOPS_BUDGET_ANNUAL_UAT="$2"; shift 2 ;;
+    --finops-budget-annual-prod)
+      FINOPS_BUDGET_ANNUAL_PROD="$2"; shift 2 ;;
     *)
       err "Flag desconocido: $1"
       usage
@@ -230,11 +231,15 @@ if [ "$NEEDS_INTERACTIVE" = "1" ]; then
   TEAM=$(prompt_optional            "Equipo GitHub (slug, dejar vacío para omitir)" "$TEAM")
 
   # FinOps — solo preguntar si se pasó algún flag --finops-* o si el usuario lo quiere
-  printf "\n${BOLD}${BLUE}FinOps (opcional — Enter para omitir)${RESET}\n"
+  printf "\n${BOLD}${BLUE}FinOps (opcional — Enter para omitir o aceptar el valor por defecto)${RESET}\n"
   [ -z "$FINOPS_PRODUCT" ]     && FINOPS_PRODUCT=$(prompt_optional     "Producto FinOps (tag product)"      "betix")
   [ -z "$FINOPS_OWNER" ]       && FINOPS_OWNER=$(prompt_optional       "Owner (tag owner)"                  "platform-team")
   [ -z "$FINOPS_COST_CENTER" ] && FINOPS_COST_CENTER=$(prompt_optional "Centro de costo (tag cost-center)"  "CC-001")
   [ -z "$FINOPS_EMAIL" ]       && FINOPS_EMAIL=$(prompt_optional       "Email para alertas FinOps"          "finops@org.com")
+  printf "${CYAN}  Presupuesto anual por entorno (mensual y semanal se infieren automáticamente)${RESET}\n" >&2
+  FINOPS_BUDGET_ANNUAL_DEV=$(prompt_optional  "  Presupuesto anual dev  (USD)" "$FINOPS_BUDGET_ANNUAL_DEV")
+  FINOPS_BUDGET_ANNUAL_UAT=$(prompt_optional  "  Presupuesto anual uat  (USD)" "$FINOPS_BUDGET_ANNUAL_UAT")
+  FINOPS_BUDGET_ANNUAL_PROD=$(prompt_optional "  Presupuesto anual prod (USD)" "$FINOPS_BUDGET_ANNUAL_PROD")
 fi
 
 # -----------------------------------------------------------------------------
@@ -575,13 +580,13 @@ header "Paso 7: FinOps tagging taxonomy"
 if [ -z "$FINOPS_PRODUCT" ]; then
   skip "No se configuraron parámetros FinOps (--finops-product). Omitiendo."
 else
-  # Calcular annual y weekly desde el monthly
-  DEV_ANNUAL=$(( FINOPS_BUDGET_MONTHLY_DEV * 12 ))
-  DEV_WEEKLY=$(( FINOPS_BUDGET_MONTHLY_DEV / 4 ))
-  UAT_ANNUAL=$(( FINOPS_BUDGET_MONTHLY_UAT * 12 ))
-  UAT_WEEKLY=$(( FINOPS_BUDGET_MONTHLY_UAT / 4 ))
-  PROD_ANNUAL=$(( FINOPS_BUDGET_MONTHLY_PROD * 12 ))
-  PROD_WEEKLY=$(( FINOPS_BUDGET_MONTHLY_PROD / 4 ))
+  # Anual es el input primario — mensual y semanal se derivan
+  DEV_MONTHLY=$(( FINOPS_BUDGET_ANNUAL_DEV / 12 ))
+  DEV_WEEKLY=$(( FINOPS_BUDGET_ANNUAL_DEV / 52 ))
+  UAT_MONTHLY=$(( FINOPS_BUDGET_ANNUAL_UAT / 12 ))
+  UAT_WEEKLY=$(( FINOPS_BUDGET_ANNUAL_UAT / 52 ))
+  PROD_MONTHLY=$(( FINOPS_BUDGET_ANNUAL_PROD / 12 ))
+  PROD_WEEKLY=$(( FINOPS_BUDGET_ANNUAL_PROD / 52 ))
 
   # Crear el directorio finops/ si no existe
   mkdir -p finops
@@ -597,9 +602,9 @@ else
 # Para regenerar:
 #   ./scripts/init-repo.sh --repo ${REPO} --finops-product ${FINOPS_PRODUCT} \\
 #     --finops-owner "${FINOPS_OWNER}" --finops-cost-center ${FINOPS_COST_CENTER} \\
-#     --finops-email ${FINOPS_EMAIL} --finops-budget-monthly-dev ${FINOPS_BUDGET_MONTHLY_DEV} \\
-#     --finops-budget-monthly-uat ${FINOPS_BUDGET_MONTHLY_UAT} \\
-#     --finops-budget-monthly-prod ${FINOPS_BUDGET_MONTHLY_PROD}
+#     --finops-email ${FINOPS_EMAIL} --finops-budget-annual-dev ${FINOPS_BUDGET_ANNUAL_DEV} \\
+#     --finops-budget-annual-uat ${FINOPS_BUDGET_ANNUAL_UAT} \\
+#     --finops-budget-annual-prod ${FINOPS_BUDGET_ANNUAL_PROD}
 # ─────────────────────────────────────────────────────────────────────────────
 version: "1.0"
 
@@ -624,16 +629,16 @@ required_tags:
 
 budgets:
   dev:
-    monthly_usd: ${FINOPS_BUDGET_MONTHLY_DEV}
-    annual_usd:  ${DEV_ANNUAL}
+    annual_usd:  ${FINOPS_BUDGET_ANNUAL_DEV}
+    monthly_usd: ${DEV_MONTHLY}
     weekly_usd:  ${DEV_WEEKLY}
   uat:
-    monthly_usd: ${FINOPS_BUDGET_MONTHLY_UAT}
-    annual_usd:  ${UAT_ANNUAL}
+    annual_usd:  ${FINOPS_BUDGET_ANNUAL_UAT}
+    monthly_usd: ${UAT_MONTHLY}
     weekly_usd:  ${UAT_WEEKLY}
   prod:
-    monthly_usd: ${FINOPS_BUDGET_MONTHLY_PROD}
-    annual_usd:  ${PROD_ANNUAL}
+    annual_usd:  ${FINOPS_BUDGET_ANNUAL_PROD}
+    monthly_usd: ${PROD_MONTHLY}
     weekly_usd:  ${PROD_WEEKLY}
 
 alerts:
